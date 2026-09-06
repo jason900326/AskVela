@@ -1,0 +1,30 @@
+{
+  "name": "askvela",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "extract:pdf": "node --env-file=.env.local scripts/extract-pdf.js",
+    "ingest": "node --env-file=.env.local scripts/ingest-book.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.115.0",
+    "next": "16.3.4",
+    "openai": "7.10.0",
+    "pdf-parse": "2.4.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.3.4",
+    "supabase": "2.116.0"
+  },
+  "engines": {
+    "node": ">=22.3.0"
+  }
+}
