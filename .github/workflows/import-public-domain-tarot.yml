@@ -1,0 +1,72 @@
+name: Import public-domain tarot source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-public-domain-tarot.yml'
+      - '.gitignore'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-book:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download The Pictorial Key to the Tarot
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf'
+          mkdir -p "$(dirname "$target")"
+
+          if [ -s "$target" ]; then
+            echo 'Book is already present; nothing to do.'
+            exit 0
+          fi
+
+          urls=(
+            'https://hermetism.info/pdf/Authors%20in%20Magick/Waite_Tarot.pdf'
+            'https://citeseerx.ist.psu.edu/document?doi=7a15961664bced51d1162198bce46d173e40dd41&repid=rep1&type=pdf'
+          )
+
+          downloaded=0
+          for url in "${urls[@]}"; do
+            echo "Trying $url"
+            if curl -L --fail --retry 3 --connect-timeout 20 --max-time 180 "$url" -o "$target.tmp"; then
+              if head -c 4 "$target.tmp" | grep -q '%PDF' && [ "$(wc -c < "$target.tmp")" -gt 1000000 ]; then
+                mv "$target.tmp" "$target"
+                downloaded=1
+                break
+              fi
+            fi
+            rm -f "$target.tmp"
+          done
+
+          if [ "$downloaded" -ne 1 ]; then
+            echo 'Could not download a valid PDF.' >&2
+            exit 1
+          fi
+
+          echo "Downloaded $(wc -c < "$target") bytes to $target"
+
+      - name: Commit book to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf'
+          if git status --porcelain -- "$target" | grep -q .; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$target"
+            git commit -m 'Add The Pictorial Key to the Tarot source PDF'
+            git push
+          else
+            echo 'No PDF change to commit.'
+          fi
