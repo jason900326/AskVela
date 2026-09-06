@@ -10,9 +10,11 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 
-# Keep source ebooks local. Do not commit copyrighted PDFs.
-data/raw/*.pdf
+# Public-domain source books may be committed under data/raw/public-domain/.
+# Keep copyrighted/private ebooks out of the repository.
+data/raw/copyrighted/
+data/raw/private/
 
-# Generated extraction output can be rebuilt locally.
+# Generated extraction output can be rebuilt.
 data/processed/*.txt
 data/processed/*.json
