@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "extract:pdf": "node --env-file=.env.local scripts/extract-pdf.js",
+    "extract:pdf": "node scripts/extract-pdf.js",
     "ingest": "node --env-file=.env.local scripts/ingest-book.js"
   },
   "dependencies": {
