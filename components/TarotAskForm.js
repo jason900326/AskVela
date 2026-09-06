@@ -51,7 +51,7 @@ export default function TarotAskForm() {
           <div className="eyebrow">RIDER–WAITE–SMITH</div>
           <h2>問 Vela 一個塔羅問題</h2>
         </div>
-        <div className="statusDot"><i /> RAG READY</div>
+        <div className="statusDot"><i /> RAG PIPELINE</div>
       </div>
 
       <form onSubmit={ask}>
@@ -82,7 +82,7 @@ export default function TarotAskForm() {
 
       {answer && (
         <div className="answerBox">
-          <div className="eyebrow">VELA'S ANSWER</div>
+          <div className="eyebrow">VELA&apos;S ANSWER</div>
           <div className="answerText">{answer}</div>
 
           {sources.length > 0 && (
