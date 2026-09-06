@@ -1,0 +1,14 @@
+{
+  "slug": "the-pictorial-key-to-the-tarot",
+  "title": "The Pictorial Key to the Tarot",
+  "author": "Arthur Edward Waite",
+  "tarot_system": "Rider-Waite-Smith",
+  "publication_year": 1911,
+  "public_domain": true,
+  "metadata": {
+    "language": "en",
+    "source_type": "book",
+    "role": "primary_reference",
+    "notes": "Foundational source for the Rider-Waite-Smith tarot system."
+  }
+}
