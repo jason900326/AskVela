@@ -1,0 +1,116 @@
+.readingShell { max-width: 1180px; }
+.readingExperience { display: grid; gap: 22px; }
+.velaHeader { display: grid; grid-template-columns: 118px 1fr; gap: 28px; align-items: center; padding: 26px 0 8px; }
+.velaPortrait { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(199,167,255,.28); background: radial-gradient(circle at 45% 35%, rgba(242,200,221,.32), rgba(91,61,130,.18) 42%, rgba(255,255,255,.02) 68%); box-shadow: 0 0 70px rgba(133,92,190,.18); }
+.velaPortrait span { font: 500 3rem Georgia, serif; color: var(--accent-2); }
+.velaHeader h1 { margin: 8px 0 10px; font: 500 clamp(2.3rem,5vw,4.7rem)/1 Georgia, "Times New Roman", serif; letter-spacing: -.04em; max-width: 860px; }
+.velaHeader p { margin: 0; max-width: 760px; color: var(--muted); line-height: 1.75; }
+
+.readingSteps { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.readingStep { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 999px; color: #82788a; background: rgba(255,255,255,.018); }
+.readingStep span { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.05); font-size: .72rem; }
+.readingStep strong { font-size: .78rem; }
+.readingStep.isActive { color: var(--text); border-color: rgba(199,167,255,.42); background: rgba(199,167,255,.06); }
+.readingStep.isComplete { color: #d7cbe0; }
+.readingStep.isComplete span { color: #110d16; background: var(--accent); }
+
+.crystalStage { min-height: 430px; display: grid; place-items: center; align-content: center; gap: 26px; text-align: center; border: 1px solid var(--line); border-radius: 34px; background: radial-gradient(circle at 50% 42%, rgba(174,118,255,.13), transparent 19rem), linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)); overflow: hidden; }
+.crystalStage > p { margin: 0; color: var(--muted); font-size: .88rem; }
+.crystalBall { position: relative; width: 230px; height: 230px; display: grid; place-items: center; align-content: center; gap: 10px; border: 1px solid rgba(233,217,255,.42); border-radius: 50%; color: var(--text); background: radial-gradient(circle at 38% 30%, rgba(255,255,255,.22), transparent 18%), radial-gradient(circle at 50% 55%, rgba(195,137,255,.3), rgba(80,47,120,.3) 55%, rgba(17,12,24,.6) 78%); box-shadow: inset 0 0 45px rgba(255,255,255,.08), 0 0 65px rgba(168,112,255,.18), 0 32px 80px rgba(0,0,0,.36); transition: transform 220ms ease, box-shadow 220ms ease; }
+.crystalBall:hover:not(:disabled) { transform: translateY(-4px) scale(1.015); box-shadow: inset 0 0 45px rgba(255,255,255,.1), 0 0 90px rgba(168,112,255,.28), 0 36px 90px rgba(0,0,0,.42); }
+.crystalBall span { font-size: 2.2rem; color: #f0d6ff; animation: velaFloat 2.8s ease-in-out infinite; }
+.crystalBall strong { font-size: .9rem; letter-spacing: .08em; }
+
+.readingPanel, .readingResult { padding: 28px; border: 1px solid var(--line); border-radius: 28px; background: var(--panel); box-shadow: 0 30px 90px rgba(0,0,0,.24); backdrop-filter: blur(18px); }
+.spreadGrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.spreadOption { min-height: 190px; padding: 20px; text-align: left; border: 1px solid var(--line); border-radius: 22px; color: var(--text); background: rgba(255,255,255,.025); transition: transform 160ms ease, border-color 160ms ease, background 160ms ease; }
+.spreadOption:hover { transform: translateY(-2px); border-color: rgba(199,167,255,.35); }
+.spreadOption.isSelected { border-color: rgba(199,167,255,.65); background: rgba(199,167,255,.08); box-shadow: 0 0 0 3px rgba(199,167,255,.05); }
+.spreadOption > span { display: block; min-height: 25px; color: var(--accent); letter-spacing: .2em; }
+.spreadOption strong { display: block; margin-top: 18px; font-size: 1rem; }
+.spreadOption p { margin: 8px 0 12px; color: var(--muted); font-size: .84rem; line-height: 1.6; }
+.spreadOption small { color: #8f8497; }
+
+.flowActions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
+.flowActions.centered { justify-content: center; }
+.primaryButton, .ghostButton, .errorBox button { padding: 12px 18px; border-radius: 999px; font-weight: 800; }
+.primaryButton { border: 0; color: #120e17; background: linear-gradient(135deg,var(--accent-2),var(--accent)); }
+.primaryButton:disabled { opacity: .45; cursor: not-allowed; }
+.ghostButton { border: 1px solid var(--line); color: var(--muted); background: transparent; }
+.ghostButton:hover { color: var(--text); border-color: rgba(199,167,255,.35); }
+
+.loadingPanel { min-height: 330px; display: grid; place-items: center; align-content: center; text-align: center; }
+.loadingPanel h2 { margin: 18px 0 8px; }
+.loadingPanel p { margin: 0; color: var(--muted); }
+.shuffleGlyph, .velaPulse { width: 74px; height: 74px; display: grid; place-items: center; border: 1px solid rgba(199,167,255,.3); border-radius: 50%; color: var(--accent); font-size: 2rem; animation: velaPulse 1.7s ease-in-out infinite; }
+.progressLine { width: min(430px,72vw); height: 4px; margin-top: 24px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.06); }
+.progressLine span { display: block; width: 45%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,transparent,var(--accent),transparent); animation: readingProgress 1.5s ease-in-out infinite; }
+
+.revealCounter { color: var(--muted); font-size: .82rem; }
+.cardSpread { display: flex; justify-content: center; gap: clamp(10px,2vw,24px); flex-wrap: wrap; padding: 14px 0 4px; perspective: 1200px; }
+.tarotCard { width: min(29vw,190px); aspect-ratio: 2 / 3.35; padding: 0; border: 0; border-radius: 18px; background: transparent; perspective: 1000px; }
+.tarotCard:disabled:not(.isRevealed) { cursor: default; opacity: .58; }
+.tarotCardInner { position: relative; width: 100%; height: 100%; display: block; transform-style: preserve-3d; transition: transform 650ms cubic-bezier(.22,.75,.22,1); }
+.tarotCard.isRevealed .tarotCardInner { transform: rotateY(180deg); }
+.tarotCardBack, .tarotCardFront { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; padding: 18px; border: 1px solid rgba(230,214,255,.24); border-radius: 18px; backface-visibility: hidden; overflow: hidden; }
+.tarotCardBack { color: #ded0eb; background: repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 6px,transparent 6px 12px), radial-gradient(circle at 50% 40%,rgba(188,128,255,.2),transparent 50%), #15101d; box-shadow: 0 16px 40px rgba(0,0,0,.34); }
+.tarotCardBack::before, .tarotCardBack::after { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(199,167,255,.22); border-radius: 12px; }
+.tarotCardBack::after { inset: 16px; border-radius: 9px; }
+.tarotCardBack i { font-style: normal; color: var(--accent); font-size: 1.9rem; }
+.tarotCardBack b { font-size: .7rem; letter-spacing: .16em; }
+.tarotCardBack small { color: #92849c; }
+.tarotCardFront { transform: rotateY(180deg); text-align: center; color: var(--text); background: radial-gradient(circle at 50% 36%,rgba(241,211,255,.12),transparent 38%), linear-gradient(180deg,#22182b,#120e18); box-shadow: 0 16px 40px rgba(0,0,0,.32); }
+.tarotCardFront small { color: var(--accent); letter-spacing: .08em; }
+.tarotCardFront i { font-style: normal; font-size: 2rem; color: #efd5ff; }
+.tarotCardFront strong { font: 600 1.25rem Georgia,serif; }
+.tarotCardFront span { color: var(--muted); font-size: .78rem; }
+.tarotCardFront em { margin-top: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: #d9cce1; font-size: .68rem; font-style: normal; }
+
+.resultIntro { max-width: 840px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.resultIntro h2 { margin: 8px 0 13px; font: 500 clamp(1.8rem,4vw,3.1rem)/1.15 Georgia,serif; }
+.resultIntro p { margin: 0; color: #e7dfeb; line-height: 1.85; }
+.resultCards { display: grid; gap: 12px; margin-top: 16px; }
+.resultCard { padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.022); }
+.resultCardHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.resultCardHeading small { color: var(--accent); font-weight: 800; }
+.resultCardHeading h3 { margin: 6px 0 0; font-size: 1.05rem; }
+.resultCardHeading h3 span { color: var(--muted); font-weight: 500; }
+.resultCardHeading em { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: .7rem; font-style: normal; }
+.resultCard > p { color: #e8e1eb; line-height: 1.8; }
+.practicalFocus { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 12px 0 2px; color: var(--muted); font-size: .86rem; }
+.practicalFocus strong { color: var(--text); }
+.readingSources { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06); color: var(--muted); }
+.readingSources summary { cursor: pointer; font-size: .78rem; }
+.readingSources ul { margin: 10px 0 0; padding-left: 18px; font-size: .76rem; line-height: 1.6; }
+.synthesisBlock { margin-top: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.018); }
+.synthesisBlock p, .synthesisBlock ul { margin: 10px 0 0; color: #e6dee9; line-height: 1.8; }
+.readingDisclaimer { margin: 18px 0 0; color: #8d8295; font-size: .76rem; line-height: 1.6; text-align: center; }
+.errorBox { display: grid; gap: 7px; }
+.errorBox strong { color: var(--danger); }
+.errorBox span { color: #d6c9d9; }
+.errorBox button { justify-self: start; margin-top: 4px; border: 1px solid rgba(255,182,182,.24); color: var(--danger); background: transparent; }
+.trustGrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 18px; }
+
+@keyframes velaFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes velaPulse { 0%,100% { transform: scale(1); opacity: .75; box-shadow: 0 0 0 rgba(199,167,255,0); } 50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 32px rgba(199,167,255,.16); } }
+@keyframes readingProgress { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+
+@media (prefers-reduced-motion: reduce) { .crystalBall, .tarotCardInner, .crystalBall span, .shuffleGlyph, .velaPulse, .progressLine span { animation: none !important; transition: none !important; } }
+@media (max-width: 760px) {
+  .velaHeader { grid-template-columns: 70px 1fr; gap: 16px; }
+  .velaPortrait { width: 70px; height: 70px; }
+  .velaPortrait span { font-size: 2rem; }
+  .velaHeader h1 { font-size: clamp(2.1rem,10vw,3.2rem); }
+  .readingSteps { grid-template-columns: repeat(4,auto); overflow-x: auto; }
+  .readingStep { padding: 8px 10px; }
+  .readingStep strong { display: none; }
+  .crystalStage { min-height: 360px; border-radius: 24px; }
+  .crystalBall { width: 190px; height: 190px; }
+  .readingPanel, .readingResult { padding: 18px; border-radius: 22px; }
+  .spreadGrid, .trustGrid { grid-template-columns: 1fr; }
+  .spreadOption { min-height: auto; }
+  .tarotCard { width: min(43vw,170px); }
+  .cardSpread.cards-3 .tarotCard { width: min(28vw,150px); }
+  .practicalFocus { grid-template-columns: 1fr; gap: 4px; }
+  .flowActions { flex-wrap: wrap; }
+}

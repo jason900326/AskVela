@@ -1,8 +1,9 @@
 import "./globals.css";
+import "./reading.css";
 
 export const metadata = {
   title: "AskVela",
-  description: "Tarot knowledge assistant powered by a source-grounded RAG pipeline.",
+  description: "Source-grounded tarot readings with a guided, anonymous V1 experience.",
 };
 
 export default function RootLayout({ children }) {
