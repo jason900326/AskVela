@@ -1,34 +1,25 @@
-import TarotAskForm from "../components/TarotAskForm";
+import TarotReadingFlow from "../components/TarotReadingFlow";
 
 export default function HomePage() {
   return (
-    <main className="shell">
-      <section className="hero">
-        <div className="eyebrow">ASKVELA · TAROT KNOWLEDGE MVP</div>
-        <h1>讓每一次解牌，都能回到真正的來源。</h1>
-        <p className="heroCopy">
-          先以 Rider–Waite–Smith 系統與《The Pictorial Key to the Tarot》建立第一層知識庫。
-          問題會先檢索原書內容，再交給 AI 整理回答。
-        </p>
-      </section>
+    <main className="shell readingShell">
+      <TarotReadingFlow />
 
-      <TarotAskForm />
-
-      <section className="infoGrid" aria-label="目前系統能力">
+      <section className="trustGrid" aria-label="AskVela 解讀原則">
         <article className="infoCard">
           <span>01</span>
-          <h2>Source-grounded</h2>
-          <p>回答前先找相關書籍片段，避免只靠模型既有印象解牌。</p>
+          <h2>先抽牌，再查來源</h2>
+          <p>牌面一旦固定，後續重試解讀也沿用同一組牌，不會因 API 錯誤重新抽牌。</p>
         </article>
         <article className="infoCard">
           <span>02</span>
-          <h2>Multi-book ready</h2>
-          <p>資料結構已預留多書籍、不同作者與不同塔羅系統的 metadata。</p>
+          <h2>原典與情境分開</h2>
+          <p>先整理 Waite、Mathers 等來源中的牌義，再把牌義放回你的問題與牌陣位置中解讀。</p>
         </article>
         <article className="infoCard">
           <span>03</span>
-          <h2>Traceable</h2>
-          <p>API 會回傳命中的來源，之後可進一步顯示章節、頁碼與作者觀點。</p>
+          <h2>保留不確定性</h2>
+          <p>AskVela 提供象徵性反思與可能方向，不把牌面當成對未來或他人的確定判決。</p>
         </article>
       </section>
     </main>
