@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 5 — follow-up conversation (not started)**
+- Current phase: **Phase 6 — accounts and history (not started)**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
@@ -127,13 +127,15 @@ The canonical anonymous flow was manually exercised through the deployed UI thro
 
 ## Phase 5 — Follow-up conversation
 
-- [ ] Preserve reading context in the current browser session
-- [ ] Add follow-up endpoint and message validation
-- [ ] Keep the original cards and sources fixed
-- [ ] Clearly separate follow-up from starting a new reading
-- [ ] Limit message size and follow-up count
-- [ ] Add context-window and cost controls
-- [ ] Test that follow-ups never silently redraw cards
+- [x] Preserve reading context in the current browser session
+- [x] Add follow-up endpoint and message validation
+- [x] Keep the original cards and sources fixed
+- [x] Clearly separate follow-up from starting a new reading
+- [x] Limit message size and follow-up count
+- [x] Add context-window and cost controls
+- [x] Test that follow-ups never silently redraw cards
+
+The anonymous browser session now keeps the current reading and follow-up thread in `sessionStorage`. Each follow-up rebuilds and verifies the original deterministic draw from the original question, spread, request ID, and reading ID before retrieving the same curated V1 source set. Follow-up messages are capped at 320 characters and six exchanges per reading; only the four most recent exchanges, bounded evidence excerpts, and a compact initial reading enter one structured model call. Automated tests protect the fixed-card identity, validation limits, session behavior, and no-redraw contract.
 
 **Exit condition:** Users can clarify the same reading without losing context or changing the draw.
 
