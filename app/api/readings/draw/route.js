@@ -11,6 +11,7 @@ export async function POST(request) {
       question: body?.question,
       spreadId: body?.spreadId,
       idempotencyKey,
+      selectedIndices: body?.selectedIndices,
     });
 
     return NextResponse.json(draw, {
@@ -32,4 +33,3 @@ export async function POST(request) {
     );
   }
 }
-
