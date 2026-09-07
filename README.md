@@ -6,13 +6,13 @@ The V1 product is intentionally narrow:
 
 > 一個有可靠書籍依據、能進行 AI 塔羅占卜的網站。
 
-The first knowledge source is **Arthur Edward Waite's _The Pictorial Key to the Tarot_**. The data model is intended to support additional books and tarot systems later without mixing different authors into a false consensus.
+The primary knowledge source is **Arthur Edward Waite's _The Pictorial Key to the Tarot_**. Phase 3 also uses **S. L. MacGregor Mathers' _The Tarot_ (1888)** as an attributed historical comparison source. Different authors are never blended into a false consensus.
 
 ## Project status
 
-AskVela currently has a working source-grounded knowledge Q&A foundation. It does **not** yet provide the complete V1 reading flow.
+AskVela has a working draw and three-layer interpretation engine, but **Phase 3 is still in progress** while the two-source knowledge set is curated and validated before UX work begins.
 
-- Current phase: core V1 reading UX
+- Current phase: Phase 3 — interpretation engine / multi-source curation and validation
 - V1 specification: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Development checklist: [ROADMAP.md](ROADMAP.md)
 
@@ -38,7 +38,11 @@ Fixed server-side draw
     ↓
 Per-card exact ID + orientation retrieval
     ↓
-Layer A: source-only meaning
+Balanced evidence across compatible source books
+    ↓
+Retrieval-facing historical source curation
+    ↓
+Layer A: source-only meaning, author-by-author
     ↓
 Layer B: question + spread-position interpretation
     ↓
@@ -47,10 +51,9 @@ Layer C: cross-card synthesis
 Structured reading + human-readable sources + safety framing
 ```
 
-`/api/ask` remains an internal knowledge-quality tool. `/api/readings/draw` owns
-the server-side draw, and `/api/readings/interpret` regenerates that exact draw
-from the same request ID before interpreting it. The language model therefore
-cannot choose cards or silently change an existing draw.
+The source-curation layer does **not** erase difficult tarot themes. Concepts such as deception, conflict, mistrust, selfishness, or treachery may remain when they are present in a source. What is removed or reframed is historical wording that directly labels a person as, for example, a bad, wicked, vicious, foolish, suspicious, or inherently untrustworthy person. The interpretation prompts then add a second defense by requiring these themes to be discussed as possible dynamics or behaviors rather than character judgments about the user or a third party.
+
+`/api/ask` remains an internal knowledge-quality tool. `/api/readings/draw` owns the server-side draw, and `/api/readings/interpret` regenerates that exact draw from the same request ID before interpreting it. The language model therefore cannot choose cards or silently change an existing draw.
 
 ## Stack
 
@@ -77,7 +80,8 @@ AskVela/
 │   └── TarotAskForm.js
 ├── data/
 │   ├── metadata/
-│   │   └── the-pictorial-key-to-the-tarot.json
+│   │   ├── the-pictorial-key-to-the-tarot.json
+│   │   └── the-tarot-macgregor-mathers-1888.json
 │   ├── tarot/
 │   │   └── cards.json                # canonical 78-card registry
 │   ├── processed/                    # generated locally; ignored by git
@@ -88,30 +92,42 @@ AskVela/
 ├── docs/
 │   └── V1_SPEC.md
 ├── lib/
+│   ├── mathers-structure-parser.js
 │   ├── openai.js
 │   ├── reading-evidence.js
 │   ├── reading-interpreter.js
 │   ├── reading-prompts.js
 │   ├── retrieval.js
-│   ├── tarot-draw.js
-│   ├── tarot-spreads.js
+│   ├── source-curation.js
+│   ├── structured-tarot-validation.js
 │   ├── supabase-admin.js
 │   ├── tarot-cards.js
+│   ├── tarot-draw.js
 │   ├── tarot-prompt.js
 │   ├── tarot-safety.js
+│   ├── tarot-spreads.js
 │   └── waite-structure-parser.js
 ├── scripts/
 │   ├── extract-pdf.js
 │   ├── ingest-book.js
 │   ├── ingest-tarot-book.js
+│   ├── parse-mathers.js
 │   ├── parse-waite.js
 │   └── validate-tarot-structure.js
 ├── supabase/
 │   └── migrations/
 │       ├── 001_knowledge_base.sql
-│       └── 002_structured_tarot.sql
+│       ├── 002_structured_tarot.sql
+│       └── 003_historical_comparison_sources.sql
 ├── test/
+│   ├── mathers-structure-parser.test.js
+│   ├── reading-evidence.test.js
+│   ├── reading-interpreter.test.js
+│   ├── reading-prompts.test.js
+│   ├── source-curation.test.js
 │   ├── tarot-cards.test.js
+│   ├── tarot-draw.test.js
+│   ├── tarot-safety.test.js
 │   └── waite-structure-parser.test.js
 └── ROADMAP.md
 ```
@@ -144,8 +160,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 TAROT_DRAW_SECRET=... # at least 32 random characters
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose
-them in browser code or commit `.env.local`.
+`SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose them in browser code or commit `.env.local`.
 
 ## Draw API
 
@@ -162,15 +177,11 @@ Idempotency-Key: <a new client-generated UUID for this reading>
 }
 ```
 
-Use a new idempotency key only when the user intentionally starts a new reading.
-Reuse the same key when retrying a failed request; the server will return the same
-reading ID, cards, positions, and orientations. The supported spread IDs are
-`single-guidance`, `past-present-future`, and `situation-obstacle-advice`.
+Use a new idempotency key only when the user intentionally starts a new reading. Reuse the same key when retrying a failed request; the server will return the same reading ID, cards, positions, and orientations. The supported spread IDs are `single-guidance`, `past-present-future`, and `situation-obstacle-advice`.
 
 ## Interpretation API
 
-After revealing a draw, generate its interpretation with the same question,
-spread, reading ID, and idempotency key:
+After revealing a draw, generate its interpretation with the same question, spread, reading ID, and idempotency key:
 
 ```http
 POST /api/readings/interpret
@@ -184,33 +195,27 @@ Idempotency-Key: <the same UUID used for the draw>
 }
 ```
 
-The server first reproduces and verifies the fixed draw, then performs three
-separate structured model calls:
+The server first reproduces and verifies the fixed draw, then performs three separate structured model calls:
 
-1. **Layer A — Source meaning:** summarizes only retrieved book evidence and
-   returns validated source IDs.
-2. **Layer B — Context interpretation:** applies Layer A to the question,
-   orientation, and spread position without pretending that inference came from
-   the author.
-3. **Layer C — Synthesis:** turns the individual cards into a coherent movement,
-   tension, or progression and returns practical reflection prompts.
+1. **Layer A — Source meaning:** summarizes only retrieved book evidence, keeps authors separately attributed, and returns validated source IDs.
+2. **Layer B — Context interpretation:** applies Layer A to the question, orientation, and spread position without pretending that inference came from the author.
+3. **Layer C — Synthesis:** turns the individual cards into a coherent movement, tension, or progression and returns practical reflection prompts.
 
-The response keeps these boundaries visible through each card's `sourceMeaning`
-and `contextInterpretation`, plus a top-level `synthesis`. It also includes
-human-readable book, author, chapter, section, and PDF page references. Questions
-detected as medical, legal, financial, or crisis-related receive deterministic
-safety notices in addition to stricter model instructions.
+The response keeps these boundaries visible through each card's `sourceMeaning` and `contextInterpretation`, plus a top-level `synthesis`. It also includes human-readable book, author, tarot system, chapter, section, and PDF page references. Questions detected as medical, legal, financial, or crisis-related receive deterministic safety notices in addition to stricter model instructions.
 
 ## 3. Create the knowledge-base tables
 
-Run both migrations in order in your Supabase project:
+Run all migrations in order in your Supabase project:
 
 ```text
 supabase/migrations/001_knowledge_base.sql
 supabase/migrations/002_structured_tarot.sql
+supabase/migrations/003_historical_comparison_sources.sql
 ```
 
-It creates:
+The third migration adds source-system compatibility so a historical comparison work can participate in an RWS reading without being falsely relabeled as an RWS-native book. The retrieval RPC still filters by the requested reading system.
+
+The schema provides:
 
 - `books`
 - `knowledge_chunks`
@@ -218,6 +223,7 @@ It creates:
 - a 1536-dimensional pgvector embedding column
 - HNSW vector index
 - card/orientation/source-location columns
+- compatible tarot-system metadata
 - `match_structured_tarot_chunks(...)`, which filters structurally before vector ranking
 
 The retrieval RPC is restricted to the Supabase `service_role` because AskVela calls it server-side.
@@ -230,10 +236,11 @@ Public-domain source books may be committed under:
 data/raw/public-domain/
 ```
 
-The first committed source is:
+The committed V1 source set is:
 
 ```text
 data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf
+data/raw/public-domain/the-tarot-macgregor-mathers-1888.pdf
 ```
 
 Copyrighted or private ebooks must not be committed. Store local copies only under:
@@ -247,56 +254,61 @@ Both directories are ignored by git. Confirm licensing before using copyrighted 
 
 ## 5. Extract PDF text
 
-For the committed Waite source:
+Extract both committed public-domain PDFs:
 
 ```bash
 npm run extract:pdf -- data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf
+npm run extract:pdf -- data/raw/public-domain/the-tarot-macgregor-mathers-1888.pdf
 ```
 
-This generates a local text file under `data/processed/`. Generated extraction files are ignored because they can be rebuilt from the permitted source.
+This generates local text files under `data/processed/`. Generated extraction files are ignored because they can be rebuilt from the permitted sources.
 
 ## 6. Parse, validate, and ingest structured tarot knowledge
 
-The metadata for the first book is included at:
-
-```text
-data/metadata/the-pictorial-key-to-the-tarot.json
-```
-
-Run the extraction command first, then parse all 78 card sections:
+### Waite
 
 ```bash
 npm run parse:waite -- \
   data/metadata/the-pictorial-key-to-the-tarot.json \
   data/processed/The-Pictorial-Key-to-the-Tarot.txt
-```
 
-Validate the generated structure before any database write:
-
-```bash
 npm run validate:tarot -- \
   data/processed/The-Pictorial-Key-to-the-Tarot.structured.json
-```
 
-After applying both migrations, create embeddings and replace the old unstructured chunks:
-
-```bash
 npm run ingest:tarot -- \
   data/metadata/the-pictorial-key-to-the-tarot.json \
   data/processed/The-Pictorial-Key-to-the-Tarot.structured.json
 ```
 
+### Mathers 1888
+
+```bash
+npm run parse:mathers -- \
+  data/metadata/the-tarot-macgregor-mathers-1888.json \
+  data/processed/the-tarot-macgregor-mathers-1888.txt
+
+npm run validate:tarot -- \
+  data/processed/the-tarot-macgregor-mathers-1888.structured.json
+
+npm run ingest:tarot -- \
+  data/metadata/the-tarot-macgregor-mathers-1888.json \
+  data/processed/the-tarot-macgregor-mathers-1888.structured.json
+```
+
 The structured workflow will:
 
 1. identify all 78 cards using stable IDs and Traditional Chinese aliases
-2. preserve description/symbolism, upright, reversed, and additional Waite meanings as separate source sections
-3. record book, author, chapter, PDF page, and source URL
+2. preserve upright/reversed evidence and, where the source provides it, description/symbolism as separate sections
+3. record book, author, native tarot system, chapter, source location, and parser profile
 4. validate deck completeness and required orientation evidence
-5. upsert the canonical card registry and book record
-6. create embeddings within each structured section
-7. replace that book's old unstructured chunks
+5. curate retrieval-facing historical person-label wording before embeddings are created
+6. upsert the canonical card registry and book record
+7. create embeddings within each curated structured section
+8. replace only that book's previous chunks
 
-`npm run ingest` remains available for non-tarot source material, but tarot books should use a source-specific parser and `ingest:tarot` so card metadata is never discarded.
+Mathers is a `meanings_only` source and a `secondary_historical_reference`. It predates the Rider-Waite-Smith deck. Its evidence may be compared with Waite, but disagreements must remain author-attributed rather than being blended together.
+
+`npm run ingest` remains available for non-tarot source material, but tarot books should use a source-specific parser and `ingest:tarot` so card metadata and source curation are never discarded.
 
 ## 7. Run AskVela
 
@@ -304,13 +316,7 @@ The structured workflow will:
 npm run dev
 ```
 
-Open the local Next.js URL and use the current knowledge Q&A page to test retrieval, for example:
-
-- `The High Priestess 在 Waite 原書中代表什麼？`
-- `The Tower 的正位與逆位有什麼差別？`
-- `Waite 如何描述 The Fool 的象徵？`
-
-This page is a development foundation, not yet the complete V1 tarot-reading experience.
+Use `/api/ask` as a development knowledge-quality tool and `/api/readings/interpret` for the fixed-draw reading pipeline. During Phase 3 evaluation, explicitly test questions that could tempt the model into judging a person, for example relationship, trust, conflict, and loyalty questions. The expected behavior is to describe possible dynamics and observable concerns, not declare the user or another person to be inherently bad, deceitful, toxic, malicious, disloyal, foolish, or untrustworthy.
 
 ## Adding another book later
 
@@ -322,6 +328,7 @@ Do **not** create a second database or RAG system. Add another metadata record a
   "title": "Another Tarot Book",
   "author": "Author Name",
   "tarot_system": "Rider-Waite-Smith",
+  "compatible_tarot_systems": ["Rider-Waite-Smith"],
   "publication_year": 2020,
   "public_domain": false,
   "metadata": {
@@ -336,16 +343,8 @@ Every chunk must preserve its source identity. Multi-book output must present ag
 
 ## Current phase status
 
-Phase 1 is complete: the Waite parser and live knowledge path cover all 78 cards,
-Major and Minor Arcana, upright and reversed evidence, and traceable source
-locations.
+Phase 1 is complete: the Waite parser and live knowledge path cover all 78 cards, Major and Minor Arcana, upright and reversed evidence, and traceable source locations.
 
-Phase 2 is also complete: the server exposes three V1 spreads and creates
-idempotent, non-repeating draws with independently assigned upright/reversed
-orientations.
+Phase 2 is complete: the server exposes three V1 spreads and creates idempotent, non-repeating draws with independently assigned upright/reversed orientations.
 
-Phase 3 is complete: the interpretation endpoint verifies the fixed draw,
-retrieves evidence separately for every card, and executes source, context, and
-synthesis layers with structured output, citation validation, and high-stakes
-safety framing. The project can now proceed to Phase 4's complete reading UX.
-Continue to use [ROADMAP.md](ROADMAP.md) as the source of truth.
+Phase 3's core interpretation engine is implemented, but **Phase 3 is not yet closed**. Before Phase 4 begins, migration `003_historical_comparison_sources.sql` must be applied to the active Supabase project, both books must be ingested through the curation layer, and live two-book evaluations must confirm source attribution and nonjudgmental person-related readings. Continue to use [ROADMAP.md](ROADMAP.md) as the source of truth.
