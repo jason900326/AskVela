@@ -4,196 +4,167 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 6 — accounts and history (auth finish)**
-- V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
-- Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
-- Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
-- Historical comparison source: S. L. MacGregor Mathers, *The Tarot* (1888)
+- Current phase: **Phase 7 — Astrology (deployment acceptance)**
+- Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
+- Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
+- Astrology contract: [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md)
 - Vela voice contract: [docs/VELA_VOICE.md](docs/VELA_VOICE.md)
 
-## Phase 0 — Freeze V1 scope
+## Phase 0 — Product foundation ✅
+- [x] Define the product and canonical Tarot flow
+- [x] Freeze source-grounding and safety rules
+- [x] Establish repository conventions and public-domain source handling
 
-- [x] Define the one-sentence V1 product
-- [x] Freeze the canonical user flow
-- [x] Define V1 spreads
-- [x] Define source-grounding rules
-- [x] Define explicit out-of-scope features
-- [x] Define V1 acceptance criteria
-- [x] Record minimum draw, reading, and follow-up contracts
-- [x] Correct README guidance for committed public-domain PDFs
+## Phase 1 — Structured Tarot knowledge ✅
+- [x] Canonical 78-card registry with Traditional Chinese names
+- [x] Waite structured parser and metadata
+- [x] Card/orientation-first retrieval before semantic ranking
+- [x] Supabase/pgvector structured ingestion and validation
 
-**Exit condition:** The team can decide whether a request belongs in V1 without redesigning the product.
+## Phase 2 — Tarot draw engine ✅
+- [x] V1 spread registry
+- [x] Deterministic server-side 78-card draw
+- [x] No duplicate cards; independent upright/reversed orientation
+- [x] Stable reading/request IDs and idempotent retries
 
-## Phase 1 — Structured tarot knowledge
+## Phase 3 — Interpretation engine ✅
+- [x] Layer A source meaning
+- [x] Layer B context / position interpretation
+- [x] Layer C multi-card synthesis
+- [x] Waite + Mathers attributed historical comparison
+- [x] Source curation, safety framing, structured output, live smoke tests
 
-- [x] Define the canonical 78-card registry and stable card IDs
-- [x] Add Traditional Chinese card names and aliases
-- [x] Define card-section metadata schema
-- [x] Extend the database for card, orientation, section type, and source location
-- [x] Build a parser for *The Pictorial Key to the Tarot*
-- [x] Extract Major Arcana sections
-- [x] Extract Minor Arcana sections
-- [x] Separate description, symbolism, divinatory meaning, and reversed meaning
-- [x] Preserve author, book, chapter, and source location
-- [x] Update ingestion to write structured metadata
-- [x] Update retrieval to filter by card and orientation before semantic ranking
-- [x] Add validation that all 78 cards are present
-- [x] Add parser and query-identification tests for Major, Minor, upright, and reversed meanings
-- [x] Apply migration `002_structured_tarot.sql` to the active Supabase project
-- [x] Run structured ingestion for the Waite source in the active Supabase project
-- [x] Run live retrieval checks for representative Major, Minor, upright, and reversed queries
-- [x] Confirm Traditional Chinese answers retain English card terminology where useful
-- [x] Confirm insufficient sources produce an explicit limitation
+## Phase 4 — Core Tarot UX ✅
+- [x] Question → spread → user card selection → reveal → result
+- [x] Responsive desktop/mobile flow
+- [x] Fixed-draw error retry
+- [x] Vela voice and progressive disclosure of source-heavy analysis
 
-**Exit condition:** Every card and orientation can reliably retrieve the correct Waite material with traceable source metadata.
+## Phase 5 — Same-reading follow-up ✅
+- [x] Preserve the original draw and source context
+- [x] Up to six bounded follow-ups
+- [x] Browser-session persistence and no-redraw contract tests
 
-## Phase 2 — Tarot draw engine
+## Phase 6 — Accounts and private history ✅
 
-- [x] Define V1 spread registry
-- [x] Implement the complete 78-card deck
-- [x] Implement server-side unbiased card selection
-- [x] Prevent duplicate cards within one draw
-- [x] Assign upright/reversed orientation independently
-- [x] Create a stable reading/draw ID
-- [x] Make draw retries idempotent
-- [x] Validate question and spread input
-- [x] Add tests for deck completeness, uniqueness, orientation, and spread positions
+Login remains optional; anonymous use is never blocked.
 
-**Exit condition:** The server can reproducibly create valid single-card and three-card readings without using the language model to select cards.
+- [x] Supabase Email/password Auth
+- [x] Google OAuth
+- [x] Forgot-password / password recovery
+- [x] Sign-out and session restoration
+- [x] Private cross-device Tarot history
+- [x] Anonymous-reading transfer after sign-in
+- [x] RLS isolation, deletion controls, 365-day retention
+- [x] Verify Google OAuth redirect on production
+- [x] Verify Google sign-in on mobile and desktop
+- [x] Verify same-email Email/password and Google behavior without an unexpected history silo
+- [x] Verify sign-out → reload → sign-back-in session behavior
+- [x] Verify password reset end-to-end
 
-## Phase 3 — Interpretation engine
+**Exit condition met:** user acceptance checks passed on 2026-09-07.
 
-### Core engine
+## Phase 7 — Astrology
 
-- [x] Create a reading endpoint separate from generic knowledge Q&A
-- [x] Retrieve evidence for every drawn card
-- [x] Build Layer A: source meaning
-- [x] Build Layer B: context and spread-position interpretation
-- [x] Build Layer C: multi-card synthesis
-- [x] Return structured output for reliable UI rendering
-- [x] Include human-readable source references
-- [x] Add safety framing for high-stakes questions
-- [x] Add evaluation cases for source fidelity and hallucination
-- [x] Keep the existing `/api/ask` endpoint as an internal knowledge-quality tool
+### 7.1 Scope and data method
+- [x] Limit V1 Astrology to 12 tropical sun signs
+- [x] Support `daily` and `weekly`
+- [x] Keep birthday client-side and send only the selected sign
+- [x] Explicitly exclude full natal chart / houses / ascendant / synastry
+- [x] Document a deterministic Sun/Moon-based method instead of asking the model to invent current sky data
 
-### Multi-source curation and live validation
+### 7.2 Zodiac and sky model
+- [x] Add 12-sign structured registry with Traditional Chinese labels
+- [x] Add fixed-date birthday helper with manual override
+- [x] Add approximate solar and lunar ecliptic longitude calculation
+- [x] Add Moon phase and major-aspect signal generation
+- [x] Add deterministic daily and Monday–Sunday weekly context
 
-- [x] Add Mathers 1888 as a second public-domain historical comparison source
-- [x] Add Mathers metadata without falsely labeling it as Rider-Waite-Smith
-- [x] Add a 78-card upright/reversed Mathers parser
-- [x] Support `meanings_only` historical sources without weakening full-reference validation
-- [x] Add retrieval compatibility for historical comparison sources while preserving their native tarot system
-- [x] Balance per-card evidence so one book cannot silently crowd the other out
-- [x] Add pre-retrieval source curation for insulting, gendered, complexion-based, and direct moral person labels
-- [x] Preserve difficult abstract themes such as deceit, conflict, mistrust, and treachery as situational concepts rather than deleting them
-- [x] Add Layer A/B/C rules that prohibit turning source themes into stable judgments of the user or a third party
-- [x] Require author-by-author attribution when sources differ instead of creating a false consensus
-- [x] Add parser, curation, evidence-balancing, and prompt regression tests
-- [x] Validate extraction, 78-card parsing, and structured-source validation against both committed PDFs in CI
-- [x] Apply migration `003_historical_comparison_sources.sql` to the active Supabase project
-- [x] Re-ingest Waite through the new curation layer
-- [x] Ingest the curated Mathers structured source
-- [x] Run live two-book knowledge retrieval checks for Major, Minor, reversed, court-card, and author-comparison cases
-- [x] Confirm live knowledge answers preserve difficult themes without directly labeling the user or a third party as bad, wicked, vicious, deceitful, toxic, foolish, or untrustworthy
-- [x] Confirm disagreements between Waite and Mathers remain explicitly attributed to their respective authors
-- [x] Make `/api/ask` respect an explicitly requested author instead of showing unrelated source books
-- [x] Mark curated retrieval wording as non-verbatim and prohibit quote-style presentation of normalized source text
-- [x] Make fixed-reading retrieval query both V1 books separately and fail loudly instead of silently degrading to one source
-- [x] Add a `smoke:reading` command that exercises the real fixed draw → evidence → Layer A/B/C interpretation pipeline
-- [x] Run the final live `npm run smoke:reading` check against the active Supabase/OpenAI environment
+### 7.3 Vela astrology engine
+- [x] Add validated `/api/astrology/reading`
+- [x] Add strict structured output schema
+- [x] Prevent invented planets, houses, natal placements, and unsupported aspects
+- [x] Return concise overall / relationship / work-study / energy / practical guidance / reflection sections
+- [x] Include transparent calculation limitation and non-deterministic disclaimer
 
-**Exit condition:** A valid fixed draw produces a coherent Traditional Chinese reading grounded in both curated V1 sources; Waite and Mathers remain separately attributable, historical person-label wording cannot become a direct character attack, and the live `smoke:reading` check passes before UX work begins.
+### 7.4 Functional UI
+- [x] Add top-level Tarot / Astrology experience switcher
+- [x] Add 12-sign selection UI
+- [x] Add optional birthday-to-sign helper
+- [x] Add daily / weekly toggle
+- [x] Add responsive structured result view and expandable calculation basis
+- [x] Keep Dream visible as the next-phase disabled entry
 
-## Phase 4 — Core V1 UX
+### 7.5 Account history integration
+- [x] Add `astrology_readings` migration with RLS and 365-day retention
+- [x] Add astrology history collection/detail/delete APIs
+- [x] Recompute sky context server-side before accepting a saved snapshot
+- [x] Merge Tarot + Astrology into the account's **我的紀錄** UI
+- [x] Support reopening a saved record even when it belongs to the other experience
 
-- [x] Landing and start-reading state
-- [x] Question input state
-- [x] Spread selection state
-- [x] Draw state
-- [x] Reveal state
-- [x] Loading/progress state while sources and interpretation are generated
-- [x] Reading result state
-- [x] Retryable error states that preserve an existing draw
-- [x] Responsive desktop and mobile layouts
-- [x] Accessible keyboard and screen-reader labels
-- [x] Lightweight card reveal motion
-- [x] Add concise, conversational Vela voice guidance and regression tests
-- [x] Layer the result UI so the short reading is primary and source-heavy analysis is collapsed by default
-- [x] End-to-end test of the canonical flow
+### 7.6 Tests and finish
+- [x] Test 12-sign registry and birthday boundaries
+- [x] Test seasonal solar anchors and daily/weekly determinism
+- [x] Test request validation and deterministic astrology IDs
+- [x] Test prompt contract against invented chart data
+- [x] Test unified history / RLS contract
+- [ ] Apply migration `005_astrology_history.sql` to the active Supabase project
+- [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop
+- [ ] Confirm PR CI lint / test / build green
 
-The canonical anonymous flow was manually exercised through the deployed UI through question → spread → draw → reveal → interpretation → result. Automated Phase 4 contract tests protect the stage sequence, fixed-draw retry path, progressive disclosure, and result typography; CI continues to cover lint, unit tests, source validation, and build.
+**Exit condition:** deployed daily/weekly readings work, private astrology history survives a new session, Tarot history still works, and CI is green.
 
-**Exit condition:** A first-time user can complete the entire reading without developer guidance.
+## Phase 8 — Dream interpretation
+- [ ] Define source method and what counts as evidence
+- [ ] Extract dream entities/themes/emotions from user text
+- [ ] Build grounded dream-symbol / psychology retrieval
+- [ ] Separate source claims from Vela contextual interpretation
+- [ ] Add Dream UI and follow-up boundaries
+- [ ] Add private Dream history to **我的紀錄**
+- [ ] Test sensitive-content framing and avoid treating symbolic interpretations as diagnosis
 
-## Phase 5 — Follow-up conversation
+## Phase 9 — Final Vela UI / UX
+- [ ] Replace functional prototype styling with the final brand system
+- [ ] Design one coherent landing experience for Tarot / Astrology / Dream
+- [ ] Finalize responsive navigation, account UI, loading/error/empty states
+- [ ] Audit accessibility and motion preferences
 
-- [x] Preserve reading context in the current browser session
-- [x] Add follow-up endpoint and message validation
-- [x] Keep the original cards and sources fixed
-- [x] Clearly separate follow-up from starting a new reading
-- [x] Limit message size and follow-up count
-- [x] Add context-window and cost controls
-- [x] Test that follow-ups never silently redraw cards
+## Phase 10 — Art assets
+- [ ] Vela main character and mode-specific variants
+- [ ] Landing/background assets
+- [ ] Crystal ball / Tarot back / Tarot faces
+- [ ] Zodiac and Dream visual assets
+- [ ] Logo, favicon, social preview, empty/loading/error art
+- [ ] Lock asset dimensions before replacing placeholders
 
-The anonymous browser session now keeps the current reading and follow-up thread in `sessionStorage`. Each follow-up rebuilds and verifies the original deterministic draw from the original question, spread, request ID, and reading ID before retrieving the same curated V1 source set. Follow-up messages are capped at 320 characters and six exchanges per reading; only the four most recent exchanges, bounded evidence excerpts, and a compact initial reading enter one structured model call. Automated tests protect the fixed-card identity, validation limits, session behavior, and no-redraw contract.
+## Phase 11 — Three-mode integration
+- [ ] Unified home and navigation
+- [ ] Unified Vela voice and status patterns
+- [ ] Unified private history filters and restore behavior
+- [ ] Cross-mode mobile/desktop regression pass
 
-**Exit condition:** Users can clarify the same reading without losing context or changing the draw.
+## Phase 12 — Paid product decisions
+- [ ] Decide free limits and premium value
+- [ ] Decide entitlement model only after all three core experiences are usable
+- [ ] Add payments after pricing/limits are frozen
 
-## Phase 6 — Accounts and history
+## Phase 13 — Production readiness
+- [ ] Production Vercel/Supabase environment audit
+- [ ] Rate limiting and abuse protection
+- [ ] Request/token/cost limits
+- [ ] Privacy-conscious error logging and analytics
+- [ ] Database backup/recovery plan
+- [ ] Copyright/source handling review
+- [ ] Privacy Policy, Terms, AI/divination disclaimer
+- [ ] Security review
+- [ ] Full mobile/desktop regression pass
+- [ ] Closed beta before public launch
 
-Login is optional: the complete anonymous flow remains available, and an account adds durable cross-device history.
-
-- [x] Decide anonymous-only versus optional login launch scope
-- [x] Add Supabase Email/password Auth
-- [x] Add `readings`, `reading_cards`, and `reading_messages`
-- [x] Add Row Level Security policies
-- [x] Add reading history and deletion controls
-- [x] Add privacy-conscious retention policy
-- [x] Add forgot-password and password-recovery UI
-- [x] Add Google OAuth sign-in to the account modal
-- [x] Keep OAuth/recovery URL session detection enabled in the browser client
-- [ ] Verify Google OAuth redirect on the deployed production origin
-- [ ] Verify Google sign-in on mobile and desktop
-- [ ] Verify Email/password and Google behavior for the same verified email; confirm no unexpected second history silo
-- [ ] Verify sign-out, reload, and sign-back-in session behavior
-- [ ] Verify password reset end-to-end from email link to successful new-password login
-
-Signed-in readings are saved automatically after the initial interpretation and after each follow-up. An anonymous reading is transferred into the account after sign-in without redrawing its cards. The server verifies the deterministic draw before accepting a snapshot; RLS isolates all reading, card, and message rows by `auth.uid()`. Users can reopen a reading across devices, delete one reading, or clear all history. Records expire 365 days after their latest save. Prior readings are never silently included in a new model request; history becomes active context only when the owner explicitly opens that reading.
-
-Supabase/Google configuration and the remaining manual acceptance tests are documented in [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md).
-
-**Exit condition:** Email/password, password recovery, Google OAuth, sign-out/session persistence, and cross-device history all pass the Phase 6 acceptance tests, with no unexpected duplicate identity/history silo.
-
-## Phase 7 — Production readiness
-
-- [ ] Configure production Vercel and Supabase environments
-- [ ] Add rate limiting and abuse protection
-- [ ] Add request, token, and cost limits
-- [ ] Add error logging without storing unnecessary sensitive questions
-- [ ] Add analytics for funnel completion
-- [ ] Add database backup/recovery plan
-- [ ] Review public-domain and copyrighted-source handling
-- [ ] Add Privacy Policy
-- [ ] Add Terms of Use
-- [ ] Add AI/tarot disclaimer
-- [ ] Run security review
-- [ ] Run mobile/desktop smoke tests
-- [ ] Confirm CI lint and build pass
-- [ ] Conduct a small closed beta before public launch
-
-**Exit condition:** AskVela can be safely operated and monitored for real users.
-
-## Phase 8 — Post-V1 backlog
-
-- [ ] Celtic Cross and additional spreads
-- [ ] Additional books beyond the curated V1 source set and author-by-author comparison UI
-- [ ] Paid usage and entitlements
-- [ ] Astrology
-- [ ] Dream interpretation
-- [ ] Social and sharing features
-- [ ] Voice
-- [ ] Advanced animation
-- [ ] Additional Vela outfits
-- [ ] Native app
-
-These items cannot be pulled into V1 without an explicit scope change in [docs/V1_SPEC.md](docs/V1_SPEC.md).
+## Post-launch backlog
+- Celtic Cross and additional Tarot spreads
+- Full natal chart / birth time / birthplace / houses / aspects
+- Additional Tarot/astrology/dream sources
+- Social/sharing features
+- Voice
+- Advanced animation and additional Vela outfits
+- Native app

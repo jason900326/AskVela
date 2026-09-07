@@ -1,9 +1,9 @@
-import TarotReadingFlow from "../components/TarotReadingFlow";
+import VelaExperience from "../components/VelaExperience";
 
 export default function HomePage() {
   return (
     <main className="shell readingShell">
-      <TarotReadingFlow />
+      <VelaExperience />
     </main>
   );
 }
