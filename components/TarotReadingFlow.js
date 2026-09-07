@@ -110,34 +110,44 @@ export default function TarotReadingFlow() {
   }, [stage]);
 
   useEffect(() => {
-    try {
-      const raw = window.sessionStorage.getItem(READING_SESSION_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      const isValid = saved?.readingId
-        && saved?.requestId
-        && saved?.question
-        && saved?.spreadId
-        && saved?.draw?.readingId === saved.readingId
-        && saved?.result?.readingId === saved.readingId;
-      if (!isValid) {
-        window.sessionStorage.removeItem(READING_SESSION_KEY);
-        return;
-      }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      try {
+        const raw = window.sessionStorage.getItem(READING_SESSION_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          const isValid = saved?.readingId
+            && saved?.requestId
+            && saved?.question
+            && saved?.spreadId
+            && saved?.draw?.readingId === saved.readingId
+            && saved?.result?.readingId === saved.readingId;
 
-      setQuestion(saved.question);
-      setSpreadId(saved.spreadId);
-      setRequestId(saved.requestId);
-      setDraw(saved.draw);
-      setRevealedCount(saved.draw?.cards?.length || 0);
-      setResult(saved.result);
-      setFollowUps(Array.isArray(saved.followUps) ? saved.followUps.slice(0, MAX_FOLLOW_UPS) : []);
-      setStage("result");
-    } catch {
-      window.sessionStorage.removeItem(READING_SESSION_KEY);
-    } finally {
-      setSessionRestored(true);
-    }
+          if (isValid) {
+            setQuestion(saved.question);
+            setSpreadId(saved.spreadId);
+            setRequestId(saved.requestId);
+            setDraw(saved.draw);
+            setRevealedCount(saved.draw?.cards?.length || 0);
+            setResult(saved.result);
+            setFollowUps(Array.isArray(saved.followUps) ? saved.followUps.slice(0, MAX_FOLLOW_UPS) : []);
+            setStage("result");
+          } else {
+            window.sessionStorage.removeItem(READING_SESSION_KEY);
+          }
+        }
+      } catch {
+        window.sessionStorage.removeItem(READING_SESSION_KEY);
+      } finally {
+        if (!cancelled) setSessionRestored(true);
+      }
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
