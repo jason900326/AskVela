@@ -20,6 +20,7 @@
 .crystalBall:hover:not(:disabled) { transform: translateY(-4px) scale(1.015); box-shadow: inset 0 0 45px rgba(255,255,255,.1), 0 0 90px rgba(168,112,255,.28), 0 36px 90px rgba(0,0,0,.42); }
 .crystalBall span { font-size: 2.2rem; color: #f0d6ff; animation: velaFloat 2.8s ease-in-out infinite; }
 .crystalBall strong { font-size: .9rem; letter-spacing: .08em; }
+.trustGrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 2px; }
 
 .readingPanel, .readingResult { padding: 28px; border: 1px solid var(--line); border-radius: 28px; background: var(--panel); box-shadow: 0 30px 90px rgba(0,0,0,.24); backdrop-filter: blur(18px); }
 .spreadGrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
@@ -39,6 +40,30 @@
 .ghostButton { border: 1px solid var(--line); color: var(--muted); background: transparent; }
 .ghostButton:hover { color: var(--text); border-color: rgba(199,167,255,.35); }
 
+.selectionPanel { overflow: hidden; }
+.selectionHeading { margin-bottom: 14px; }
+.selectionHeading p { max-width: 720px; margin: 10px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.7; }
+.selectionPositions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 4px; }
+.selectionPositions span { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: #887d90; background: rgba(255,255,255,.012); font-size: .76rem; transition: color 160ms ease, border-color 160ms ease, background 160ms ease; }
+.selectionPositions span b { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.05); font-size: .65rem; }
+.selectionPositions span.isChosen { color: #e8dff0; border-color: rgba(199,167,255,.36); background: rgba(199,167,255,.055); }
+.selectionPositions span.isChosen b { color: #140f19; background: var(--accent); }
+.cardFan { display: flex; align-items: flex-end; justify-content: center; min-height: 310px; margin: 10px -8px 0; padding: 52px 34px 52px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
+.cardFan::-webkit-scrollbar { display: none; }
+.selectionCard { position: relative; flex: 0 0 84px; width: 84px; aspect-ratio: 2 / 3.35; margin-left: -28px; padding: 0; border: 0; border-radius: 13px; color: var(--text); background: transparent; transform: translateY(var(--fan-lift)) rotate(var(--fan-rotation)); transform-origin: 50% 110%; transition: transform 190ms ease, filter 190ms ease; }
+.selectionCard:first-child { margin-left: 0; }
+.selectionCard:hover { z-index: 3; transform: translateY(calc(var(--fan-lift) - 8px)) rotate(var(--fan-rotation)); }
+.selectionCard.isSelected { z-index: 5; transform: translateY(-26px) rotate(0deg); filter: drop-shadow(0 18px 22px rgba(167,111,235,.23)); }
+.selectionCardBack { position: absolute; inset: 0; display: grid; place-items: center; border: 1px solid rgba(230,214,255,.25); border-radius: 13px; background: repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 5px,transparent 5px 10px), radial-gradient(circle at 50% 42%,rgba(188,128,255,.24),transparent 53%), #15101d; box-shadow: 0 12px 26px rgba(0,0,0,.3); overflow: hidden; }
+.selectionCardBack::before, .selectionCardBack::after { content: ""; position: absolute; inset: 7px; border: 1px solid rgba(199,167,255,.2); border-radius: 9px; }
+.selectionCardBack::after { inset: 12px; border-radius: 7px; }
+.selectionCardBack i { position: relative; z-index: 1; color: #d9b9ff; font-style: normal; font-size: 1.3rem; }
+.selectionCard.isSelected .selectionCardBack { border-color: rgba(231,211,255,.68); box-shadow: 0 0 0 3px rgba(199,167,255,.08), 0 18px 34px rgba(0,0,0,.36); }
+.selectionOrder { position: absolute; left: 50%; bottom: -41px; min-width: 32px; display: grid; justify-items: center; gap: 2px; transform: translateX(-50%); color: #f1e9f5; font-size: .72rem; font-weight: 900; }
+.selectionOrder::before { content: ""; position: absolute; top: -1px; width: 28px; height: 28px; border-radius: 50%; background: rgba(199,167,255,.2); z-index: -1; }
+.selectionOrder small { margin-top: 12px; color: #b8a9c1; font-size: .62rem; font-weight: 700; white-space: nowrap; }
+.selectionHint { margin: 0; color: #92869a; font-size: .8rem; text-align: center; }
+
 .loadingPanel { min-height: 330px; display: grid; place-items: center; align-content: center; text-align: center; }
 .loadingPanel h2 { margin: 18px 0 8px; }
 .loadingPanel p { margin: 0; color: var(--muted); }
@@ -48,11 +73,13 @@
 
 .revealCounter { color: var(--muted); font-size: .82rem; }
 .cardSpread { display: flex; justify-content: center; gap: clamp(10px,2vw,24px); flex-wrap: wrap; padding: 14px 0 4px; perspective: 1200px; }
+.cardSpread.cards-3 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(8px,1.8vw,18px); width: min(100%,620px); margin: 0 auto; }
 .tarotCard { width: min(29vw,190px); aspect-ratio: 2 / 3.35; padding: 0; border: 0; border-radius: 18px; background: transparent; perspective: 1000px; }
+.cardSpread.cards-3 .tarotCard { width: 100%; min-width: 0; }
 .tarotCard:disabled:not(.isRevealed) { cursor: default; opacity: .58; }
 .tarotCardInner { position: relative; width: 100%; height: 100%; display: block; transform-style: preserve-3d; transition: transform 650ms cubic-bezier(.22,.75,.22,1); }
 .tarotCard.isRevealed .tarotCardInner { transform: rotateY(180deg); }
-.tarotCardBack, .tarotCardFront { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; padding: 18px; border: 1px solid rgba(230,214,255,.24); border-radius: 18px; backface-visibility: hidden; overflow: hidden; }
+.tarotCardBack, .tarotCardFront { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; padding: 42px 16px 44px; border: 1px solid rgba(230,214,255,.24); border-radius: 18px; backface-visibility: hidden; overflow: hidden; }
 .tarotCardBack { color: #ded0eb; background: repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 6px,transparent 6px 12px), radial-gradient(circle at 50% 40%,rgba(188,128,255,.2),transparent 50%), #15101d; box-shadow: 0 16px 40px rgba(0,0,0,.34); }
 .tarotCardBack::before, .tarotCardBack::after { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(199,167,255,.22); border-radius: 12px; }
 .tarotCardBack::after { inset: 16px; border-radius: 9px; }
@@ -60,11 +87,11 @@
 .tarotCardBack b { font-size: .7rem; letter-spacing: .16em; }
 .tarotCardBack small { color: #92849c; }
 .tarotCardFront { transform: rotateY(180deg); text-align: center; color: var(--text); background: radial-gradient(circle at 50% 36%,rgba(241,211,255,.12),transparent 38%), linear-gradient(180deg,#22182b,#120e18); box-shadow: 0 16px 40px rgba(0,0,0,.32); }
-.tarotCardFront small { color: var(--accent); letter-spacing: .08em; }
+.tarotCardFront small { position: absolute; top: 13px; left: 8px; right: 8px; color: var(--accent); letter-spacing: .06em; font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tarotCardFront i { font-style: normal; font-size: 2rem; color: #efd5ff; }
-.tarotCardFront strong { font: 600 1.25rem Georgia,serif; }
-.tarotCardFront span { color: var(--muted); font-size: .78rem; }
-.tarotCardFront em { margin-top: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: #d9cce1; font-size: .68rem; font-style: normal; }
+.tarotCardFront strong { max-width: 100%; font: 600 1.25rem/1.25 Georgia,serif; overflow-wrap: anywhere; }
+.tarotCardFront span { color: var(--muted); font-size: .78rem; line-height: 1.3; }
+.tarotCardFront em { position: absolute; left: 50%; bottom: 11px; transform: translateX(-50%); padding: 5px 9px; border: 1px solid rgba(232,220,255,.18); border-radius: 999px; color: #d9cce1; background: rgba(10,7,14,.62); font-size: .68rem; font-style: normal; white-space: nowrap; }
 
 .resultIntro { max-width: 780px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
 .resultIntro h2 { margin: 8px 0 14px; max-width: 760px; font: 500 clamp(1.65rem,2.4vw,2.25rem)/1.25 Georgia,serif; letter-spacing: -.02em; text-wrap: balance; }
@@ -84,6 +111,30 @@
 .quickGuidance { margin-top: 14px; padding: 18px 20px; border: 1px solid rgba(199,167,255,.18); border-radius: 20px; background: rgba(199,167,255,.035); }
 .quickGuidance ul { margin: 10px 0 0; padding-left: 20px; color: #e6dee9; line-height: 1.75; }
 .quickGuidance li + li { margin-top: 6px; }
+
+.followUpPanel { margin-top: 22px; padding: 24px 0 4px; border-top: 1px solid var(--line); }
+.followUpHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.followUpHeading h3 { margin: 7px 0 8px; font: 600 1.18rem/1.35 Georgia,serif; }
+.followUpHeading p { max-width: 660px; margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.65; }
+.fixedReadingBadge { flex: 0 0 auto; padding: 7px 10px; border: 1px solid rgba(199,167,255,.18); border-radius: 999px; color: #a99bb2; background: rgba(199,167,255,.03); font-size: .7rem; white-space: nowrap; }
+.followUpThread { display: grid; gap: 22px; margin-top: 24px; }
+.followUpExchange { padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,.055); }
+.followUpQuestion { margin: 0 0 15px; color: #d4c9d8; font-size: .9rem; line-height: 1.65; }
+.followUpQuestion span { margin-right: 10px; color: var(--accent); font-size: .7rem; font-weight: 900; letter-spacing: .06em; }
+.followUpVelaNote { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; }
+.followUpVelaNote > i { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(199,167,255,.24); border-radius: 50%; color: #e2c5ff; background: radial-gradient(circle,rgba(199,167,255,.13),transparent 68%); font-style: normal; }
+.followUpVelaNote small { color: #8f8497; font-size: .7rem; }
+.followUpVelaNote p { margin: 6px 0 0; color: #ece5ef; font-size: .94rem; line-height: 1.78; }
+.followUpFocus { display: grid; grid-template-columns: 94px 1fr; gap: 10px; margin-top: 12px; padding-left: 12px; border-left: 2px solid rgba(199,167,255,.35); color: var(--muted); font-size: .8rem; line-height: 1.55; }
+.followUpFocus strong { color: #ddd2e2; }
+.followUpForm { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.055); }
+.followUpForm textarea { min-height: 96px; padding: 16px 17px; border-radius: 16px; background: rgba(7,5,10,.28); }
+.followUpActions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.followUpActions > span { color: #83798a; font-size: .72rem; }
+.followUpLimit { margin: 20px 0 0; color: #998da1; font-size: .82rem; line-height: 1.6; }
+.followUpError { display: grid; gap: 5px; margin-top: 14px; padding: 12px 14px; border: 1px solid rgba(255,182,182,.18); border-radius: 14px; background: rgba(255,95,95,.035); }
+.followUpError strong { color: var(--danger); font-size: .82rem; }
+.followUpError span { color: #cdbfd1; font-size: .78rem; line-height: 1.55; }
 
 .deepReading { margin-top: 16px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.014); overflow: hidden; }
 .deepReading > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 20px; cursor: pointer; list-style: none; }
@@ -110,31 +161,62 @@
 .errorBox strong { color: var(--danger); }
 .errorBox span { color: #d6c9d9; }
 .errorBox button { justify-self: start; margin-top: 4px; border: 1px solid rgba(255,182,182,.24); color: var(--danger); background: transparent; }
-.trustGrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 18px; }
 
 @keyframes velaFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @keyframes velaPulse { 0%,100% { transform: scale(1); opacity: .75; box-shadow: 0 0 0 rgba(199,167,255,0); } 50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 32px rgba(199,167,255,.16); } }
 @keyframes readingProgress { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
 
-@media (prefers-reduced-motion: reduce) { .crystalBall, .tarotCardInner, .crystalBall span, .shuffleGlyph, .velaPulse, .progressLine span { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .crystalBall, .tarotCardInner, .crystalBall span, .shuffleGlyph, .velaPulse, .progressLine span, .selectionCard { animation: none !important; transition: none !important; } }
 @media (max-width: 760px) {
   .velaHeader { grid-template-columns: 70px 1fr; gap: 16px; }
   .velaPortrait { width: 70px; height: 70px; }
   .velaPortrait span { font-size: 2rem; }
   .velaHeader h1 { font-size: clamp(1.9rem,9vw,2.8rem); }
-  .readingSteps { grid-template-columns: repeat(4,auto); overflow-x: auto; }
-  .readingStep { padding: 8px 10px; }
+  .readingSteps { grid-template-columns: repeat(4,1fr); gap: 6px; overflow: visible; }
+  .readingStep { justify-content: center; padding: 8px 6px; }
   .readingStep strong { display: none; }
   .crystalStage { min-height: 360px; border-radius: 24px; }
   .crystalBall { width: 190px; height: 190px; }
   .readingPanel, .readingResult { padding: 18px; border-radius: 22px; }
   .spreadGrid, .trustGrid { grid-template-columns: 1fr; }
   .spreadOption { min-height: auto; }
+  .selectionHeading { align-items: flex-start; }
+  .selectionHeading p { font-size: .84rem; }
+  .selectionPositions { gap: 6px; }
+  .selectionPositions span { padding: 6px 8px; font-size: .7rem; }
+  .cardFan { justify-content: flex-start; min-height: 252px; margin-inline: -18px; padding: 46px 22px 50px; scroll-padding-inline: 22px; }
+  .selectionCard { flex-basis: 60px; width: 60px; margin-left: -23px; border-radius: 10px; }
+  .selectionCard:first-child { margin-left: 0; }
+  .selectionCardBack { border-radius: 10px; }
+  .selectionCardBack::before { inset: 5px; border-radius: 7px; }
+  .selectionCardBack::after { inset: 9px; border-radius: 5px; }
+  .selectionCard.isSelected { transform: translateY(-20px) rotate(0deg); }
+  .selectionOrder { bottom: -38px; }
+  .selectionHint { font-size: .74rem; line-height: 1.55; }
   .tarotCard { width: min(43vw,170px); }
-  .cardSpread.cards-3 .tarotCard { width: min(28vw,150px); }
+  .cardSpread.cards-3 { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; width: 100%; }
+  .cardSpread.cards-3 .tarotCard { width: 100%; max-width: none; }
+  .cardSpread.cards-3 .tarotCardBack, .cardSpread.cards-3 .tarotCardFront { padding: 34px 6px 36px; border-radius: 13px; }
+  .cardSpread.cards-3 .tarotCardBack::before { inset: 6px; border-radius: 9px; }
+  .cardSpread.cards-3 .tarotCardBack::after { inset: 11px; border-radius: 6px; }
+  .cardSpread.cards-3 .tarotCardBack i { font-size: 1.35rem; }
+  .cardSpread.cards-3 .tarotCardBack b { font-size: .5rem; letter-spacing: .08em; }
+  .cardSpread.cards-3 .tarotCardBack small { font-size: .58rem; }
+  .cardSpread.cards-3 .tarotCardFront small { top: 8px; font-size: .6rem; }
+  .cardSpread.cards-3 .tarotCardFront i { font-size: 1.4rem; }
+  .cardSpread.cards-3 .tarotCardFront strong { font-size: clamp(.86rem,4.1vw,1.02rem); line-height: 1.22; }
+  .cardSpread.cards-3 .tarotCardFront span { font-size: .6rem; line-height: 1.25; }
+  .cardSpread.cards-3 .tarotCardFront em { bottom: 7px; padding: 4px 7px; font-size: .58rem; }
   .resultIntro h2 { font-size: clamp(1.55rem,7.4vw,1.95rem); }
   .practicalFocus { grid-template-columns: 1fr; gap: 4px; }
   .flowActions { flex-wrap: wrap; }
+  .followUpHeading { display: grid; gap: 12px; }
+  .fixedReadingBadge { justify-self: start; }
+  .followUpVelaNote { grid-template-columns: 30px 1fr; gap: 10px; }
+  .followUpVelaNote > i { width: 30px; height: 30px; }
+  .followUpFocus { grid-template-columns: 1fr; gap: 3px; }
+  .followUpActions { align-items: flex-end; }
+  .followUpActions .primaryButton { padding-inline: 14px; }
   .deepReading > summary { align-items: flex-start; flex-wrap: wrap; }
   .deepReading > summary small { width: calc(100% - 28px); margin-left: 0; }
   .deepReadingBody { padding: 0 14px 14px; }
