@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import VelaAccount from "./VelaAccount.js";
 
 const ORIENTATION_LABELS = { upright: "正位", reversed: "逆位" };
 const READING_SESSION_KEY = "askvela.current-reading.v2";
@@ -104,6 +105,20 @@ export default function TarotReadingFlow() {
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
   const [sessionRestored, setSessionRestored] = useState(false);
+
+  const activeReading = useMemo(() => {
+    if (stage !== "result" || !draw || !result || !requestId) return null;
+    return {
+      readingId: draw.readingId,
+      requestId,
+      question: question.trim(),
+      spreadId,
+      selectedCardIndexes,
+      draw,
+      result,
+      followUps,
+    };
+  }, [stage, draw, result, requestId, question, spreadId, selectedCardIndexes, followUps]);
 
   const allRevealed = Boolean(draw?.cards?.length) && revealedCount >= draw.cards.length;
   const selectedSpread = spreads.find((spread) => spread.id === spreadId);
@@ -364,8 +379,26 @@ export default function TarotReadingFlow() {
     setError("");
   }
 
+  function restoreSavedReading(saved) {
+    if (!saved?.readingId || !saved?.draw || !saved?.result) return;
+    setQuestion(saved.question || saved.draw.question || "");
+    setSpreadId(saved.spreadId || saved.draw.spread?.id || "");
+    setRequestId(saved.requestId || "");
+    setSelectedCardIndexes(Array.isArray(saved.selectedCardIndexes) ? saved.selectedCardIndexes : []);
+    setDraw(saved.draw);
+    setRevealedCount(saved.draw.cards?.length || 0);
+    setResult(saved.result);
+    setFollowUps(Array.isArray(saved.followUps) ? saved.followUps.slice(0, MAX_FOLLOW_UPS) : []);
+    setFollowUpMessage("");
+    setFollowUpError("");
+    setError("");
+    setSessionRestored(true);
+    setStage("result");
+  }
+
   return (
     <section className={`readingExperience stage-${stage}`} aria-live="polite">
+      <VelaAccount activeReading={activeReading} onRestoreReading={restoreSavedReading} />
       {stage === "welcome" && (
         <>
           <header className="velaHeader">

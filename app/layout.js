@@ -4,6 +4,7 @@ import "./reading.css";
 import "./follow-up.css";
 import "./brand.css";
 import "./mobile-selection.css";
+import "./account.css";
 
 export const metadata = {
   title: "Vela",
