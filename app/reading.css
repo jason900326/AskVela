@@ -3,8 +3,8 @@
 .velaHeader { display: grid; grid-template-columns: 118px 1fr; gap: 28px; align-items: center; padding: 26px 0 8px; }
 .velaPortrait { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(199,167,255,.28); background: radial-gradient(circle at 45% 35%, rgba(242,200,221,.32), rgba(91,61,130,.18) 42%, rgba(255,255,255,.02) 68%); box-shadow: 0 0 70px rgba(133,92,190,.18); }
 .velaPortrait span { font: 500 3rem Georgia, serif; color: var(--accent-2); }
-.velaHeader h1 { margin: 8px 0 10px; font: 500 clamp(2.3rem,5vw,4.7rem)/1 Georgia, "Times New Roman", serif; letter-spacing: -.04em; max-width: 860px; }
-.velaHeader p { margin: 0; max-width: 760px; color: var(--muted); line-height: 1.75; }
+.velaHeader h1 { margin: 8px 0 10px; font: 500 clamp(2.2rem,4.2vw,3.8rem)/1.05 Georgia, "Times New Roman", serif; letter-spacing: -.04em; max-width: 860px; }
+.velaHeader p { margin: 0; max-width: 780px; color: var(--muted); line-height: 1.75; }
 
 .readingSteps { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
 .readingStep { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 999px; color: #82788a; background: rgba(255,255,255,.018); }
@@ -66,24 +66,45 @@
 .tarotCardFront span { color: var(--muted); font-size: .78rem; }
 .tarotCardFront em { margin-top: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: #d9cce1; font-size: .68rem; font-style: normal; }
 
-.resultIntro { max-width: 840px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
-.resultIntro h2 { margin: 8px 0 13px; font: 500 clamp(1.8rem,4vw,3.1rem)/1.15 Georgia,serif; }
-.resultIntro p { margin: 0; color: #e7dfeb; line-height: 1.85; }
-.resultCards { display: grid; gap: 12px; margin-top: 16px; }
+.resultIntro { max-width: 780px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.resultIntro h2 { margin: 8px 0 14px; max-width: 760px; font: 500 clamp(1.65rem,2.4vw,2.25rem)/1.25 Georgia,serif; letter-spacing: -.02em; text-wrap: balance; }
+.resultIntro p { margin: 0; max-width: 760px; color: #e7dfeb; font-size: .98rem; line-height: 1.8; }
+.velaSummary { text-wrap: pretty; }
+.resultCards { display: grid; gap: 12px; margin-top: 18px; }
 .resultCard { padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.022); }
 .resultCardHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .resultCardHeading small { color: var(--accent); font-weight: 800; }
 .resultCardHeading h3 { margin: 6px 0 0; font-size: 1.05rem; }
 .resultCardHeading h3 span { color: var(--muted); font-weight: 500; }
 .resultCardHeading em { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: .7rem; font-style: normal; }
-.resultCard > p { color: #e8e1eb; line-height: 1.8; }
+.resultCard > p { margin: 14px 0 0; color: #e8e1eb; font-size: .94rem; line-height: 1.75; }
 .practicalFocus { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 12px 0 2px; color: var(--muted); font-size: .86rem; }
 .practicalFocus strong { color: var(--text); }
+
+.quickGuidance { margin-top: 14px; padding: 18px 20px; border: 1px solid rgba(199,167,255,.18); border-radius: 20px; background: rgba(199,167,255,.035); }
+.quickGuidance ul { margin: 10px 0 0; padding-left: 20px; color: #e6dee9; line-height: 1.75; }
+.quickGuidance li + li { margin-top: 6px; }
+
+.deepReading { margin-top: 16px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.014); overflow: hidden; }
+.deepReading > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 20px; cursor: pointer; list-style: none; }
+.deepReading > summary::-webkit-details-marker { display: none; }
+.deepReading > summary::after { content: "+"; flex: 0 0 auto; color: var(--accent); font-size: 1.25rem; line-height: 1; }
+.deepReading[open] > summary::after { content: "−"; }
+.deepReading > summary span { font-weight: 800; }
+.deepReading > summary small { margin-left: auto; color: #8f8497; font-size: .75rem; }
+.deepReadingBody { display: grid; gap: 14px; padding: 0 20px 20px; border-top: 1px solid rgba(255,255,255,.055); }
+.sourceMeaningSection { padding-top: 18px; }
+.sourceMeaningGrid { display: grid; gap: 10px; margin-top: 10px; }
+.sourceMeaningCard { padding: 16px; border: 1px solid rgba(255,255,255,.065); border-radius: 16px; background: rgba(255,255,255,.012); }
+.sourceMeaningHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.sourceMeaningHeading span { color: var(--muted); font-size: .74rem; }
+.sourceMeaningCard > p { margin: 10px 0 0; color: #dcd3df; font-size: .86rem; line-height: 1.7; }
+.sourceLimitations { margin: 10px 0 0; padding-left: 18px; color: #9f93a7; font-size: .76rem; line-height: 1.6; }
 .readingSources { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06); color: var(--muted); }
 .readingSources summary { cursor: pointer; font-size: .78rem; }
 .readingSources ul { margin: 10px 0 0; padding-left: 18px; font-size: .76rem; line-height: 1.6; }
-.synthesisBlock { margin-top: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.018); }
-.synthesisBlock p, .synthesisBlock ul { margin: 10px 0 0; color: #e6dee9; line-height: 1.8; }
+.synthesisBlock { padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.018); }
+.synthesisBlock p, .synthesisBlock ul { margin: 10px 0 0; color: #e6dee9; line-height: 1.75; }
 .readingDisclaimer { margin: 18px 0 0; color: #8d8295; font-size: .76rem; line-height: 1.6; text-align: center; }
 .errorBox { display: grid; gap: 7px; }
 .errorBox strong { color: var(--danger); }
@@ -100,7 +121,7 @@
   .velaHeader { grid-template-columns: 70px 1fr; gap: 16px; }
   .velaPortrait { width: 70px; height: 70px; }
   .velaPortrait span { font-size: 2rem; }
-  .velaHeader h1 { font-size: clamp(2.1rem,10vw,3.2rem); }
+  .velaHeader h1 { font-size: clamp(1.9rem,9vw,2.8rem); }
   .readingSteps { grid-template-columns: repeat(4,auto); overflow-x: auto; }
   .readingStep { padding: 8px 10px; }
   .readingStep strong { display: none; }
@@ -111,6 +132,11 @@
   .spreadOption { min-height: auto; }
   .tarotCard { width: min(43vw,170px); }
   .cardSpread.cards-3 .tarotCard { width: min(28vw,150px); }
+  .resultIntro h2 { font-size: clamp(1.55rem,7.4vw,1.95rem); }
   .practicalFocus { grid-template-columns: 1fr; gap: 4px; }
   .flowActions { flex-wrap: wrap; }
+  .deepReading > summary { align-items: flex-start; flex-wrap: wrap; }
+  .deepReading > summary small { width: calc(100% - 28px); margin-left: 0; }
+  .deepReadingBody { padding: 0 14px 14px; }
+  .sourceMeaningHeading { align-items: flex-start; flex-direction: column; gap: 4px; }
 }

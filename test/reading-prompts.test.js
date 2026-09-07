@@ -28,3 +28,17 @@ test("all interpretation layers prohibit converting difficult source themes into
   assert.match(buildLayerCInstructions(safety), /declare another person bad/u);
 });
 
+test("Vela voice instructions prefer concise conversational output over report-like prose", () => {
+  const safety = { isHighStakes: false, categories: [] };
+  const layerB = buildLayerBInstructions(safety);
+  const layerC = buildLayerCInstructions(safety);
+
+  assert.match(layerB, /1-2 sentences/u);
+  assert.match(layerB, /not like a formal report or textbook/u);
+  assert.match(layerC, /voice users experience as Vela/u);
+  assert.match(layerC, /18-32 Traditional Chinese characters/u);
+  assert.match(layerC, /120-220 Traditional Chinese characters/u);
+  assert.match(layerC, /at most 2 focused items/u);
+  assert.match(layerC, /at most 1 focused question/u);
+  assert.match(layerC, /這組牌顯示/u);
+});
