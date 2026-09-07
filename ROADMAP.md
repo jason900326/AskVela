@@ -110,7 +110,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Test unified history / RLS contract
 - [ ] Apply migration `005_astrology_history.sql` to the active Supabase project
 - [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop
-- [ ] Confirm PR CI lint / test / build green
+- [x] Confirm PR CI lint / test / build green (PR #14)
 
 **Exit condition:** deployed daily/weekly readings work, private astrology history survives a new session, Tarot history still works, and CI is green.
 
