@@ -3,6 +3,7 @@ import { getOpenAI, CHAT_MODEL } from "../../../lib/openai";
 import { retrieveKnowledge } from "../../../lib/retrieval";
 import { buildGroundedInput, buildTarotInstructions } from "../../../lib/tarot-prompt";
 import { identifyTarotQuery } from "../../../lib/tarot-cards";
+import { identifyRequestedTarotSources } from "../../../lib/tarot-source-target";
 
 export const runtime = "nodejs";
 
@@ -21,16 +22,22 @@ export async function POST(request) {
     }
 
     const identified = identifyTarotQuery(question);
+    const requestedSources = identifyRequestedTarotSources(question);
     const chunks = await retrieveKnowledge(question, {
       tarotSystem,
       matchCount: identified.cardIds.length ? 12 : 8,
+      bookSlugs: requestedSources.explicitlyTargeted ? requestedSources.bookSlugs : null,
+      balanceBooks: requestedSources.bookSlugs.length > 1,
     });
 
     if (chunks.length === 0) {
       return NextResponse.json(
         {
-          answer: "目前知識庫沒有找到足夠相關的原書內容。請先完成書籍 ingestion，或換一個更具體的問題。",
+          answer: requestedSources.explicitlyTargeted
+            ? `目前知識庫沒有找到指定來源（${requestedSources.sourceLabels.join("、")}）的足夠相關內容。`
+            : "目前知識庫沒有找到足夠相關的原書內容。請先完成書籍 ingestion，或換一個更具體的問題。",
           sources: [],
+          requestedSources,
         },
         { status: 200 },
       );
@@ -60,6 +67,7 @@ export async function POST(request) {
     return NextResponse.json({
       answer: response.output_text || "目前沒有產生可顯示的回答。",
       sources,
+      requestedSources,
       identifiedCards: identified.cards.map((card) => ({
         cardId: card.card_id,
         nameEn: card.name_en,
