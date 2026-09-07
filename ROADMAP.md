@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 6 — accounts and history (not started)**
+- Current phase: **Phase 7 — production readiness**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
@@ -141,14 +141,16 @@ The anonymous browser session now keeps the current reading and follow-up thread
 
 ## Phase 6 — Accounts and history
 
-Not required for the first usable anonymous V1 flow.
+Login is optional: the complete anonymous flow remains available, and an account adds durable cross-device history.
 
-- [ ] Decide anonymous-only versus optional login launch scope
-- [ ] Add Supabase Auth if approved
-- [ ] Add `readings`, `reading_cards`, and `reading_messages`
-- [ ] Add Row Level Security policies
-- [ ] Add reading history and deletion controls
-- [ ] Add privacy-conscious retention policy
+- [x] Decide anonymous-only versus optional login launch scope
+- [x] Add Supabase Auth if approved
+- [x] Add `readings`, `reading_cards`, and `reading_messages`
+- [x] Add Row Level Security policies
+- [x] Add reading history and deletion controls
+- [x] Add privacy-conscious retention policy
+
+Signed-in readings are saved automatically after the initial interpretation and after each follow-up. An anonymous reading is transferred into the account after sign-in without redrawing its cards. The server verifies the deterministic draw before accepting a snapshot; RLS isolates all reading, card, and message rows by `auth.uid()`. Users can reopen a reading across devices, delete one reading, or clear all history. Records expire 365 days after their latest save. Prior readings are never silently included in a new model request; history becomes active context only when the owner explicitly opens that reading.
 
 **Exit condition:** Account data is isolated, recoverable, and user-controlled.
 

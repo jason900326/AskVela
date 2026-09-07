@@ -1,6 +1,6 @@
 # AskVela
 
-AskVela is a source-grounded AI tarot reading website built with JavaScript, Next.js, OpenAI, Supabase, and pgvector.
+Vela (repository name: AskVela) is a source-grounded AI tarot reading website built with JavaScript, Next.js, OpenAI, Supabase, and pgvector.
 
 The V1 product is intentionally narrow:
 
@@ -10,9 +10,9 @@ The primary knowledge source is **Arthur Edward Waite's _The Pictorial Key to th
 
 ## Project status
 
-AskVela has a working draw and three-layer interpretation engine, but **Phase 3 is still in progress** while the two-source knowledge set is curated and validated before UX work begins.
+Vela now has the complete anonymous reading flow, same-reading follow-ups, optional Supabase login, and private cross-device reading history. Work has moved to production readiness.
 
-- Current phase: Phase 3 — interpretation engine / multi-source curation and validation
+- Current phase: Phase 7 — production readiness
 - V1 specification: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Development checklist: [ROADMAP.md](ROADMAP.md)
 
@@ -156,11 +156,12 @@ OPENAI_CHAT_MODEL=gpt-5.5
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 
 NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 TAROT_DRAW_SECRET=... # at least 32 random characters
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose them in browser code or commit `.env.local`.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally safe for browser use when Row Level Security is enabled. `SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose those server-only values in browser code or commit `.env.local`.
 
 ## Draw API
 
@@ -211,6 +212,7 @@ Run all migrations in order in your Supabase project:
 supabase/migrations/001_knowledge_base.sql
 supabase/migrations/002_structured_tarot.sql
 supabase/migrations/003_historical_comparison_sources.sql
+supabase/migrations/004_accounts_and_reading_history.sql
 ```
 
 The third migration adds source-system compatibility so a historical comparison work can participate in an RWS reading without being falsely relabeled as an RWS-native book. The retrieval RPC still filters by the requested reading system.
@@ -227,6 +229,8 @@ The schema provides:
 - `match_structured_tarot_chunks(...)`, which filters structurally before vector ranking
 
 The retrieval RPC is restricted to the Supabase `service_role` because AskVela calls it server-side.
+
+The fourth migration adds optional email/password accounts and user-owned reading history. It creates `readings`, `reading_cards`, and `reading_messages`, applies Row Level Security, and adds the atomic `save_reading_history(...)` RPC. See [docs/PHASE6_ACCOUNTS.md](docs/PHASE6_ACCOUNTS.md) for Auth redirect, retention, deletion, and memory-boundary details.
 
 ## 4. Source-book storage policy
 
