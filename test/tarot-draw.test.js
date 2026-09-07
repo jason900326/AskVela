@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTarotDraw, DrawValidationError } from "../lib/tarot-draw.js";
+import {
+  createTarotDraw,
+  DrawValidationError,
+  TAROT_SELECTION_POOL_SIZE,
+} from "../lib/tarot-draw.js";
 import { TAROT_SPREADS } from "../lib/tarot-spreads.js";
 
 const SECRET = "test-only-secret-with-at-least-32-characters";
@@ -43,6 +47,34 @@ test("the same idempotency key and payload reproduce the exact same reading", ()
   assert.notDeepEqual(draw(), draw({ idempotencyKey: "a-different-idempotency-key" }));
 });
 
+test("face-down selection points at exact deterministic slots in the shuffled pool", () => {
+  const firstHiddenCard = draw({ spreadId: "single-guidance" });
+  const selectedFirst = draw({
+    spreadId: "single-guidance",
+    selectedCardIndexes: [0],
+  });
+  const selectedSecond = draw({
+    spreadId: "single-guidance",
+    selectedCardIndexes: [1],
+  });
+
+  assert.equal(selectedFirst.cards[0].cardId, firstHiddenCard.cards[0].cardId);
+  assert.notEqual(selectedSecond.cards[0].cardId, selectedFirst.cards[0].cardId);
+  assert.deepEqual(selectedSecond.selectedCardIndexes, [1]);
+  assert.notEqual(selectedFirst.readingId, selectedSecond.readingId);
+});
+
+test("three-card user selections stay unique, ordered, and idempotent", () => {
+  const selection = [9, 2, 6];
+  const first = draw({ selectedCardIndexes: selection });
+  const retry = draw({ selectedCardIndexes: selection });
+
+  assert.deepEqual(first, retry);
+  assert.deepEqual(first.selectedCardIndexes, selection);
+  assert.equal(new Set(first.cards.map((card) => card.cardId)).size, 3);
+  assert.deepEqual(first.cards.map((card) => card.position), ["situation", "obstacle", "advice"]);
+});
+
 test("all 78 cards and both orientations are reachable across independent draws", () => {
   const cards = new Set();
   const orientations = new Set();
@@ -58,10 +90,16 @@ test("all 78 cards and both orientations are reachable across independent draws"
   assert.deepEqual([...orientations].sort(), ["reversed", "upright"]);
 });
 
-test("invalid questions, spreads, and idempotency keys are rejected", () => {
+test("invalid questions, spreads, idempotency keys, and card selections are rejected", () => {
   assert.throws(() => draw({ question: "   " }), DrawValidationError);
   assert.throws(() => draw({ question: "a".repeat(501) }), DrawValidationError);
   assert.throws(() => draw({ spreadId: "celtic-cross" }), DrawValidationError);
   assert.throws(() => draw({ idempotencyKey: "short" }), DrawValidationError);
+  assert.throws(() => draw({ selectedCardIndexes: [0, 1] }), DrawValidationError);
+  assert.throws(() => draw({ selectedCardIndexes: [0, 0, 1] }), DrawValidationError);
+  assert.throws(
+    () => draw({ selectedCardIndexes: [0, 1, TAROT_SELECTION_POOL_SIZE] }),
+    DrawValidationError,
+  );
 });
 

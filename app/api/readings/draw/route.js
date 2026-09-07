@@ -11,6 +11,7 @@ export async function POST(request) {
       question: body?.question,
       spreadId: body?.spreadId,
       idempotencyKey,
+      selectedCardIndexes: body?.selectedCardIndexes,
     });
 
     return NextResponse.json(draw, {

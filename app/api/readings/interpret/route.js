@@ -17,6 +17,7 @@ export async function POST(request) {
       spreadId: body?.spreadId,
       requestId,
       readingId: body?.readingId,
+      selectedCardIndexes: body?.selectedCardIndexes,
     });
 
     return NextResponse.json(result, {
