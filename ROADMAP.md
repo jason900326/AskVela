@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 7 — Astrology (deployment acceptance)**
+- Current phase: **Phase 7 — Astrology (source grounding pending)**
 - Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
 - Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Astrology contract: [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md)
@@ -71,7 +71,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Support `daily` and `weekly`
 - [x] Keep birthday client-side and send only the selected sign
 - [x] Explicitly exclude full natal chart / houses / ascendant / synastry
-- [x] Document a deterministic Sun/Moon-based method instead of asking the model to invent current sky data
+- [x] Document a deterministic Sun/Moon calculation layer so the model never invents sky positions
 
 ### 7.2 Zodiac and sky model
 - [x] Add 12-sign structured registry with Traditional Chinese labels
@@ -80,20 +80,29 @@ Login remains optional; anonymous use is never blocked.
 - [x] Add Moon phase and major-aspect signal generation
 - [x] Add deterministic daily and Monday–Sunday weekly context
 
-### 7.3 Vela astrology engine
+### 7.3 Source-grounded Vela astrology engine
 - [x] Add validated `/api/astrology/reading`
 - [x] Add strict structured output schema
 - [x] Prevent invented planets, houses, natal placements, and unsupported aspects
-- [x] Return concise overall / relationship / work-study / energy / practical guidance / reflection sections
-- [x] Include transparent calculation limitation and non-deterministic disclaimer
+- [x] Add a hard source gate: no astrology interpretation is generated while the astrology book knowledge base is empty
+- [x] Reject previously generated pre-source astrology results from session/history restore
+- [ ] Select at least one astrology reference book with legally usable source material
+- [ ] Upload/extract the source material
+- [ ] Define structured astrology source metadata and ingestion
+- [ ] Retrieve relevant source evidence for sign/period/sky signals before model interpretation
+- [ ] Require human-readable source references in each astrology result
+- [ ] Re-enable daily/weekly generation only after the source-grounding acceptance tests pass
 
 ### 7.4 Functional UI
-- [x] Add top-level Tarot / Astrology experience switcher
-- [x] Add 12-sign selection UI
-- [x] Add optional birthday-to-sign helper
+- [x] Replace the Tarot / Astrology / Dream tab-first landing with a conversation-first Vela home
+- [x] Place Vela / fortune-teller stage in the center and let the user describe what they care about first
+- [x] Let Vela recommend Tarot, Astrology, or Dream based on that message
+- [x] Keep Dream visible but unavailable until its own source system exists
+- [x] Add 12-sign selection UI and optional birthday-to-sign helper
 - [x] Add daily / weekly toggle
-- [x] Add responsive structured result view and expandable calculation basis
-- [x] Keep Dream visible as the next-phase disabled entry
+- [x] Reduce daily/weekly result headline typography for mobile readability
+- [x] Pin account avatar and **我的紀錄** controls to the top-right consistently across modes
+- [x] Add responsive structured result view and expandable method/source area
 
 ### 7.5 Account history integration
 - [x] Add `astrology_readings` migration with RLS and 365-day retention
@@ -101,6 +110,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Recompute sky context server-side before accepting a saved snapshot
 - [x] Merge Tarot + Astrology into the account's **我的紀錄** UI
 - [x] Support reopening a saved record even when it belongs to the other experience
+- [ ] Apply migration `005_astrology_history.sql` to the active Supabase project before source-grounded astrology history is enabled
 
 ### 7.6 Tests and finish
 - [x] Test 12-sign registry and birthday boundaries
@@ -108,11 +118,11 @@ Login remains optional; anonymous use is never blocked.
 - [x] Test request validation and deterministic astrology IDs
 - [x] Test prompt contract against invented chart data
 - [x] Test unified history / RLS contract
-- [ ] Apply migration `005_astrology_history.sql` to the active Supabase project
-- [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop
-- [x] Confirm PR CI lint / test / build green (PR #14)
+- [x] Test the source gate and conversation-first landing contract
+- [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop **after astrology sources are ingested**
+- [x] Confirm Phase 7 base implementation PR CI lint / test / build green (PR #14)
 
-**Exit condition:** deployed daily/weekly readings work, private astrology history survives a new session, Tarot history still works, and CI is green.
+**Exit condition:** astrology has a real source corpus, every result is evidence-grounded with visible source references, daily/weekly readings work on production, private astrology history survives a new session, Tarot history still works, and CI is green.
 
 ## Phase 8 — Dream interpretation
 - [ ] Define source method and what counts as evidence
@@ -124,8 +134,8 @@ Login remains optional; anonymous use is never blocked.
 - [ ] Test sensitive-content framing and avoid treating symbolic interpretations as diagnosis
 
 ## Phase 9 — Final Vela UI / UX
-- [ ] Replace functional prototype styling with the final brand system
-- [ ] Design one coherent landing experience for Tarot / Astrology / Dream
+- [ ] Replace the current CSS fortune-teller placeholder with the final illustrated Vela character
+- [ ] Refine the dialogue-first landing around the final artwork and crystal-ball composition
 - [ ] Finalize responsive navigation, account UI, loading/error/empty states
 - [ ] Audit accessibility and motion preferences
 
