@@ -1,17 +1,45 @@
 .velaExperienceHub { display: grid; gap: 24px; }
-.experienceTabs { width: min(620px, calc(100% - 24px)); margin: 0 auto 4px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 7px; border: 1px solid var(--line); border-radius: 18px; background: rgba(8,7,12,.72); backdrop-filter: blur(14px); }
-.experienceTabs button { min-height: 62px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 9px; align-items: center; padding: 9px 12px; border: 1px solid transparent; border-radius: 13px; color: var(--muted); background: transparent; text-align: left; }
-.experienceTabs button > span { grid-row: 1 / 3; font-size: 1.25rem; }
-.experienceTabs strong { color: var(--text); font-size: .84rem; }
-.experienceTabs small { font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; }
-.experienceTabs button.isActive { border-color: rgba(199,167,255,.35); background: rgba(199,167,255,.09); }
-.experienceTabs button:disabled { opacity: .42; cursor: not-allowed; }
+
+/* Home is a conversation with Vela first; modes are recommendations, not primary tabs. */
+.velaGuideHome { position: relative; padding-top: 22px; }
+.fortuneTellerStage { min-height: 480px; display: grid; grid-template-columns: minmax(270px,.85fr) minmax(320px,1.15fr); gap: 34px; align-items: center; padding: 38px; border: 1px solid var(--line); border-radius: 30px; background: radial-gradient(circle at 25% 35%,rgba(199,167,255,.13),transparent 34%), linear-gradient(145deg,rgba(35,23,47,.78),rgba(8,7,12,.91)); overflow: hidden; }
+.fortuneTellerPortrait { position: relative; min-height: 390px; display: grid; place-items: center; isolation: isolate; }
+.fortuneTellerHalo { position: absolute; top: 20px; width: 260px; height: 260px; border: 1px solid rgba(199,167,255,.18); border-radius: 50%; background: radial-gradient(circle,rgba(199,167,255,.1),transparent 67%); box-shadow: 0 0 90px rgba(153,103,215,.12); z-index: -1; }
+.fortuneTellerHead { position: absolute; top: 77px; width: 78px; height: 86px; display: grid; place-items: center; border: 1px solid rgba(232,220,255,.22); border-radius: 48% 48% 44% 44%; color: #d9c6ff; background: linear-gradient(155deg,#2c2037,#100c16); font-size: 1.55rem; box-shadow: 0 18px 38px rgba(0,0,0,.32); }
+.fortuneTellerBody { position: absolute; top: 149px; width: 210px; height: 178px; border: 1px solid rgba(232,220,255,.12); border-radius: 48% 48% 25% 25% / 32% 32% 18% 18%; background: linear-gradient(155deg,rgba(88,59,111,.72),rgba(18,12,25,.96)); box-shadow: 0 24px 60px rgba(0,0,0,.34); }
+.fortuneTellerTable { position: absolute; bottom: 18px; width: min(96%,360px); height: 108px; border-top: 1px solid rgba(232,220,255,.18); border-radius: 50% 50% 20px 20px; background: linear-gradient(180deg,rgba(32,20,43,.96),rgba(10,8,13,.98)); box-shadow: 0 26px 65px rgba(0,0,0,.45); }
+.fortuneTellerCrystal { position: absolute; left: 50%; top: -55px; width: 116px; height: 116px; transform: translateX(-50%); display: grid; place-items: center; border: 1px solid rgba(216,191,255,.45); border-radius: 50%; color: #eee4ff; background: radial-gradient(circle at 37% 30%,rgba(255,255,255,.24),rgba(181,131,255,.18) 25%,rgba(55,31,74,.85) 66%,rgba(13,9,18,.96)); box-shadow: inset 0 0 30px rgba(226,209,255,.16),0 0 52px rgba(175,118,255,.17); font-size: 1.6rem; }
+.velaDialogueBubble { max-width: 650px; padding: 28px 30px; border: 1px solid rgba(232,220,255,.14); border-radius: 26px 26px 26px 8px; background: rgba(10,8,14,.66); backdrop-filter: blur(12px); }
+.velaDialogueBubble h1 { margin: 8px 0 12px; font: 500 clamp(2rem,4.5vw,3.35rem)/1.08 Georgia,serif; }
+.velaDialogueBubble p { margin: 0; color: #c8bdcd; line-height: 1.8; }
+.velaGuideForm { display: grid; gap: 10px; padding: 22px; border: 1px solid var(--line); border-radius: 22px; background: rgba(10,8,14,.78); }
+.velaGuideForm label { color: #d8cedd; font-size: .76rem; font-weight: 800; letter-spacing: .04em; }
+.velaGuideForm textarea { width: 100%; resize: vertical; min-height: 96px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 15px; outline: 0; color: var(--text); background: rgba(5,4,8,.58); font: inherit; line-height: 1.65; }
+.velaGuideForm textarea:focus { border-color: rgba(199,167,255,.5); box-shadow: 0 0 0 3px rgba(199,167,255,.07); }
+.velaGuideActions { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.velaGuideActions > span { color: var(--muted); font-size: .72rem; }
+.velaQuickPrompts { display: flex; flex-wrap: wrap; gap: 9px; }
+.velaQuickPrompts button { padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; color: #b9acbf; background: rgba(255,255,255,.018); font-size: .72rem; }
+.velaQuickPrompts button:hover { color: var(--text); border-color: rgba(199,167,255,.34); background: rgba(199,167,255,.05); }
+.guideRecommendation { display: grid; gap: 10px; padding: 24px; border: 1px solid rgba(199,167,255,.22); border-radius: 22px; background: linear-gradient(120deg,rgba(199,167,255,.08),rgba(11,9,15,.8)); }
+.guideRecommendation h2 { margin: 0; font: 500 clamp(1.45rem,3vw,2rem)/1.25 Georgia,serif; }
+.guideRecommendation p { margin: 0; color: #c8bdcd; line-height: 1.75; }
+.guideRecommendationActions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 5px; }
+.guideRecommendationActions .primaryButton:disabled { opacity: .48; cursor: not-allowed; }
+.experienceModeHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 42px; padding: 0 4px; }
+.experienceModeHeader button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: #bcaec3; background: rgba(13,10,18,.72); font-size: .74rem; }
+.experienceModeHeader span { color: #887b90; font-size: .72rem; letter-spacing: .1em; }
+
 .astrologyExperience { position: relative; display: grid; gap: 24px; }
 .astrologyHero { display: grid; grid-template-columns: 92px 1fr; gap: 24px; align-items: center; padding: 32px; border: 1px solid var(--line); border-radius: 26px; background: linear-gradient(135deg, rgba(199,167,255,.09), rgba(52,39,69,.08) 50%, rgba(8,7,12,.7)); }
 .astrologyGlyph, .astrologyResultGlyph { display: grid; place-items: center; border: 1px solid rgba(199,167,255,.35); border-radius: 50%; color: #e4d7ff; background: radial-gradient(circle at 38% 32%, rgba(225,209,255,.2), rgba(66,46,91,.35) 55%, rgba(14,10,21,.75)); box-shadow: inset 0 0 30px rgba(199,167,255,.12), 0 16px 42px rgba(0,0,0,.22); }
 .astrologyGlyph { width: 92px; height: 92px; font-size: 2rem; }
-.astrologyHero h1 { margin: 7px 0 10px; font: 500 clamp(2rem, 5vw, 3.6rem)/1.05 Georgia, serif; }
+.astrologyHero h1 { margin: 7px 0 10px; font: 500 clamp(1.85rem,4.2vw,3rem)/1.1 Georgia, serif; }
 .astrologyHero p { max-width: 760px; margin: 0; color: var(--muted); line-height: 1.75; }
+.astrologySourceGate { display: grid; gap: 5px; padding: 16px 18px; border: 1px solid rgba(231,193,126,.22); border-radius: 17px; background: rgba(174,126,45,.055); }
+.astrologySourceGate strong { color: #ead5ae; font-size: .84rem; }
+.astrologySourceGate span { color: #c9bba5; font-size: .77rem; line-height: 1.55; }
+.astrologySourceGate small { color: #918372; font-size: .7rem; line-height: 1.5; }
 .astrologyPanel { display: grid; gap: 24px; padding: 28px; border: 1px solid var(--line); border-radius: 24px; background: rgba(11,9,15,.78); }
 .astrologyInputGroup { display: grid; gap: 18px; }
 .birthdayField { display: grid; gap: 7px; max-width: 520px; color: #d8cedd; font-size: .78rem; font-weight: 800; }
@@ -32,7 +60,7 @@
 .astrologyResultHeader { display: grid; grid-template-columns: 96px 1fr; gap: 22px; align-items: center; padding: 28px; border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(135deg, rgba(199,167,255,.11), rgba(8,7,12,.74)); }
 .astrologyResultGlyph { width: 96px; height: 96px; font-size: 2.35rem; }
 .astrologyResultHeader small { color: var(--muted); }
-.astrologyResultHeader h2 { margin: 8px 0 0; font: 500 clamp(1.7rem, 4vw, 2.65rem)/1.18 Georgia, serif; }
+.astrologyResultHeader h2 { margin: 8px 0 0; font: 500 clamp(1.45rem,3.2vw,2.15rem)/1.28 Georgia, serif; }
 .astrologyResultGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .astrologyResultGrid section, .astrologyGuidance, .astrologyReflection, .astrologyBasis { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(12,10,16,.68); }
 .astrologyResultGrid section > span { color: #9881bb; font-size: .68rem; letter-spacing: .12em; }
@@ -43,4 +71,36 @@
 .astrologyBasis > div { padding-top: 14px; color: var(--muted); line-height: 1.65; }
 .astrologyBasis p { margin-top: 0; }
 .astrologyBasis small { display: block; margin-top: 12px; color: #85778c; }
-@media (max-width: 760px) { .experienceTabs { width: 100%; } .experienceTabs button { grid-template-columns: 1fr; grid-template-rows: auto auto; text-align: center; } .experienceTabs button > span { grid-row: auto; } .experienceTabs small { display: none; } .astrologyHero, .astrologyResultHeader { grid-template-columns: 1fr; padding: 22px; } .astrologyGlyph, .astrologyResultGlyph { width: 72px; height: 72px; } .astrologyPanel { padding: 18px; } .zodiacGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .zodiacGrid button { min-height: 82px; padding: 8px 5px; } .astrologyResultGrid { grid-template-columns: 1fr; } .astrologySubmitRow { align-items: stretch; flex-direction: column; } .astrologySubmitRow .primaryButton { width: 100%; } }
+
+@media (max-width: 760px) {
+  .velaGuideHome { padding-top: 10px; }
+  .fortuneTellerStage { min-height: 0; grid-template-columns: 1fr; gap: 14px; padding: 20px 18px 22px; border-radius: 24px; }
+  .fortuneTellerPortrait { min-height: 290px; }
+  .fortuneTellerHalo { top: 0; width: 205px; height: 205px; }
+  .fortuneTellerHead { top: 44px; width: 66px; height: 72px; }
+  .fortuneTellerBody { top: 105px; width: 172px; height: 135px; }
+  .fortuneTellerTable { bottom: 3px; height: 80px; width: min(96%,300px); }
+  .fortuneTellerCrystal { top: -46px; width: 96px; height: 96px; }
+  .velaDialogueBubble { padding: 20px; border-radius: 21px 21px 21px 7px; }
+  .velaDialogueBubble h1 { font-size: 1.95rem; }
+  .velaDialogueBubble p { font-size: .9rem; line-height: 1.7; }
+  .velaGuideForm { padding: 16px; }
+  .velaGuideActions { align-items: stretch; flex-direction: column; }
+  .velaGuideActions .primaryButton { width: 100%; }
+  .velaQuickPrompts { display: grid; }
+  .velaQuickPrompts button { border-radius: 13px; text-align: left; line-height: 1.45; }
+  .guideRecommendation { padding: 19px; }
+  .guideRecommendationActions { display: grid; }
+  .guideRecommendationActions button { width: 100%; }
+  .experienceModeHeader { padding: 0 2px; }
+  .astrologyHero, .astrologyResultHeader { grid-template-columns: 1fr; padding: 22px; }
+  .astrologyGlyph, .astrologyResultGlyph { width: 72px; height: 72px; }
+  .astrologyHero h1 { font-size: 1.9rem; }
+  .astrologyPanel { padding: 18px; }
+  .zodiacGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .zodiacGrid button { min-height: 82px; padding: 8px 5px; }
+  .astrologyResultHeader h2 { font-size: 1.5rem; line-height: 1.3; }
+  .astrologyResultGrid { grid-template-columns: 1fr; }
+  .astrologySubmitRow { align-items: stretch; flex-direction: column; }
+  .astrologySubmitRow .primaryButton { width: 100%; }
+}
