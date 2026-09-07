@@ -14,7 +14,8 @@
     "parse:mathers": "node scripts/parse-mathers.js",
     "validate:tarot": "node scripts/validate-tarot-structure.js",
     "ingest": "node --env-file=.env.local scripts/ingest-book.js",
-    "ingest:tarot": "node --env-file=.env.local scripts/ingest-tarot-book.js"
+    "ingest:tarot": "node --env-file=.env.local scripts/ingest-tarot-book.js",
+    "smoke:reading": "node --env-file=.env.local scripts/smoke-reading.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",
