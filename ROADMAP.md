@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 7 — production readiness**
+- Current phase: **Phase 6 — accounts and history (auth finish)**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
@@ -144,15 +144,25 @@ The anonymous browser session now keeps the current reading and follow-up thread
 Login is optional: the complete anonymous flow remains available, and an account adds durable cross-device history.
 
 - [x] Decide anonymous-only versus optional login launch scope
-- [x] Add Supabase Auth if approved
+- [x] Add Supabase Email/password Auth
 - [x] Add `readings`, `reading_cards`, and `reading_messages`
 - [x] Add Row Level Security policies
 - [x] Add reading history and deletion controls
 - [x] Add privacy-conscious retention policy
+- [x] Add forgot-password and password-recovery UI
+- [x] Add Google OAuth sign-in to the account modal
+- [x] Keep OAuth/recovery URL session detection enabled in the browser client
+- [ ] Verify Google OAuth redirect on the deployed production origin
+- [ ] Verify Google sign-in on mobile and desktop
+- [ ] Verify Email/password and Google behavior for the same verified email; confirm no unexpected second history silo
+- [ ] Verify sign-out, reload, and sign-back-in session behavior
+- [ ] Verify password reset end-to-end from email link to successful new-password login
 
 Signed-in readings are saved automatically after the initial interpretation and after each follow-up. An anonymous reading is transferred into the account after sign-in without redrawing its cards. The server verifies the deterministic draw before accepting a snapshot; RLS isolates all reading, card, and message rows by `auth.uid()`. Users can reopen a reading across devices, delete one reading, or clear all history. Records expire 365 days after their latest save. Prior readings are never silently included in a new model request; history becomes active context only when the owner explicitly opens that reading.
 
-**Exit condition:** Account data is isolated, recoverable, and user-controlled.
+Supabase/Google configuration and the remaining manual acceptance tests are documented in [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md).
+
+**Exit condition:** Email/password, password recovery, Google OAuth, sign-out/session persistence, and cross-device history all pass the Phase 6 acceptance tests, with no unexpected duplicate identity/history silo.
 
 ## Phase 7 — Production readiness
 

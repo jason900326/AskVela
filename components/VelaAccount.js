@@ -10,6 +10,7 @@ function translateAuthError(error) {
   if (message.includes("user already registered")) return "這個 Email 已經註冊過了。";
   if (message.includes("password should be")) return "密碼至少需要 8 個字元。";
   if (message.includes("rate limit")) return "操作太頻繁，請稍後再試。";
+  if (message.includes("provider is not enabled")) return "Google 登入目前尚未啟用。";
   return error?.message || "登入服務暫時沒有回應。";
 }
 
@@ -116,6 +117,25 @@ export default function VelaAccount({ activeReading, onRestoreReading }) {
 
     return () => window.clearTimeout(timer);
   }, [client, user, activeReading]);
+
+  async function signInWithGoogle() {
+    if (!client || authLoading) return;
+    setAuthLoading(true);
+    setAuthMessage("");
+
+    try {
+      const { error } = await client.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setAuthMessage(translateAuthError(error));
+      setAuthLoading(false);
+    }
+  }
 
   async function submitAuth(event) {
     event.preventDefault();
@@ -288,6 +308,15 @@ export default function VelaAccount({ activeReading, onRestoreReading }) {
             <div className="eyebrow">VELA ACCOUNT</div>
             <h2 id="account-title">{authMode === "signup" ? "建立帳號" : authMode === "recovery" ? "設定新密碼" : "歡迎回來"}</h2>
             <p>{authMode === "recovery" ? "輸入新的密碼後即可回到 Vela。" : "登入不是占卜的門票，而是讓你能跨裝置保留值得回看的牌面。"}</p>
+            {authMode !== "recovery" && (
+              <>
+                <button className="googleAuthButton" type="button" onClick={signInWithGoogle} disabled={authLoading}>
+                  <span className="googleAuthMark" aria-hidden="true">G</span>
+                  使用 Google 繼續
+                </button>
+                <div className="accountDivider" aria-hidden="true"><span>或使用 Email</span></div>
+              </>
+            )}
             <form onSubmit={submitAuth}>
               {authMode !== "recovery" && (
                 <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
