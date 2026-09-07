@@ -19,3 +19,12 @@ test("high-stakes context is explicitly passed into context and synthesis layers
   assert.match(buildLayerCInstructions(safety), /professional or emergency assistance/u);
 });
 
+test("all interpretation layers prohibit converting difficult source themes into person judgments", () => {
+  const safety = { isHighStakes: false, categories: [] };
+  assert.match(buildLayerAInstructions(), /stable moral judgment about a person/u);
+  assert.match(buildLayerAInstructions(), /false consensus/u);
+  assert.match(buildLayerBInstructions(safety), /Do not infer stable personality/u);
+  assert.match(buildLayerBInstructions(safety), /possibility to examine/u);
+  assert.match(buildLayerCInstructions(safety), /declare another person bad/u);
+});
+
