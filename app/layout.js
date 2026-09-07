@@ -5,10 +5,11 @@ import "./follow-up.css";
 import "./brand.css";
 import "./mobile-selection.css";
 import "./account.css";
+import "./astrology.css";
 
 export const metadata = {
   title: "Vela",
-  description: "Source-grounded tarot readings with a guided, anonymous V1 experience.",
+  description: "Source-grounded tarot readings and structured sun-sign astrology with Vela.",
 };
 
 export default function RootLayout({ children }) {
