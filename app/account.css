@@ -1,8 +1,8 @@
 .accountDock {
-  position: absolute;
-  top: 21px;
-  right: max(16px, calc((100vw - 1120px) / 2));
-  z-index: 20;
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(16px, calc((100vw - 1120px) / 2), env(safe-area-inset-right));
+  z-index: 80;
   min-height: 34px;
   display: flex;
   align-items: center;
@@ -17,10 +17,11 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   color: #d9cfde;
-  background: rgba(16,12,22,.8);
+  background: rgba(16,12,22,.88);
   font-size: .74rem;
   font-weight: 800;
   backdrop-filter: blur(14px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.18);
 }
 
 .accountDock > button:hover { color: var(--text); border-color: rgba(199,167,255,.4); }
@@ -144,7 +145,7 @@
 .clearHistoryButton { display: block; margin: 22px auto 0; padding: 8px 12px; border: 0; color: #9d8790; background: transparent; font-size: .72rem; text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 760px) {
-  .accountDock { position: absolute; top: 13px; right: 11px; }
+  .accountDock { top: max(12px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); }
   .accountDock > button { min-height: 31px; padding: 6px 9px; font-size: .7rem; }
   .accountDock .accountAvatar { width: 31px; }
   .saveState { display: none; }

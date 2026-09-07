@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  ASTROLOGY_SOURCE_MESSAGE,
+  ASTROLOGY_SOURCE_NEXT_STEP,
+  ASTROLOGY_SOURCE_READY,
+} from "../lib/astrology-source-status.js";
 import { getZodiacByBirthday, ZODIAC_SIGNS } from "../lib/zodiac.js";
 import VelaAccount from "./VelaAccount.js";
 
@@ -38,7 +43,13 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
         const raw = window.sessionStorage.getItem(ASTROLOGY_SESSION_KEY);
         if (raw) {
           const saved = JSON.parse(raw);
-          if (saved?.version === 1 && saved?.kind === "astrology" && saved?.readingId && saved?.result) {
+          const trustworthySavedReading = saved?.version === 1
+            && saved?.kind === "astrology"
+            && saved?.readingId
+            && saved?.result
+            && saved?.sourceGrounded === true;
+
+          if (trustworthySavedReading) {
             setReading(saved);
             setSignId(saved.sign?.id || "");
             setPeriod(saved.period || "daily");
@@ -60,7 +71,7 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
   }, []);
 
   useEffect(() => {
-    if (!sessionRestored || !reading) return;
+    if (!sessionRestored || !reading || reading.sourceGrounded !== true) return;
     try {
       window.sessionStorage.setItem(ASTROLOGY_SESSION_KEY, JSON.stringify({ version: 1, ...reading }));
     } catch {
@@ -76,6 +87,10 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
 
   async function submitReading(event) {
     event.preventDefault();
+    if (!ASTROLOGY_SOURCE_READY) {
+      setError(`${ASTROLOGY_SOURCE_MESSAGE} ${ASTROLOGY_SOURCE_NEXT_STEP}`);
+      return;
+    }
     if (!signId || loading) return;
     setLoading(true);
     setError("");
@@ -95,6 +110,7 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法完成星座解讀。");
+      if (data.sourceGrounded !== true) throw new Error("這次星座解讀沒有通過來源驗證，因此不顯示結果。");
       setReading(data);
     } catch (err) {
       setError(err.message || "目前無法完成星座解讀。");
@@ -115,6 +131,11 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
 
   function restoreSavedAstrology(saved) {
     if (!saved?.readingId || saved?.kind !== "astrology" || !saved?.result) return;
+    if (saved.sourceGrounded !== true) {
+      setReading(null);
+      setError("這筆是星座來源庫完成前產生的舊版測試解讀。為了避免把沒有書籍依據的內容當成正式運勢，現在不再顯示它。");
+      return;
+    }
     setReading(saved);
     setSignId(saved.sign?.id || "");
     setPeriod(saved.period || "daily");
@@ -138,9 +159,17 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
             <div>
               <div className="eyebrow">ASKVELA · ASTROLOGY</div>
               <h1>今天，想看看哪個星座的節奏？</h1>
-              <p>Vela 會先用日期計算太陽、月亮與月相，再把這些訊號放回你的太陽星座。這一版不假裝知道你的完整出生星盤。</p>
+              <p>生日只用來協助選擇太陽星座。正式運勢會等書籍來源與引用流程補齊後才重新開放，不會只靠模型自由發揮。</p>
             </div>
           </header>
+
+          {!ASTROLOGY_SOURCE_READY && (
+            <aside className="astrologySourceGate" role="status">
+              <strong>星座來源資料庫尚未完成</strong>
+              <span>{ASTROLOGY_SOURCE_MESSAGE}</span>
+              <small>{ASTROLOGY_SOURCE_NEXT_STEP}</small>
+            </aside>
+          )}
 
           <form className="astrologyPanel" onSubmit={submitReading}>
             <section className="astrologyInputGroup">
@@ -178,7 +207,9 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
 
             <div className="astrologySubmitRow">
               <div>{selectedSign ? <span>{selectedSign.glyph} {selectedSign.nameZhTw} · {period === "daily" ? "今日" : "本週"}</span> : <span>先選一個星座</span>}</div>
-              <button className="primaryButton" type="submit" disabled={!signId || loading}>{loading ? "Vela 正在整理天象…" : "請 Vela 解讀"}</button>
+              <button className="primaryButton" type="submit" disabled={!signId || loading || !ASTROLOGY_SOURCE_READY}>
+                {ASTROLOGY_SOURCE_READY ? (loading ? "Vela 正在查閱來源…" : "請 Vela 解讀") : "等待星座來源資料庫"}
+              </button>
             </div>
           </form>
         </>
