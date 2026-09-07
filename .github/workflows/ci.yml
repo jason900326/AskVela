@@ -33,6 +33,7 @@ jobs:
           npm run parse:waite -- data/metadata/the-pictorial-key-to-the-tarot.json /tmp/waite.txt /tmp/waite.structured.json
           npm run validate:tarot -- /tmp/waite.structured.json
           npm run extract:pdf -- data/raw/public-domain/the-tarot-macgregor-mathers-1888.pdf /tmp/mathers.txt
+          grep -n -A 120 -m 1 -i "MEANINGS OF THE CARDS" /tmp/mathers.txt || true
           npm run parse:mathers -- data/metadata/the-tarot-macgregor-mathers-1888.json /tmp/mathers.txt /tmp/mathers.structured.json
           npm run validate:tarot -- /tmp/mathers.structured.json
 
