@@ -27,5 +27,14 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Validate committed tarot sources
+        run: |
+          npm run extract:pdf -- data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf /tmp/waite.txt
+          npm run parse:waite -- data/metadata/the-pictorial-key-to-the-tarot.json /tmp/waite.txt /tmp/waite.structured.json
+          npm run validate:tarot -- /tmp/waite.structured.json
+          npm run extract:pdf -- data/raw/public-domain/the-tarot-macgregor-mathers-1888.pdf /tmp/mathers.txt
+          npm run parse:mathers -- data/metadata/the-tarot-macgregor-mathers-1888.json /tmp/mathers.txt /tmp/mathers.structured.json
+          npm run validate:tarot -- /tmp/mathers.structured.json
+
       - name: Build
         run: npm run build

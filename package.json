@@ -11,6 +11,7 @@
     "test": "node --test",
     "extract:pdf": "node scripts/extract-pdf.js",
     "parse:waite": "node scripts/parse-waite.js",
+    "parse:mathers": "node scripts/parse-mathers.js",
     "validate:tarot": "node scripts/validate-tarot-structure.js",
     "ingest": "node --env-file=.env.local scripts/ingest-book.js",
     "ingest:tarot": "node --env-file=.env.local scripts/ingest-tarot-book.js"
