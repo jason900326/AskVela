@@ -9,7 +9,10 @@ test("Phase 4 keeps the canonical anonymous reading stages and fixed-draw retry 
   const source = await readFile(flowPath, "utf8");
 
   for (const stage of ["welcome", "question", "spread", "drawing", "reveal", "interpreting", "result"]) {
-    assert.match(source, new RegExp(`stage === \\"${stage}\\"|setStage\\(\\"${stage}\\"\\)`, "u"));
+    assert.ok(
+      source.includes(`stage === "${stage}"`) || source.includes(`setStage("${stage}")`),
+      `missing ${stage} stage`,
+    );
   }
 
   assert.match(source, /\/api\/spreads/u);
