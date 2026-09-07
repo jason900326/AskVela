@@ -1,0 +1,464 @@
+.readingExperience:not(.stage-welcome) {
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.immersivePanel,
+.selectionPanel,
+.revealPanel {
+  min-height: min(680px, 72vh);
+}
+
+.selectionIntro {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.selectionIntro h2 {
+  margin: 6px 0 8px;
+  font: 500 clamp(1.55rem, 2.8vw, 2.25rem)/1.2 Georgia, "Times New Roman", serif;
+}
+
+.selectionIntro p {
+  margin: 0;
+  max-width: 720px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.miniVela {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(199, 167, 255, .28);
+  border-radius: 50%;
+  color: var(--accent);
+  background: rgba(199, 167, 255, .045);
+  box-shadow: 0 0 34px rgba(168, 112, 255, .10);
+  font-size: 1.55rem;
+}
+
+.selectionProgress {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 24px 0 6px;
+  color: var(--muted);
+}
+
+.selectionProgress > span {
+  color: #e8dff0;
+  font-weight: 800;
+}
+
+.selectionProgress small {
+  text-align: right;
+  line-height: 1.5;
+}
+
+.selectionFan {
+  display: flex;
+  align-items: center;
+  min-height: 250px;
+  padding: 42px 36px 34px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.selectionCard {
+  position: relative;
+  flex: 0 0 78px;
+  width: 78px;
+  aspect-ratio: 2 / 3.35;
+  margin-left: -37px;
+  padding: 0;
+  border: 1px solid rgba(226, 207, 255, .26);
+  border-radius: 12px;
+  color: #d9c9e8;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.018) 0 5px, transparent 5px 10px),
+    radial-gradient(circle at 50% 40%, rgba(188,128,255,.18), transparent 52%),
+    #15101d;
+  box-shadow: 0 12px 30px rgba(0,0,0,.30);
+  transform: translateY(calc(abs(var(--fan-index) - 8.5) * 1px));
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+  scroll-snap-align: center;
+}
+
+.selectionCard:first-child {
+  margin-left: 0;
+}
+
+.selectionCard::before,
+.selectionCard::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(199,167,255,.20);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.selectionCard::after {
+  inset: 11px;
+  border-radius: 6px;
+}
+
+.selectionCard:hover:not(:disabled),
+.selectionCard:focus-visible {
+  z-index: 3;
+  transform: translateY(-10px);
+  border-color: rgba(223, 190, 255, .62);
+  box-shadow: 0 18px 38px rgba(0,0,0,.36), 0 0 28px rgba(168,112,255,.12);
+}
+
+.selectionCard.isSelected {
+  z-index: 4;
+  transform: translateY(-20px);
+  border-color: rgba(223, 190, 255, .86);
+  box-shadow: 0 22px 44px rgba(0,0,0,.38), 0 0 34px rgba(188,128,255,.22);
+}
+
+.selectionCard:disabled:not(.isSelected) {
+  opacity: .48;
+}
+
+.selectionCardPattern {
+  position: relative;
+  z-index: 1;
+  font-size: 1.15rem;
+}
+
+.selectionOrder {
+  position: absolute;
+  z-index: 5;
+  top: -12px;
+  right: -10px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #160f1d;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(0,0,0,.34);
+}
+
+.cardSpread.cards-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 1.6vw, 20px);
+  width: min(100%, 650px);
+  margin: 0 auto;
+}
+
+.cardSpread.cards-3 .tarotCard {
+  width: 100%;
+  max-width: 190px;
+  justify-self: center;
+}
+
+.tarotCardFront {
+  grid-template-rows: auto auto auto auto auto;
+}
+
+.tarotCardFront em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  white-space: nowrap;
+}
+
+.followUpPanel {
+  margin-top: 26px;
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+}
+
+.followUpHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.followUpHeading h3 {
+  margin: 7px 0 7px;
+  font: 500 clamp(1.3rem, 2vw, 1.65rem)/1.3 Georgia, "Times New Roman", serif;
+}
+
+.followUpHeading p {
+  margin: 0;
+  max-width: 680px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.fixedReadingBadge {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid rgba(199,167,255,.20);
+  border-radius: 999px;
+  color: #a99caf;
+  font-size: .72rem;
+  white-space: nowrap;
+}
+
+.followUpThread {
+  margin-top: 24px;
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+
+.followUpEntry {
+  padding: 22px 0;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+.followUpQuestion {
+  margin: 0 0 16px;
+  color: #d8cedc;
+  font-size: .91rem;
+  line-height: 1.7;
+}
+
+.followUpQuestion span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.followUpAnswer {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.velaGlyph {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(199,167,255,.20);
+  border-radius: 50%;
+  color: var(--accent);
+  background: rgba(199,167,255,.035);
+}
+
+.followUpAnswer small {
+  color: #9f92a7;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.followUpAnswer p {
+  margin: 5px 0 0;
+  color: #ebe4ee;
+  line-height: 1.78;
+}
+
+.followUpFocus {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.6;
+}
+
+.followUpFocus strong {
+  flex: 0 0 auto;
+  color: #d8cedd;
+}
+
+.followUpForm {
+  margin-top: 22px;
+}
+
+.followUpForm textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.followUpActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.followUpActions > span {
+  color: #82778a;
+  font-size: .74rem;
+}
+
+.followUpLimit {
+  margin: 20px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.followUpError {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+  color: #d8cbdc;
+}
+
+.followUpError strong {
+  color: var(--danger);
+}
+
+@media (max-width: 760px) {
+  .readingExperience:not(.stage-welcome) {
+    padding-top: 2px;
+  }
+
+  .immersivePanel,
+  .selectionPanel,
+  .revealPanel {
+    min-height: auto;
+  }
+
+  .selectionIntro {
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+  }
+
+  .miniVela {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .selectionIntro h2 {
+    font-size: 1.45rem;
+  }
+
+  .selectionProgress {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .selectionProgress small {
+    text-align: left;
+  }
+
+  .selectionFan {
+    min-height: 220px;
+    margin-inline: -18px;
+    padding: 38px 28px 28px;
+  }
+
+  .selectionCard {
+    flex-basis: 70px;
+    width: 70px;
+    margin-left: -36px;
+  }
+
+  .cardSpread.cards-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    width: 100%;
+  }
+
+  .cardSpread.cards-3 .tarotCard {
+    width: 100%;
+    max-width: none;
+  }
+
+  .cardSpread.cards-3 .tarotCardBack,
+  .cardSpread.cards-3 .tarotCardFront {
+    gap: 5px;
+    padding: 8px 6px;
+    border-radius: 13px;
+  }
+
+  .cardSpread.cards-3 .tarotCardBack::before,
+  .cardSpread.cards-3 .tarotCardBack::after {
+    inset: 6px;
+    border-radius: 8px;
+  }
+
+  .cardSpread.cards-3 .tarotCardBack::after {
+    inset: 11px;
+    border-radius: 6px;
+  }
+
+  .cardSpread.cards-3 .tarotCardFront small {
+    font-size: .58rem;
+    line-height: 1.2;
+  }
+
+  .cardSpread.cards-3 .tarotCardFront i {
+    font-size: 1.25rem;
+  }
+
+  .cardSpread.cards-3 .tarotCardFront strong {
+    font-size: clamp(.82rem, 3.4vw, 1rem);
+    line-height: 1.15;
+  }
+
+  .cardSpread.cards-3 .tarotCardFront span {
+    font-size: .56rem;
+    line-height: 1.25;
+  }
+
+  .cardSpread.cards-3 .tarotCardFront em {
+    min-height: 22px;
+    margin-top: 1px;
+    padding: 3px 6px;
+    font-size: .54rem;
+  }
+
+  .followUpHeading {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fixedReadingBadge {
+    align-self: flex-start;
+  }
+
+  .followUpEntry {
+    padding: 19px 0;
+  }
+
+  .followUpAnswer {
+    grid-template-columns: 32px 1fr;
+    gap: 10px;
+  }
+
+  .velaGlyph {
+    width: 32px;
+    height: 32px;
+  }
+
+  .followUpFocus {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .followUpActions {
+    align-items: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selectionCard {
+    transition: none !important;
+  }
+}
