@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 1 — Structured tarot knowledge**
+- Current phase: **Phase 3 — Interpretation engine**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - First source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
@@ -31,7 +31,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Build a parser for *The Pictorial Key to the Tarot*
 - [x] Extract Major Arcana sections
 - [x] Extract Minor Arcana sections
-- [ ] Separate description, symbolism, divinatory meaning, and reversed meaning
+- [x] Separate description, symbolism, divinatory meaning, and reversed meaning
 - [x] Preserve author, book, chapter, and source location
 - [x] Update ingestion to write structured metadata
 - [x] Update retrieval to filter by card and orientation before semantic ranking
@@ -47,15 +47,15 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Phase 2 — Tarot draw engine
 
-- [ ] Define V1 spread registry
-- [ ] Implement the complete 78-card deck
-- [ ] Implement server-side unbiased card selection
-- [ ] Prevent duplicate cards within one draw
-- [ ] Assign upright/reversed orientation independently
-- [ ] Create a stable reading/draw ID
-- [ ] Make draw retries idempotent
-- [ ] Validate question and spread input
-- [ ] Add tests for deck completeness, uniqueness, orientation, and spread positions
+- [x] Define V1 spread registry
+- [x] Implement the complete 78-card deck
+- [x] Implement server-side unbiased card selection
+- [x] Prevent duplicate cards within one draw
+- [x] Assign upright/reversed orientation independently
+- [x] Create a stable reading/draw ID
+- [x] Make draw retries idempotent
+- [x] Validate question and spread input
+- [x] Add tests for deck completeness, uniqueness, orientation, and spread positions
 
 **Exit condition:** The server can reproducibly create valid single-card and three-card readings without using the language model to select cards.
 

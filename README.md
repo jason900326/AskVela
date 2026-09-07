@@ -51,7 +51,9 @@ OpenAI Responses API
 Grounded answer + source list
 ```
 
-`/api/ask` is the current knowledge-quality foundation. The V1 draw and reading APIs will be added as separate responsibilities as described in the roadmap.
+`/api/ask` remains the knowledge-quality tool. `/api/readings/draw` now owns the
+server-side draw, while interpretation will be added as a separate Phase 3
+responsibility so the language model can never choose or silently change cards.
 
 ## Stack
 
@@ -68,6 +70,8 @@ Grounded answer + source list
 AskVela/
 ├── app/
 │   ├── api/ask/route.js
+│   ├── api/readings/draw/route.js
+│   ├── api/spreads/route.js
 │   ├── globals.css
 │   ├── layout.js
 │   └── page.js
@@ -88,6 +92,8 @@ AskVela/
 ├── lib/
 │   ├── openai.js
 │   ├── retrieval.js
+│   ├── tarot-draw.js
+│   ├── tarot-spreads.js
 │   ├── supabase-admin.js
 │   ├── tarot-cards.js
 │   ├── tarot-prompt.js
@@ -133,9 +139,31 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 
 NEXT_PUBLIC_SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
+TAROT_DRAW_SECRET=... # at least 32 random characters
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it in browser code or commit `.env.local`.
+`SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose
+them in browser code or commit `.env.local`.
+
+## Draw API
+
+List the three frozen V1 spreads with `GET /api/spreads`. Create a draw with:
+
+```http
+POST /api/readings/draw
+Content-Type: application/json
+Idempotency-Key: <a new client-generated UUID for this reading>
+
+{
+  "question": "我最近是否適合換工作？",
+  "spreadId": "situation-obstacle-advice"
+}
+```
+
+Use a new idempotency key only when the user intentionally starts a new reading.
+Reuse the same key when retrying a failed request; the server will return the same
+reading ID, cards, positions, and orientations. The supported spread IDs are
+`single-guidance`, `past-present-future`, and `situation-obstacle-advice`.
 
 ## 3. Create the knowledge-base tables
 
@@ -270,8 +298,14 @@ Do **not** create a second database or RAG system. Add another metadata record a
 
 Every chunk must preserve its source identity. Multi-book output must present agreements and disagreements explicitly instead of blending authors together.
 
-## Current Phase 1 status
+## Current phase status
 
-The repository now contains the first complete structured-parser implementation for Waite. Its automated test extracts the committed PDF and verifies all 78 cards, Major and Minor Arcana, upright and reversed evidence, and traceable source locations.
+Phase 1 is complete: the Waite parser and live knowledge path cover all 78 cards,
+Major and Minor Arcana, upright and reversed evidence, and traceable source
+locations.
 
-Phase 1 is not complete until migration `002` has been applied to the actual Supabase project, the structured output has been ingested, and representative live queries have been checked in Traditional Chinese. Continue to use [ROADMAP.md](ROADMAP.md) as the source of truth.
+Phase 2 is also complete: the server exposes three V1 spreads and creates
+idempotent, non-repeating draws with independently assigned upright/reversed
+orientations. Phase 3 will retrieve evidence for those fixed cards and produce
+the source/context/synthesis interpretation layers. Continue to use
+[ROADMAP.md](ROADMAP.md) as the source of truth.
