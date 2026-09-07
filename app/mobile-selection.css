@@ -1,0 +1,56 @@
+@media (max-width: 760px) {
+  .cardFan {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(44px, 1fr));
+    align-items: start;
+    justify-content: stretch;
+    gap: 42px 5px;
+    min-height: 0;
+    margin: 8px 0 0;
+    padding: 34px 0 42px;
+    overflow: visible;
+    scroll-padding-inline: 0;
+  }
+
+  .selectionCard,
+  .selectionCard:first-child {
+    width: 100%;
+    min-width: 44px;
+    max-width: 58px;
+    justify-self: center;
+    flex-basis: auto;
+    margin-left: 0;
+    transform: none;
+    transform-origin: center;
+  }
+
+  .selectionCard:hover {
+    transform: none;
+  }
+
+  .selectionCard.isSelected {
+    transform: translateY(-7px);
+  }
+
+  .selectionOrder {
+    bottom: -32px;
+  }
+
+  .selectionOrder small {
+    max-width: 54px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 355px) {
+  .cardFan {
+    grid-template-columns: repeat(6, minmax(42px, 1fr));
+    gap: 40px 3px;
+  }
+
+  .selectionCard,
+  .selectionCard:first-child {
+    min-width: 42px;
+  }
+}
