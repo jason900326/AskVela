@@ -1,8 +1,35 @@
 # AskVela
 
-AskVela is a source-grounded tarot knowledge assistant built with JavaScript, Next.js, OpenAI, Supabase, and pgvector.
+AskVela is a source-grounded AI tarot reading website built with JavaScript, Next.js, OpenAI, Supabase, and pgvector.
 
-The first knowledge source is **Arthur Edward Waite's _The Pictorial Key to the Tarot_**, with the data model designed to support many books and multiple tarot systems later.
+The V1 product is intentionally narrow:
+
+> 一個有可靠書籍依據、能進行 AI 塔羅占卜的網站。
+
+The first knowledge source is **Arthur Edward Waite's _The Pictorial Key to the Tarot_**. The data model is intended to support additional books and tarot systems later without mixing different authors into a false consensus.
+
+## Project status
+
+AskVela currently has a working source-grounded knowledge Q&A foundation. It does **not** yet provide the complete V1 reading flow.
+
+- Current phase: structured 78-card tarot knowledge
+- V1 specification: [docs/V1_SPEC.md](docs/V1_SPEC.md)
+- Development checklist: [ROADMAP.md](ROADMAP.md)
+
+The frozen V1 flow is:
+
+```text
+Enter AskVela
+→ enter a question
+→ choose a spread
+→ draw cards
+→ reveal cards
+→ retrieve relevant book evidence
+→ generate a complete AI interpretation
+→ ask follow-up questions
+```
+
+Astrology, dream interpretation, social features, voice, complex animation, native apps, and multi-tier payment plans are outside V1.
 
 ## Current architecture
 
@@ -21,6 +48,8 @@ OpenAI Responses API
     ↓
 Grounded answer + source list
 ```
+
+`/api/ask` is the current knowledge-quality foundation. The V1 draw and reading APIs will be added as separate responsibilities as described in the roadmap.
 
 ## Stack
 
@@ -45,8 +74,13 @@ AskVela/
 ├── data/
 │   ├── metadata/
 │   │   └── the-pictorial-key-to-the-tarot.json
-│   ├── processed/          # generated locally; ignored by git
-│   └── raw/                # put PDFs here locally; PDFs are ignored by git
+│   ├── processed/                    # generated locally; ignored by git
+│   └── raw/
+│       ├── public-domain/            # public-domain sources may be committed
+│       ├── copyrighted/              # ignored; do not commit
+│       └── private/                  # ignored; do not commit
+├── docs/
+│   └── V1_SPEC.md
 ├── lib/
 │   ├── openai.js
 │   ├── retrieval.js
@@ -55,9 +89,10 @@ AskVela/
 ├── scripts/
 │   ├── extract-pdf.js
 │   └── ingest-book.js
-└── supabase/
-    └── migrations/
-        └── 001_knowledge_base.sql
+├── supabase/
+│   └── migrations/
+│       └── 001_knowledge_base.sql
+└── ROADMAP.md
 ```
 
 ## 1. Install
@@ -107,52 +142,53 @@ It creates:
 
 The retrieval RPC is restricted to the Supabase `service_role` because AskVela calls it server-side.
 
-## 4. Put the PDF on your computer
+## 4. Source-book storage policy
 
-Do **not** upload source PDFs to the repository.
-
-Create:
+Public-domain source books may be committed under:
 
 ```text
-data/raw/
+data/raw/public-domain/
 ```
 
-Then place the downloaded file there, for example:
+The first committed source is:
 
 ```text
-data/raw/the-pictorial-key-to-the-tarot.pdf
+data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf
 ```
 
-PDF files under `data/raw/` are ignored by git.
+Copyrighted or private ebooks must not be committed. Store local copies only under:
 
-## 5. Extract the PDF text
+```text
+data/raw/copyrighted/
+data/raw/private/
+```
+
+Both directories are ignored by git. Confirm licensing before using copyrighted full text in a commercial knowledge base.
+
+## 5. Extract PDF text
+
+For the committed Waite source:
 
 ```bash
-npm run extract:pdf -- data/raw/the-pictorial-key-to-the-tarot.pdf
+npm run extract:pdf -- data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf
 ```
 
-This generates:
-
-```text
-data/processed/the-pictorial-key-to-the-tarot.txt
-```
-
-Generated extraction files are also ignored by git because they can be recreated from the local source PDF.
+This generates a local text file under `data/processed/`. Generated extraction files are ignored because they can be rebuilt from the permitted source.
 
 ## 6. Create embeddings and ingest the book
 
-The metadata for the first book is already included:
+The metadata for the first book is included at:
 
 ```text
 data/metadata/the-pictorial-key-to-the-tarot.json
 ```
 
-Run:
+Run the extraction command first, then pass the generated text path to:
 
 ```bash
 npm run ingest -- \
   data/metadata/the-pictorial-key-to-the-tarot.json \
-  data/processed/the-pictorial-key-to-the-tarot.txt
+  data/processed/<generated-file>.txt
 ```
 
 The ingestion script will:
@@ -169,19 +205,17 @@ The ingestion script will:
 npm run dev
 ```
 
-Open the local Next.js URL and try questions such as:
+Open the local Next.js URL and use the current knowledge Q&A page to test retrieval, for example:
 
 - `The High Priestess 在 Waite 原書中代表什麼？`
 - `The Tower 的正位與逆位有什麼差別？`
 - `Waite 如何描述 The Fool 的象徵？`
 
-AskVela retrieves relevant source chunks first, then gives those chunks to the model as the primary source material.
+This page is a development foundation, not yet the complete V1 tarot-reading experience.
 
-## Adding the second book
+## Adding another book later
 
-You do **not** need a second database or a second RAG system.
-
-Create another metadata file:
+Do **not** create a second database or RAG system. Add another metadata record and ingest it into the same source-aware schema.
 
 ```json
 {
@@ -199,12 +233,10 @@ Create another metadata file:
 }
 ```
 
-Then extract and ingest it using the same two scripts. Each chunk keeps its `book_id`, so retrieval can search across many books while preserving source identity.
+Every chunk must preserve its source identity. Multi-book output must present agreements and disagreements explicitly instead of blending authors together.
 
-For copyrighted books, confirm that your intended storage and product use is properly licensed before putting their full text into a commercial knowledge base.
+## Next knowledge-quality upgrade
 
-## What this first version does not do yet
+The current ingestion semantically chunks the complete book, but does not yet create reliable card-specific metadata such as `card_id`, `card_name`, `upright`, `reversed`, section type, or precise source location.
 
-The current ingestion is intentionally generic. It semantically chunks the complete book but does not yet build card-specific chapter metadata such as `card_name`, `upright`, `reversed`, or exact printed page references.
-
-The next knowledge-quality upgrade should be a **Tarot structure parser** that recognizes the 78 card sections in _The Pictorial Key to the Tarot_ and stores structured metadata alongside each source chunk. That improves card filtering, citations, and multi-author comparison without changing the overall RAG architecture.
+The next implementation phase is the **Tarot structure parser** in [ROADMAP.md](ROADMAP.md). It must recognize all 78 card sections in _The Pictorial Key to the Tarot_ and attach structured metadata before the complete draw-and-interpretation flow is built.
