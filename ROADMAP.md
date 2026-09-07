@@ -4,10 +4,11 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 4 — Core V1 UX**
+- Current phase: **Phase 3 — Interpretation engine / multi-source curation and validation**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
-- First source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
+- Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
+- Historical comparison source: S. L. MacGregor Mathers, *The Tarot* (1888)
 
 ## Phase 0 — Freeze V1 scope
 
@@ -61,6 +62,8 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Phase 3 — Interpretation engine
 
+### Core engine
+
 - [x] Create a reading endpoint separate from generic knowledge Q&A
 - [x] Retrieve evidence for every drawn card
 - [x] Build Layer A: source meaning
@@ -72,7 +75,28 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Add evaluation cases for source fidelity and hallucination
 - [x] Keep the existing `/api/ask` endpoint as an internal knowledge-quality tool
 
-**Exit condition:** A valid draw produces a coherent Traditional Chinese reading that separates source facts from AI synthesis.
+### Multi-source curation before Phase 4
+
+- [x] Add Mathers 1888 as a second public-domain historical comparison source
+- [x] Add Mathers metadata without falsely labeling it as Rider-Waite-Smith
+- [x] Add a 78-card upright/reversed Mathers parser
+- [x] Support `meanings_only` historical sources without weakening full-reference validation
+- [x] Add retrieval compatibility for historical comparison sources while preserving their native tarot system
+- [x] Balance per-card evidence so one book cannot silently crowd the other out
+- [x] Add pre-retrieval source curation for insulting, gendered, complexion-based, and direct moral person labels
+- [x] Preserve difficult abstract themes such as deceit, conflict, mistrust, and treachery as situational concepts rather than deleting them
+- [x] Add Layer A/B/C rules that prohibit turning source themes into stable judgments of the user or a third party
+- [x] Require author-by-author attribution when sources differ instead of creating a false consensus
+- [x] Add parser, curation, evidence-balancing, and prompt regression tests
+- [ ] Apply migration `003_historical_comparison_sources.sql` to the active Supabase project
+- [ ] Extract and parse the committed Mathers PDF in the working environment
+- [ ] Re-ingest Waite through the new curation layer
+- [ ] Ingest the curated Mathers structured source
+- [ ] Run live two-book retrieval checks for representative Major, Minor, upright, reversed, and court-card cases
+- [ ] Run live reading evaluations for relationship/person questions and confirm the model does not call the user or another person bad, wicked, vicious, deceitful, toxic, foolish, or untrustworthy as a character judgment
+- [ ] Confirm disagreements between Waite and Mathers remain explicitly attributed to their respective authors
+
+**Exit condition:** A valid draw produces a coherent Traditional Chinese reading grounded in the curated source set; Waite and Mathers remain separately attributable, historical person-label wording cannot become a direct character attack, and live two-book evaluations pass before UX work begins.
 
 ## Phase 4 — Core V1 UX
 
@@ -138,7 +162,7 @@ Not required for the first usable anonymous V1 flow.
 ## Phase 8 — Post-V1 backlog
 
 - [ ] Celtic Cross and additional spreads
-- [ ] Multiple books and author-by-author comparison
+- [ ] Additional books beyond the curated V1 source set and author-by-author comparison UI
 - [ ] Paid usage and entitlements
 - [ ] Astrology
 - [ ] Dream interpretation
