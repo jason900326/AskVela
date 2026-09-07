@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const ORIENTATION_LABELS = { upright: "正位", reversed: "逆位" };
+const READING_SESSION_KEY = "askvela.current-reading.v1";
+const MAX_FOLLOW_UPS = 6;
+const MAX_FOLLOW_UP_MESSAGE_LENGTH = 320;
 
 function makeRequestId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -63,6 +66,22 @@ function SourceList({ sources = [] }) {
   );
 }
 
+function compactInitialReading(result) {
+  return {
+    overview: result?.synthesis?.overview || "",
+    narrative: result?.synthesis?.narrative || "",
+    cards: (result?.cards || []).map((card) => ({
+      cardId: card.cardId,
+      contextInterpretation: card.contextInterpretation || "",
+      practicalFocus: card.practicalFocus || "",
+    })),
+  };
+}
+
+function cardSignature(cards = []) {
+  return cards.map((card) => `${card.cardId}:${card.position}:${card.orientation}`).join("|");
+}
+
 export default function TarotReadingFlow() {
   const [stage, setStage] = useState("welcome");
   const [question, setQuestion] = useState("");
@@ -74,15 +93,80 @@ export default function TarotReadingFlow() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [followUps, setFollowUps] = useState([]);
+  const [followUpMessage, setFollowUpMessage] = useState("");
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpError, setFollowUpError] = useState("");
+  const [sessionRestored, setSessionRestored] = useState(false);
 
   const allRevealed = Boolean(draw?.cards?.length) && revealedCount >= draw.cards.length;
   const selectedSpread = spreads.find((spread) => spread.id === spreadId);
+  const followUpLimitReached = followUps.length >= MAX_FOLLOW_UPS;
   const stepIndex = useMemo(() => {
     if (stage === "welcome" || stage === "question") return 1;
     if (stage === "spread") return 2;
     if (["drawing", "reveal"].includes(stage)) return 3;
     return 4;
   }, [stage]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      try {
+        const raw = window.sessionStorage.getItem(READING_SESSION_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          const isValid = saved?.readingId
+            && saved?.requestId
+            && saved?.question
+            && saved?.spreadId
+            && saved?.draw?.readingId === saved.readingId
+            && saved?.result?.readingId === saved.readingId;
+
+          if (isValid) {
+            setQuestion(saved.question);
+            setSpreadId(saved.spreadId);
+            setRequestId(saved.requestId);
+            setDraw(saved.draw);
+            setRevealedCount(saved.draw?.cards?.length || 0);
+            setResult(saved.result);
+            setFollowUps(Array.isArray(saved.followUps) ? saved.followUps.slice(0, MAX_FOLLOW_UPS) : []);
+            setStage("result");
+          } else {
+            window.sessionStorage.removeItem(READING_SESSION_KEY);
+          }
+        }
+      } catch {
+        window.sessionStorage.removeItem(READING_SESSION_KEY);
+      } finally {
+        if (!cancelled) setSessionRestored(true);
+      }
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sessionRestored || stage !== "result" || !draw || !result || !requestId) return;
+    try {
+      window.sessionStorage.setItem(READING_SESSION_KEY, JSON.stringify({
+        version: 1,
+        readingId: draw.readingId,
+        requestId,
+        question: question.trim(),
+        spreadId,
+        draw,
+        result,
+        followUps,
+      }));
+    } catch {
+      // The reading remains usable even if browser storage is unavailable.
+    }
+  }, [sessionRestored, stage, draw, result, requestId, question, spreadId, followUps]);
 
   async function startReading() {
     setError("");
@@ -115,6 +199,9 @@ export default function TarotReadingFlow() {
     setError("");
     setStage("drawing");
     setResult(null);
+    setFollowUps([]);
+    setFollowUpMessage("");
+    setFollowUpError("");
     setRevealedCount(0);
 
     try {
@@ -160,6 +247,7 @@ export default function TarotReadingFlow() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法完成解讀。");
       setResult(data);
+      setFollowUps([]);
       setStage("result");
     } catch (err) {
       setError(err.message || "目前無法完成解讀。");
@@ -169,14 +257,65 @@ export default function TarotReadingFlow() {
     }
   }
 
+  async function submitFollowUp(event) {
+    event.preventDefault();
+    const message = followUpMessage.trim();
+    if (!message || !draw || !result || !requestId || followUpLoading || followUpLimitReached) return;
+
+    setFollowUpLoading(true);
+    setFollowUpError("");
+
+    try {
+      const response = await fetch("/api/readings/follow-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": requestId },
+        body: JSON.stringify({
+          readingId: draw.readingId,
+          requestId,
+          question: question.trim(),
+          spreadId,
+          message,
+          history: followUps.map((item) => ({ question: item.question, answer: item.answer })),
+          initialReading: compactInitialReading(result),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "目前無法完成追問。");
+
+      if (data.readingId !== draw.readingId || cardSignature(data.fixedCards) !== cardSignature(draw.cards)) {
+        throw new Error("追問回覆與原本牌面不一致，已停止顯示這次回覆。請沿用同一次占卜重試。");
+      }
+
+      setFollowUps((items) => [...items, {
+        question: message,
+        answer: data.answer,
+        practicalFocus: data.practicalFocus || "",
+        safety: data.safety || null,
+      }]);
+      setFollowUpMessage("");
+    } catch (err) {
+      setFollowUpError(err.message || "目前無法完成追問；原本的牌面不會改變。");
+    } finally {
+      setFollowUpLoading(false);
+    }
+  }
+
   function resetReading() {
-    setStage("question");
+    try {
+      window.sessionStorage.removeItem(READING_SESSION_KEY);
+    } catch {
+      // Ignore storage failures while resetting local state.
+    }
+    setStage(spreads.length ? "question" : "welcome");
     setQuestion("");
     setSpreadId("");
     setRequestId("");
     setDraw(null);
     setRevealedCount(0);
     setResult(null);
+    setFollowUps([]);
+    setFollowUpMessage("");
+    setFollowUpError("");
     setError("");
   }
 
@@ -276,6 +415,49 @@ export default function TarotReadingFlow() {
               <ul>{result.synthesis.practicalGuidance.map((item) => <li key={item}>{item}</li>)}</ul>
             </section>
           )}
+
+          <section className="followUpPanel" aria-labelledby="follow-up-title">
+            <div className="followUpHeading">
+              <div>
+                <div className="eyebrow">CONTINUE THIS READING</div>
+                <h3 id="follow-up-title">還有想從這組牌繼續問的嗎？</h3>
+                <p>接下來會固定沿用剛才的牌、位置、正逆位與原典來源，不會重新抽牌。</p>
+              </div>
+              <span className="fixedReadingBadge">同一組牌 · {followUps.length}/{MAX_FOLLOW_UPS}</span>
+            </div>
+
+            {followUps.length > 0 && (
+              <div className="followUpThread" aria-live="polite">
+                {followUps.map((item, index) => (
+                  <div className="followUpExchange" key={`${index}-${item.question}`}>
+                    <div className="followUpUser"><small>你</small><p>{item.question}</p></div>
+                    <div className="followUpVela"><small>Vela</small><p>{item.answer}</p>{item.practicalFocus && <div className="followUpFocus"><strong>可以先留意</strong><span>{item.practicalFocus}</span></div>}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!followUpLimitReached ? (
+              <form className="followUpForm" onSubmit={submitFollowUp}>
+                <textarea
+                  value={followUpMessage}
+                  onChange={(event) => setFollowUpMessage(event.target.value)}
+                  maxLength={MAX_FOLLOW_UP_MESSAGE_LENGTH}
+                  rows={3}
+                  placeholder="例如：那我現在最需要先確認的是什麼？"
+                  aria-label="針對這次占卜繼續追問"
+                />
+                <div className="followUpActions">
+                  <span>{followUpMessage.length}/{MAX_FOLLOW_UP_MESSAGE_LENGTH}</span>
+                  <button className="primaryButton" type="submit" disabled={!followUpMessage.trim() || followUpLoading}>{followUpLoading ? "Vela 正在想…" : "繼續問 Vela"}</button>
+                </div>
+              </form>
+            ) : (
+              <p className="followUpLimit">這次占卜的 {MAX_FOLLOW_UPS} 次追問已用完。想換一個問題時，可以開始新的占卜。</p>
+            )}
+
+            {followUpError && <div className="followUpError" role="alert"><strong>追問沒有成功。</strong><span>{followUpError}</span></div>}
+          </section>
 
           <details className="deepReading">
             <summary>

@@ -1,5 +1,6 @@
 import "./globals.css";
 import "./reading.css";
+import "./follow-up.css";
 
 export const metadata = {
   title: "AskVela",
