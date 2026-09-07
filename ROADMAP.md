@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 3 — Interpretation engine**
+- Current phase: **Phase 4 — Core V1 UX**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - First source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
@@ -61,16 +61,16 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Phase 3 — Interpretation engine
 
-- [ ] Create a reading endpoint separate from generic knowledge Q&A
-- [ ] Retrieve evidence for every drawn card
-- [ ] Build Layer A: source meaning
-- [ ] Build Layer B: context and spread-position interpretation
-- [ ] Build Layer C: multi-card synthesis
-- [ ] Return structured output for reliable UI rendering
-- [ ] Include human-readable source references
-- [ ] Add safety framing for high-stakes questions
-- [ ] Add evaluation cases for source fidelity and hallucination
-- [ ] Keep the existing `/api/ask` endpoint as an internal knowledge-quality tool or retire it deliberately
+- [x] Create a reading endpoint separate from generic knowledge Q&A
+- [x] Retrieve evidence for every drawn card
+- [x] Build Layer A: source meaning
+- [x] Build Layer B: context and spread-position interpretation
+- [x] Build Layer C: multi-card synthesis
+- [x] Return structured output for reliable UI rendering
+- [x] Include human-readable source references
+- [x] Add safety framing for high-stakes questions
+- [x] Add evaluation cases for source fidelity and hallucination
+- [x] Keep the existing `/api/ask` endpoint as an internal knowledge-quality tool
 
 **Exit condition:** A valid draw produces a coherent Traditional Chinese reading that separates source facts from AI synthesis.
 

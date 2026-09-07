@@ -177,17 +177,16 @@ Vela 的語氣應冷靜、清楚、有同理心，不恐嚇、不故弄玄虛，
 ```json
 {
   "readingId": "uuid",
+  "requestId": "the-same-idempotency-key-used-for-the-draw",
   "question": "我最近是否適合換工作？",
-  "spreadId": "situation-obstacle-advice",
-  "cards": [
-    {
-      "cardId": "major-09-hermit",
-      "position": "situation",
-      "orientation": "upright"
-    }
-  ]
+  "spreadId": "situation-obstacle-advice"
 }
 ```
+
+The client may send the request ID through the `Idempotency-Key` header instead
+of the JSON body. The interpretation endpoint regenerates the draw from this
+server-verifiable input and checks `readingId`; it does not trust client-supplied
+cards, positions, or orientations.
 
 ### Follow up
 

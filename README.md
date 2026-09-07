@@ -12,7 +12,7 @@ The first knowledge source is **Arthur Edward Waite's _The Pictorial Key to the 
 
 AskVela currently has a working source-grounded knowledge Q&A foundation. It does **not** yet provide the complete V1 reading flow.
 
-- Current phase: structured 78-card tarot knowledge
+- Current phase: core V1 reading UX
 - V1 specification: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Development checklist: [ROADMAP.md](ROADMAP.md)
 
@@ -34,26 +34,23 @@ Astrology, dream interpretation, social features, voice, complex animation, nati
 ## Current architecture
 
 ```text
-User question
+Fixed server-side draw
     ↓
-Card + orientation identification
+Per-card exact ID + orientation retrieval
     ↓
-Next.js /api/ask
+Layer A: source-only meaning
     ↓
-OpenAI embedding
+Layer B: question + spread-position interpretation
     ↓
-Exact card/orientation database filter
+Layer C: cross-card synthesis
     ↓
-pgvector ranking inside the filtered source material
-    ↓
-OpenAI Responses API
-    ↓
-Grounded answer + source list
+Structured reading + human-readable sources + safety framing
 ```
 
-`/api/ask` remains the knowledge-quality tool. `/api/readings/draw` now owns the
-server-side draw, while interpretation will be added as a separate Phase 3
-responsibility so the language model can never choose or silently change cards.
+`/api/ask` remains an internal knowledge-quality tool. `/api/readings/draw` owns
+the server-side draw, and `/api/readings/interpret` regenerates that exact draw
+from the same request ID before interpreting it. The language model therefore
+cannot choose cards or silently change an existing draw.
 
 ## Stack
 
@@ -71,6 +68,7 @@ AskVela/
 ├── app/
 │   ├── api/ask/route.js
 │   ├── api/readings/draw/route.js
+│   ├── api/readings/interpret/route.js
 │   ├── api/spreads/route.js
 │   ├── globals.css
 │   ├── layout.js
@@ -91,12 +89,16 @@ AskVela/
 │   └── V1_SPEC.md
 ├── lib/
 │   ├── openai.js
+│   ├── reading-evidence.js
+│   ├── reading-interpreter.js
+│   ├── reading-prompts.js
 │   ├── retrieval.js
 │   ├── tarot-draw.js
 │   ├── tarot-spreads.js
 │   ├── supabase-admin.js
 │   ├── tarot-cards.js
 │   ├── tarot-prompt.js
+│   ├── tarot-safety.js
 │   └── waite-structure-parser.js
 ├── scripts/
 │   ├── extract-pdf.js
@@ -164,6 +166,40 @@ Use a new idempotency key only when the user intentionally starts a new reading.
 Reuse the same key when retrying a failed request; the server will return the same
 reading ID, cards, positions, and orientations. The supported spread IDs are
 `single-guidance`, `past-present-future`, and `situation-obstacle-advice`.
+
+## Interpretation API
+
+After revealing a draw, generate its interpretation with the same question,
+spread, reading ID, and idempotency key:
+
+```http
+POST /api/readings/interpret
+Content-Type: application/json
+Idempotency-Key: <the same UUID used for the draw>
+
+{
+  "readingId": "the-reading-id-returned-by-draw",
+  "question": "我最近是否適合換工作？",
+  "spreadId": "situation-obstacle-advice"
+}
+```
+
+The server first reproduces and verifies the fixed draw, then performs three
+separate structured model calls:
+
+1. **Layer A — Source meaning:** summarizes only retrieved book evidence and
+   returns validated source IDs.
+2. **Layer B — Context interpretation:** applies Layer A to the question,
+   orientation, and spread position without pretending that inference came from
+   the author.
+3. **Layer C — Synthesis:** turns the individual cards into a coherent movement,
+   tension, or progression and returns practical reflection prompts.
+
+The response keeps these boundaries visible through each card's `sourceMeaning`
+and `contextInterpretation`, plus a top-level `synthesis`. It also includes
+human-readable book, author, chapter, section, and PDF page references. Questions
+detected as medical, legal, financial, or crisis-related receive deterministic
+safety notices in addition to stricter model instructions.
 
 ## 3. Create the knowledge-base tables
 
@@ -306,6 +342,10 @@ locations.
 
 Phase 2 is also complete: the server exposes three V1 spreads and creates
 idempotent, non-repeating draws with independently assigned upright/reversed
-orientations. Phase 3 will retrieve evidence for those fixed cards and produce
-the source/context/synthesis interpretation layers. Continue to use
-[ROADMAP.md](ROADMAP.md) as the source of truth.
+orientations.
+
+Phase 3 is complete: the interpretation endpoint verifies the fixed draw,
+retrieves evidence separately for every card, and executes source, context, and
+synthesis layers with structured output, citation validation, and high-stakes
+safety framing. The project can now proceed to Phase 4's complete reading UX.
+Continue to use [ROADMAP.md](ROADMAP.md) as the source of truth.
