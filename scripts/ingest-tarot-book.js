@@ -3,7 +3,12 @@ import path from "node:path";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { TAROT_CARDS } from "../lib/tarot-cards.js";
-import { validateStructuredTarot } from "../lib/waite-structure-parser.js";
+import { validateStructuredTarotSource } from "../lib/structured-tarot-validation.js";
+import {
+  assertCuratedSourceMeaning,
+  curateSourceMeaning,
+  SOURCE_CURATION_VERSION,
+} from "../lib/source-curation.js";
 
 const metadataPath = process.argv[2];
 const structuredPath = process.argv[3];
@@ -53,9 +58,29 @@ function splitSection(content, targetSize = 2800, overlap = 250) {
   return parts;
 }
 
+function curateSection(card, section) {
+  const curated = curateSourceMeaning(section.content);
+  assertCuratedSourceMeaning(
+    curated.content,
+    `${card.card_id}/${section.section_type}/${section.orientation || "shared"}`,
+  );
+
+  return {
+    content: curated.content,
+    curation: {
+      version: SOURCE_CURATION_VERSION,
+      changed: Boolean(section.curation?.changed || curated.changed),
+      actions: [...new Set([
+        ...(section.curation?.actions || []),
+        ...curated.actions,
+      ])],
+    },
+  };
+}
+
 const metadata = JSON.parse(await readFile(path.resolve(metadataPath), "utf8"));
 const structured = JSON.parse(await readFile(path.resolve(structuredPath), "utf8"));
-const validationErrors = validateStructuredTarot(structured);
+const validationErrors = validateStructuredTarotSource(structured);
 if (validationErrors.length) {
   throw new Error(`Structured tarot validation failed:\n- ${validationErrors.join("\n- ")}`);
 }
@@ -79,6 +104,12 @@ const { error: cardError } = await supabase.from("tarot_cards").upsert(
 );
 if (cardError) throw new Error(`Tarot card registry upsert failed: ${cardError.message}`);
 
+const compatibleTarotSystems = Array.isArray(metadata.compatible_tarot_systems)
+  ? metadata.compatible_tarot_systems
+  : metadata.tarot_system
+    ? [metadata.tarot_system]
+    : [];
+
 const { data: book, error: bookError } = await supabase
   .from("books")
   .upsert(
@@ -87,6 +118,7 @@ const { data: book, error: bookError } = await supabase
       title: metadata.title,
       author: metadata.author || null,
       tarot_system: metadata.tarot_system || null,
+      compatible_tarot_systems: compatibleTarotSystems,
       publication_year: metadata.publication_year || null,
       public_domain: Boolean(metadata.public_domain),
       metadata: metadata.metadata || {},
@@ -99,19 +131,25 @@ const { data: book, error: bookError } = await supabase
 if (bookError) throw new Error(`Book upsert failed: ${bookError.message}`);
 
 let chunkIndex = 0;
-const chunks = structured.cards.flatMap((card) => card.sections.flatMap((section, sectionIndex) => (
-  splitSection(section.content).map((part, partIndex) => ({
+let curatedSectionCount = 0;
+const chunks = structured.cards.flatMap((card) => card.sections.flatMap((section, sectionIndex) => {
+  const curatedSection = curateSection(card, section);
+  if (curatedSection.curation.changed) curatedSectionCount += 1;
+
+  return splitSection(curatedSection.content).map((part, partIndex) => ({
     chunkIndex: chunkIndex++,
     card,
     section,
     sectionIndex,
     partIndex,
+    curation: curatedSection.curation,
     ...part,
-  }))
-)));
+  }));
+}));
 
 console.log(`Book: ${book.title}`);
 console.log(`Prepared ${chunks.length} structured chunks for 78 cards.`);
+console.log(`Source curation ${SOURCE_CURATION_VERSION}: ${curatedSectionCount} sections changed.`);
 
 const rows = [];
 const batchSize = 32;
@@ -143,11 +181,13 @@ for (let offset = 0; offset < chunks.length; offset += batchSize) {
     metadata: {
       parser: structured.parser,
       schema_version: structured.schema_version,
+      coverage_profile: structured.coverage_profile || "full_reference",
       source_file: path.basename(structuredPath),
       section_index: chunk.sectionIndex,
       part_index: chunk.partIndex,
       section_char_start: chunk.charStart,
       section_char_end: chunk.charEnd,
+      source_curation: chunk.curation,
     },
   })));
   console.log(`Embedded ${Math.min(offset + batch.length, chunks.length)}/${chunks.length}`);
