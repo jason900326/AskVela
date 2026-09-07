@@ -4,6 +4,10 @@
   padding: 22px 0 0;
 }
 
+.brandBar + .shell {
+  padding-top: 34px;
+}
+
 .brandMark {
   display: inline-flex;
   align-items: center;
@@ -44,6 +48,10 @@
   .brandBar {
     width: min(100% - 22px, 1120px);
     padding-top: 14px;
+  }
+
+  .brandBar + .shell {
+    padding-top: 24px;
   }
 
   .brandMark {
