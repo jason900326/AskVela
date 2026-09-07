@@ -5,6 +5,7 @@ import test from "node:test";
 const accountPath = new URL("../components/VelaAccount.js", import.meta.url);
 const flowPath = new URL("../components/TarotReadingFlow.js", import.meta.url);
 const authPath = new URL("../lib/supabase-user.js", import.meta.url);
+const browserAuthPath = new URL("../lib/supabase-browser.js", import.meta.url);
 const historyPath = new URL("../lib/reading-history.js", import.meta.url);
 const collectionRoutePath = new URL("../app/api/readings/history/route.js", import.meta.url);
 const detailRoutePath = new URL("../app/api/readings/history/[readingId]/route.js", import.meta.url);
@@ -38,6 +39,18 @@ test("history API authenticates from a bearer token and never accepts a body use
   assert.match(detailRoute, /getAuthenticatedSupabase\(request\)/u);
   assert.doesNotMatch(collectionRoute, /body\?\.userId/u);
   assert.doesNotMatch(detailRoute, /body\?\.userId/u);
+});
+
+test("Supabase Auth supports the current publishable key and the legacy anon fallback", async () => {
+  const [browserAuth, serverAuth] = await Promise.all([
+    readFile(browserAuthPath, "utf8"),
+    readFile(authPath, "utf8"),
+  ]);
+
+  assert.match(browserAuth, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/u);
+  assert.match(browserAuth, /NEXT_PUBLIC_SUPABASE_ANON_KEY/u);
+  assert.match(serverAuth, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/u);
+  assert.match(serverAuth, /NEXT_PUBLIC_SUPABASE_ANON_KEY/u);
 });
 
 test("history save verifies the deterministic draw before calling the atomic RPC", async () => {

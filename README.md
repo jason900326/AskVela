@@ -156,12 +156,13 @@ OPENAI_CHAT_MODEL=gpt-5.5
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 
 NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=... # preferred
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...        # supported legacy fallback
 SUPABASE_SERVICE_ROLE_KEY=...
 TAROT_DRAW_SECRET=... # at least 32 random characters
 ```
 
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally safe for browser use when Row Level Security is enabled. `SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose those server-only values in browser code or commit `.env.local`.
+The publishable key (or legacy anon key) is intentionally safe for browser use when Row Level Security is enabled. `SUPABASE_SERVICE_ROLE_KEY` and `TAROT_DRAW_SECRET` are server-only. Never expose those server-only values in browser code or commit `.env.local`.
 
 ## Draw API
 

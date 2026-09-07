@@ -28,7 +28,7 @@ Users can delete one reading or clear all history. Deleting the Supabase Auth us
 ## Deployment setup
 
 1. Run `supabase/migrations/004_accounts_and_reading_history.sql` in the active Supabase project.
-2. Add `NEXT_PUBLIC_SUPABASE_ANON_KEY` to local and Vercel environments. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only.
+2. Add `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to local and Vercel environments. The legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` remains a supported fallback. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only.
 3. In Supabase Auth URL Configuration, allow the production Vela URL and local development URL as redirect URLs.
 4. Keep Email/Password enabled. Email confirmation may remain enabled; the UI handles both immediate sessions and confirmation-email signup.
 
