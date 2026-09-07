@@ -88,8 +88,8 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Add Layer A/B/C rules that prohibit turning source themes into stable judgments of the user or a third party
 - [x] Require author-by-author attribution when sources differ instead of creating a false consensus
 - [x] Add parser, curation, evidence-balancing, and prompt regression tests
+- [x] Validate extraction, 78-card parsing, and structured-source validation against both committed PDFs in CI
 - [ ] Apply migration `003_historical_comparison_sources.sql` to the active Supabase project
-- [ ] Extract and parse the committed Mathers PDF in the working environment
 - [ ] Re-ingest Waite through the new curation layer
 - [ ] Ingest the curated Mathers structured source
 - [ ] Run live two-book retrieval checks for representative Major, Minor, upright, reversed, and court-card cases
