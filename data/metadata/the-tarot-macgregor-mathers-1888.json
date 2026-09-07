@@ -1,0 +1,19 @@
+{
+  "slug": "the-tarot-macgregor-mathers-1888",
+  "title": "The Tarot: Its Occult Signification, Use in Fortune-Telling, and Method of Play",
+  "author": "S. L. MacGregor Mathers",
+  "tarot_system": "Pre-RWS Continental",
+  "compatible_tarot_systems": [
+    "Rider-Waite-Smith"
+  ],
+  "publication_year": 1888,
+  "public_domain": true,
+  "parser": "mathers-tarot-1888-v1",
+  "metadata": {
+    "language": "en",
+    "source_type": "book",
+    "role": "secondary_historical_reference",
+    "compatibility_mode": "historical_comparison",
+    "notes": "Predates the Rider-Waite-Smith deck. Use as an attributed historical comparison source; never merge disagreements with Waite into a false author consensus. Retrieval-facing meanings are curated to remove direct moral/person labels while preserving the underlying situation or behavior concept."
+  }
+}
