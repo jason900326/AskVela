@@ -187,7 +187,7 @@ export default function TarotReadingFlow() {
         <div>
           <div className="eyebrow">ASKVELA · TAROT READING</div>
           <h1>{stage === "welcome" ? "今天，想問 Vela 什麼？" : "把問題交給牌面慢慢展開。"}</h1>
-          <p>以 Rider–Waite–Smith 為核心，先抽牌，再依原典來源與牌陣位置完成解讀。</p>
+          <p>我會先看牌，再查 Waite 與 Mathers 的原典，把牌義放回你的問題裡；牌面提供的是方向，不是對未來的確定判決。</p>
         </div>
       </header>
 
@@ -254,20 +254,56 @@ export default function TarotReadingFlow() {
 
       {stage === "result" && result && (
         <article className="readingResult">
-          <div className="resultIntro"><div className="eyebrow">VELA&apos;S READING</div><h2>{result.synthesis?.overview || "這次的牌面已經展開。"}</h2><p>{result.synthesis?.narrative}</p></div>
-          <div className="resultCards">
+          <div className="resultIntro">
+            <div className="eyebrow">VELA&apos;S READING</div>
+            <h2>{result.synthesis?.overview || "這次的牌面已經展開。"}</h2>
+            <p className="velaSummary">{result.synthesis?.narrative}</p>
+          </div>
+
+          <div className="resultCards" aria-label="各張牌的重點解讀">
             {result.cards.map((card) => (
               <section className="resultCard" key={`${card.cardId}-${card.position}`}>
                 <div className="resultCardHeading"><div><small>{card.positionLabelZhTw}</small><h3>{card.nameZhTw} <span>{card.nameEn}</span></h3></div><em>{ORIENTATION_LABELS[card.orientation]}</em></div>
                 <p>{card.contextInterpretation}</p>
                 {card.practicalFocus && <div className="practicalFocus"><strong>可以留意</strong><span>{card.practicalFocus}</span></div>}
-                <SourceList sources={card.sources} />
               </section>
             ))}
           </div>
-          {result.synthesis?.crossCardPattern && <section className="synthesisBlock"><div className="eyebrow">牌與牌之間</div><p>{result.synthesis.crossCardPattern}</p></section>}
-          {result.synthesis?.practicalGuidance?.length > 0 && <section className="synthesisBlock"><div className="eyebrow">接下來可以怎麼想</div><ul>{result.synthesis.practicalGuidance.map((item) => <li key={item}>{item}</li>)}</ul></section>}
-          {result.synthesis?.reflectionQuestions?.length > 0 && <section className="synthesisBlock"><div className="eyebrow">留給你的問題</div><ul>{result.synthesis.reflectionQuestions.map((item) => <li key={item}>{item}</li>)}</ul></section>}
+
+          {result.synthesis?.practicalGuidance?.length > 0 && (
+            <section className="quickGuidance">
+              <div className="eyebrow">VELA 的建議</div>
+              <ul>{result.synthesis.practicalGuidance.map((item) => <li key={item}>{item}</li>)}</ul>
+            </section>
+          )}
+
+          <details className="deepReading">
+            <summary>
+              <span>查看完整牌義與分析</span>
+              <small>原典牌義、牌與牌之間、參考來源</small>
+            </summary>
+            <div className="deepReadingBody">
+              <section className="sourceMeaningSection">
+                <div className="eyebrow">原典牌義</div>
+                <div className="sourceMeaningGrid">
+                  {result.cards.map((card) => (
+                    <article className="sourceMeaningCard" key={`source-${card.cardId}-${card.position}`}>
+                      <div className="sourceMeaningHeading"><strong>{card.nameZhTw}</strong><span>{ORIENTATION_LABELS[card.orientation]} · {card.positionLabelZhTw}</span></div>
+                      <p>{card.sourceMeaning}</p>
+                      {card.sourceLimitations?.length > 0 && (
+                        <ul className="sourceLimitations">{card.sourceLimitations.map((item) => <li key={item}>{item}</li>)}</ul>
+                      )}
+                      <SourceList sources={card.sources} />
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              {result.synthesis?.crossCardPattern && <section className="synthesisBlock"><div className="eyebrow">牌與牌之間</div><p>{result.synthesis.crossCardPattern}</p></section>}
+              {result.synthesis?.reflectionQuestions?.length > 0 && <section className="synthesisBlock"><div className="eyebrow">留給你的問題</div><ul>{result.synthesis.reflectionQuestions.map((item) => <li key={item}>{item}</li>)}</ul></section>}
+            </div>
+          </details>
+
           <p className="readingDisclaimer">{result.disclaimer}</p>
           <div className="flowActions centered"><button className="ghostButton" type="button" onClick={resetReading}>開始新的占卜</button></div>
         </article>
