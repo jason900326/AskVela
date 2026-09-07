@@ -171,22 +171,68 @@ textarea::placeholder { color: #827689; }
 .answerText {
   margin-top: 12px;
   color: #eee8f1;
-  white-space: pre-wrap;
   line-height: 1.85;
+}
+.answerText > :first-child { margin-top: 0; }
+.answerText > :last-child { margin-bottom: 0; }
+.answerText h1,
+.answerText h2,
+.answerText h3 {
+  margin: 1.7em 0 0.65em;
+  color: var(--text);
+  line-height: 1.35;
+}
+.answerText h1 { font-size: 1.35rem; }
+.answerText h2 { font-size: 1.18rem; }
+.answerText h3 { font-size: 1.05rem; }
+.answerText p { margin: 0 0 1em; }
+.answerText strong { color: #fff; font-weight: 800; }
+.answerText ul,
+.answerText ol { margin: 0.75em 0 1.15em; padding-left: 1.45em; }
+.answerText li { margin: 0.35em 0; }
+.answerText blockquote {
+  margin: 1em 0;
+  padding: 0.15em 0 0.15em 1em;
+  color: var(--muted);
+  border-left: 3px solid var(--accent);
+}
+.answerText table {
+  display: block;
+  width: 100%;
+  margin: 1em 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.answerText th,
+.answerText td { padding: 9px 12px; border: 1px solid var(--line); text-align: left; }
+.answerText th { color: var(--text); background: rgba(255,255,255,0.04); }
+.answerText code {
+  padding: 0.12em 0.35em;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.07);
 }
 .sources { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
 .sources h3 { margin: 0 0 12px; font-size: 0.85rem; color: var(--muted); }
 .sourceItem {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.045);
+}
+.sourceItem:last-child { border-bottom: 0; }
+.sourceHeading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 18px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.045);
 }
-.sourceItem:last-child { border-bottom: 0; }
 .sourceItem strong { font-size: 0.9rem; }
 .sourceItem span { color: #8f8497; font-size: 0.76rem; text-align: right; }
+.sourceItem ul {
+  margin: 8px 0 0;
+  padding-left: 1.15em;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
 
 .infoGrid {
   display: grid;
@@ -211,6 +257,6 @@ textarea::placeholder { color: #827689; }
   .askPanel { padding: 18px; border-radius: 22px; }
   .panelHeading { flex-direction: column; gap: 12px; }
   .infoGrid { grid-template-columns: 1fr; }
-  .sourceItem { align-items: flex-start; flex-direction: column; gap: 4px; }
-  .sourceItem span { text-align: left; }
+  .sourceHeading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .sourceHeading span { text-align: left; }
 }

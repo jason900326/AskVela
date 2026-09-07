@@ -37,11 +37,11 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Update retrieval to filter by card and orientation before semantic ranking
 - [x] Add validation that all 78 cards are present
 - [x] Add parser and query-identification tests for Major, Minor, upright, and reversed meanings
-- [ ] Apply migration `002_structured_tarot.sql` to the active Supabase project
-- [ ] Run structured ingestion for the Waite source in the active Supabase project
-- [ ] Run live retrieval checks for representative Major, Minor, upright, and reversed queries
-- [ ] Confirm Traditional Chinese answers retain English card terminology where useful
-- [ ] Confirm insufficient sources produce an explicit limitation
+- [x] Apply migration `002_structured_tarot.sql` to the active Supabase project
+- [x] Run structured ingestion for the Waite source in the active Supabase project
+- [x] Run live retrieval checks for representative Major, Minor, upright, and reversed queries
+- [x] Confirm Traditional Chinese answers retain English card terminology where useful
+- [x] Confirm insufficient sources produce an explicit limitation
 
 **Exit condition:** Every card and orientation can reliably retrieve the correct Waite material with traceable source metadata.
 
