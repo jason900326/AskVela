@@ -73,6 +73,46 @@
 .historyPanel h2 { margin: 7px 0 9px; font: 500 1.75rem/1.2 Georgia,serif; }
 .accountModal > p { margin: 0 34px 20px 0; color: var(--muted); font-size: .84rem; line-height: 1.65; }
 .accountClose { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); background: transparent; font-size: 1.2rem; }
+.googleAuthButton {
+  width: 100%;
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 13px;
+  color: #f4eef7;
+  background: rgba(255,255,255,.045);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+}
+.googleAuthButton:hover:not(:disabled) { border-color: rgba(199,167,255,.42); background: rgba(199,167,255,.07); }
+.googleAuthButton:disabled { opacity: .6; cursor: wait; }
+.googleAuthMark {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #1b1520;
+  background: #fff;
+  font-size: .78rem;
+  font-weight: 900;
+}
+.accountDivider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+  color: #807487;
+  font-size: .68rem;
+}
+.accountDivider::before,
+.accountDivider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+.accountDivider span { white-space: nowrap; }
 .accountModal form { display: grid; gap: 13px; }
 .accountModal label { display: grid; gap: 6px; color: #cfc4d4; font-size: .76rem; font-weight: 800; }
 .accountModal input { width: 100%; min-height: 45px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 13px; outline: 0; color: var(--text); background: rgba(5,4,8,.4); font: inherit; }
