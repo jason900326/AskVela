@@ -63,7 +63,7 @@ export default function VelaExperience() {
     setGuideResult(recommendExperience(text));
   }
 
-  function useQuickPrompt(text) {
+  function applyQuickPrompt(text) {
     setGuideInput(text);
     setGuideResult(recommendExperience(text));
   }
@@ -107,7 +107,7 @@ export default function VelaExperience() {
         </form>
 
         <div className="velaQuickPrompts" aria-label="快速開始">
-          {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => useQuickPrompt(text)}>{text}</button>)}
+          {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => applyQuickPrompt(text)}>{text}</button>)}
         </div>
 
         {recommendation && (
