@@ -4,11 +4,12 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 3 — final live fixed-draw smoke check**
+- Current phase: **Phase 5 — follow-up conversation (not started)**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
 - Historical comparison source: S. L. MacGregor Mathers, *The Tarot* (1888)
+- Vela voice contract: [docs/VELA_VOICE.md](docs/VELA_VOICE.md)
 
 ## Phase 0 — Freeze V1 scope
 
@@ -99,24 +100,28 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Mark curated retrieval wording as non-verbatim and prohibit quote-style presentation of normalized source text
 - [x] Make fixed-reading retrieval query both V1 books separately and fail loudly instead of silently degrading to one source
 - [x] Add a `smoke:reading` command that exercises the real fixed draw → evidence → Layer A/B/C interpretation pipeline
-- [ ] Run the final live `npm run smoke:reading` check against the active Supabase/OpenAI environment
+- [x] Run the final live `npm run smoke:reading` check against the active Supabase/OpenAI environment
 
 **Exit condition:** A valid fixed draw produces a coherent Traditional Chinese reading grounded in both curated V1 sources; Waite and Mathers remain separately attributable, historical person-label wording cannot become a direct character attack, and the live `smoke:reading` check passes before UX work begins.
 
 ## Phase 4 — Core V1 UX
 
-- [ ] Landing and start-reading state
-- [ ] Question input state
-- [ ] Spread selection state
-- [ ] Draw state
-- [ ] Reveal state
-- [ ] Loading/progress state while sources and interpretation are generated
-- [ ] Reading result state
-- [ ] Retryable error states that preserve an existing draw
-- [ ] Responsive desktop and mobile layouts
-- [ ] Accessible keyboard and screen-reader labels
-- [ ] Lightweight card reveal motion
-- [ ] End-to-end test of the canonical flow
+- [x] Landing and start-reading state
+- [x] Question input state
+- [x] Spread selection state
+- [x] Draw state
+- [x] Reveal state
+- [x] Loading/progress state while sources and interpretation are generated
+- [x] Reading result state
+- [x] Retryable error states that preserve an existing draw
+- [x] Responsive desktop and mobile layouts
+- [x] Accessible keyboard and screen-reader labels
+- [x] Lightweight card reveal motion
+- [x] Add concise, conversational Vela voice guidance and regression tests
+- [x] Layer the result UI so the short reading is primary and source-heavy analysis is collapsed by default
+- [x] End-to-end test of the canonical flow
+
+The canonical anonymous flow was manually exercised through the deployed UI through question → spread → draw → reveal → interpretation → result. Automated Phase 4 contract tests protect the stage sequence, fixed-draw retry path, progressive disclosure, and result typography; CI continues to cover lint, unit tests, source validation, and build.
 
 **Exit condition:** A first-time user can complete the entire reading without developer guidance.
 
