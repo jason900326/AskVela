@@ -19,7 +19,8 @@ test("Phase 6 keeps login optional and transfers an active anonymous reading aft
 
   assert.match(account, /signInWithPassword/u);
   assert.match(account, /signUp/u);
-  assert.match(account, /activeReading && !user/u);
+  assert.match(account, /const activeEntry = activeAstrology \|\| activeReading/u);
+  assert.match(account, /activeEntry && !user/u);
   assert.match(account, /method: "POST"/u);
   assert.match(account, /登入以保存/u);
   assert.match(flow, /<VelaAccount activeReading=\{activeReading\}/u);
