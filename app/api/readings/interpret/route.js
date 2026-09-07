@@ -17,6 +17,7 @@ export async function POST(request) {
       spreadId: body?.spreadId,
       requestId,
       readingId: body?.readingId,
+      selectedIndices: body?.selectedIndices,
     });
 
     return NextResponse.json(result, {
@@ -41,4 +42,3 @@ export async function POST(request) {
     );
   }
 }
-
