@@ -15,21 +15,40 @@ const REQUEST = {
 };
 
 function sourceFor(cardId) {
-  return [{
-    id: `source-${cardId}`,
-    book_id: "book-1",
-    book_title: "The Pictorial Key to the Tarot",
-    author: "Arthur Edward Waite",
-    chapter: "The Cards and Their Symbolism",
-    card_id: cardId,
-    card_name: cardId,
-    card_name_zh_tw: cardId,
-    orientation: null,
-    section_type: "description_symbolism",
-    source_location: { pdf_page_start: 42 },
-    chunk_index: 1,
-    content: `Grounded source for ${cardId}`,
-  }];
+  return [
+    {
+      id: `waite-${cardId}`,
+      book_id: "book-waite",
+      book_title: "The Pictorial Key to the Tarot",
+      author: "Arthur Edward Waite",
+      tarot_system: "Rider-Waite-Smith",
+      chapter: "The Cards and Their Symbolism",
+      card_id: cardId,
+      card_name: cardId,
+      card_name_zh_tw: cardId,
+      orientation: null,
+      section_type: "description_symbolism",
+      source_location: { pdf_page_start: 42 },
+      chunk_index: 1,
+      content: `Waite grounded source for ${cardId}`,
+    },
+    {
+      id: `mathers-${cardId}`,
+      book_id: "book-mathers",
+      book_title: "The Tarot",
+      author: "S. L. MacGregor Mathers",
+      tarot_system: "Pre-RWS Continental",
+      chapter: "Meanings of the Cards",
+      card_id: cardId,
+      card_name: cardId,
+      card_name_zh_tw: cardId,
+      orientation: null,
+      section_type: "divinatory_meaning",
+      source_location: { pdf_page_start: 15 },
+      chunk_index: 2,
+      content: `Mathers grounded source for ${cardId}`,
+    },
+  ];
 }
 
 test("interpretation executes A then B then C and returns traceable structured cards", async () => {
@@ -85,6 +104,7 @@ test("interpretation executes A then B then C and returns traceable structured c
   assert.equal(result.cards.length, 3);
   assert.deepEqual(result.cards[0].citationIds, ["card-1-source-1"]);
   assert.equal(result.cards[0].sources[0].book, "The Pictorial Key to the Tarot");
+  assert.equal(new Set(result.cards[0].sources.map((source) => source.book)).size, 2);
   assert.equal(result.synthesis.crossCardPattern, "過去到未來的推進");
   assert.match(result.disclaimer, /不保證未來/u);
 });
