@@ -1,0 +1,58 @@
+.brandBar {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 22px 0 0;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: .16em;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.brandMarkIcon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(199,167,255,.28);
+  border-radius: 50%;
+  color: var(--accent);
+  background: radial-gradient(circle at 50% 50%, rgba(199,167,255,.12), transparent 68%);
+  box-shadow: 0 0 28px rgba(158,103,224,.10);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.velaHeader .eyebrow {
+  font-size: 0;
+}
+
+.velaHeader .eyebrow::after {
+  content: "VELA · TAROT READING";
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+@media (max-width: 760px) {
+  .brandBar {
+    width: min(100% - 22px, 1120px);
+    padding-top: 14px;
+  }
+
+  .brandMark {
+    gap: 8px;
+    font-size: .72rem;
+  }
+
+  .brandMarkIcon {
+    width: 29px;
+    height: 29px;
+  }
+}
