@@ -5,6 +5,7 @@
   "tarot_system": "Rider-Waite-Smith",
   "publication_year": 1911,
   "public_domain": true,
+  "parser": "waite-pictorial-key-v1",
   "metadata": {
     "language": "en",
     "source_type": "book",

@@ -8,8 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "node --test",
     "extract:pdf": "node scripts/extract-pdf.js",
-    "ingest": "node --env-file=.env.local scripts/ingest-book.js"
+    "parse:waite": "node scripts/parse-waite.js",
+    "validate:tarot": "node scripts/validate-tarot-structure.js",
+    "ingest": "node --env-file=.env.local scripts/ingest-book.js",
+    "ingest:tarot": "node --env-file=.env.local scripts/ingest-tarot-book.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",

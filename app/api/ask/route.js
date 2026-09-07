@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOpenAI, CHAT_MODEL } from "../../../lib/openai";
 import { retrieveKnowledge } from "../../../lib/retrieval";
 import { buildGroundedInput, buildTarotInstructions } from "../../../lib/tarot-prompt";
+import { identifyTarotQuery } from "../../../lib/tarot-cards";
 
 export const runtime = "nodejs";
 
@@ -19,9 +20,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "問題太長，請控制在 1200 字元內。" }, { status: 400 });
     }
 
+    const identified = identifyTarotQuery(question);
     const chunks = await retrieveKnowledge(question, {
       tarotSystem,
-      matchCount: 8,
+      matchCount: identified.cardIds.length ? 12 : 8,
     });
 
     if (chunks.length === 0) {
@@ -45,6 +47,12 @@ export async function POST(request) {
       book: chunk.book_title,
       author: chunk.author,
       chapter: chunk.chapter,
+      cardId: chunk.card_id,
+      cardName: chunk.card_name,
+      cardNameZhTw: chunk.card_name_zh_tw,
+      orientation: chunk.orientation,
+      sectionType: chunk.section_type,
+      sourceLocation: chunk.source_location,
       chunkIndex: chunk.chunk_index,
       similarity: chunk.similarity,
     }));
@@ -52,6 +60,12 @@ export async function POST(request) {
     return NextResponse.json({
       answer: response.output_text || "目前沒有產生可顯示的回答。",
       sources,
+      identifiedCards: identified.cards.map((card) => ({
+        cardId: card.card_id,
+        nameEn: card.name_en,
+        nameZhTw: card.name_zh_tw,
+      })),
+      orientation: identified.orientation,
     });
   } catch (error) {
     console.error("/api/ask failed", error);

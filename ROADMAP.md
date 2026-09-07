@@ -24,19 +24,22 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Phase 1 — Structured tarot knowledge
 
-- [ ] Define the canonical 78-card registry and stable card IDs
-- [ ] Add Traditional Chinese card names and aliases
-- [ ] Define card-section metadata schema
-- [ ] Extend the database for card, orientation, section type, and source location
-- [ ] Build a parser for *The Pictorial Key to the Tarot*
-- [ ] Extract Major Arcana sections
-- [ ] Extract Minor Arcana sections
+- [x] Define the canonical 78-card registry and stable card IDs
+- [x] Add Traditional Chinese card names and aliases
+- [x] Define card-section metadata schema
+- [x] Extend the database for card, orientation, section type, and source location
+- [x] Build a parser for *The Pictorial Key to the Tarot*
+- [x] Extract Major Arcana sections
+- [x] Extract Minor Arcana sections
 - [ ] Separate description, symbolism, divinatory meaning, and reversed meaning
-- [ ] Preserve author, book, chapter, and source location
-- [ ] Update ingestion to write structured metadata
-- [ ] Update retrieval to filter by card and orientation before semantic ranking
-- [ ] Add validation that all 78 cards are present
-- [ ] Add representative retrieval tests for Major, Minor, upright, and reversed meanings
+- [x] Preserve author, book, chapter, and source location
+- [x] Update ingestion to write structured metadata
+- [x] Update retrieval to filter by card and orientation before semantic ranking
+- [x] Add validation that all 78 cards are present
+- [x] Add parser and query-identification tests for Major, Minor, upright, and reversed meanings
+- [ ] Apply migration `002_structured_tarot.sql` to the active Supabase project
+- [ ] Run structured ingestion for the Waite source in the active Supabase project
+- [ ] Run live retrieval checks for representative Major, Minor, upright, and reversed queries
 - [ ] Confirm Traditional Chinese answers retain English card terminology where useful
 - [ ] Confirm insufficient sources produce an explicit limitation
 

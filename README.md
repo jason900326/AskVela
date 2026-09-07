@@ -36,13 +36,15 @@ Astrology, dream interpretation, social features, voice, complex animation, nati
 ```text
 User question
     ↓
+Card + orientation identification
+    ↓
 Next.js /api/ask
     ↓
 OpenAI embedding
     ↓
-Supabase pgvector similarity search
+Exact card/orientation database filter
     ↓
-Relevant book chunks
+pgvector ranking inside the filtered source material
     ↓
 OpenAI Responses API
     ↓
@@ -74,6 +76,8 @@ AskVela/
 ├── data/
 │   ├── metadata/
 │   │   └── the-pictorial-key-to-the-tarot.json
+│   ├── tarot/
+│   │   └── cards.json                # canonical 78-card registry
 │   ├── processed/                    # generated locally; ignored by git
 │   └── raw/
 │       ├── public-domain/            # public-domain sources may be committed
@@ -85,13 +89,22 @@ AskVela/
 │   ├── openai.js
 │   ├── retrieval.js
 │   ├── supabase-admin.js
-│   └── tarot-prompt.js
+│   ├── tarot-cards.js
+│   ├── tarot-prompt.js
+│   └── waite-structure-parser.js
 ├── scripts/
 │   ├── extract-pdf.js
-│   └── ingest-book.js
+│   ├── ingest-book.js
+│   ├── ingest-tarot-book.js
+│   ├── parse-waite.js
+│   └── validate-tarot-structure.js
 ├── supabase/
 │   └── migrations/
-│       └── 001_knowledge_base.sql
+│       ├── 001_knowledge_base.sql
+│       └── 002_structured_tarot.sql
+├── test/
+│   ├── tarot-cards.test.js
+│   └── waite-structure-parser.test.js
 └── ROADMAP.md
 ```
 
@@ -126,19 +139,22 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## 3. Create the knowledge-base tables
 
-Run the migration in your Supabase project:
+Run both migrations in order in your Supabase project:
 
 ```text
 supabase/migrations/001_knowledge_base.sql
+supabase/migrations/002_structured_tarot.sql
 ```
 
 It creates:
 
 - `books`
 - `knowledge_chunks`
+- `tarot_cards`
 - a 1536-dimensional pgvector embedding column
 - HNSW vector index
-- `match_knowledge_chunks(...)` retrieval RPC
+- card/orientation/source-location columns
+- `match_structured_tarot_chunks(...)`, which filters structurally before vector ranking
 
 The retrieval RPC is restricted to the Supabase `service_role` because AskVela calls it server-side.
 
@@ -175,7 +191,7 @@ npm run extract:pdf -- data/raw/public-domain/The-Pictorial-Key-to-the-Tarot.pdf
 
 This generates a local text file under `data/processed/`. Generated extraction files are ignored because they can be rebuilt from the permitted source.
 
-## 6. Create embeddings and ingest the book
+## 6. Parse, validate, and ingest structured tarot knowledge
 
 The metadata for the first book is included at:
 
@@ -183,21 +199,40 @@ The metadata for the first book is included at:
 data/metadata/the-pictorial-key-to-the-tarot.json
 ```
 
-Run the extraction command first, then pass the generated text path to:
+Run the extraction command first, then parse all 78 card sections:
 
 ```bash
-npm run ingest -- \
+npm run parse:waite -- \
   data/metadata/the-pictorial-key-to-the-tarot.json \
-  data/processed/<generated-file>.txt
+  data/processed/The-Pictorial-Key-to-the-Tarot.txt
 ```
 
-The ingestion script will:
+Validate the generated structure before any database write:
 
-1. upsert the book into `books`
-2. split the extracted text into overlapping chunks
-3. create 1536-dimensional embeddings
-4. replace that book's old chunks on re-ingestion
-5. store chunks and embeddings in Supabase
+```bash
+npm run validate:tarot -- \
+  data/processed/The-Pictorial-Key-to-the-Tarot.structured.json
+```
+
+After applying both migrations, create embeddings and replace the old unstructured chunks:
+
+```bash
+npm run ingest:tarot -- \
+  data/metadata/the-pictorial-key-to-the-tarot.json \
+  data/processed/The-Pictorial-Key-to-the-Tarot.structured.json
+```
+
+The structured workflow will:
+
+1. identify all 78 cards using stable IDs and Traditional Chinese aliases
+2. preserve description/symbolism, upright, reversed, and additional Waite meanings as separate source sections
+3. record book, author, chapter, PDF page, and source URL
+4. validate deck completeness and required orientation evidence
+5. upsert the canonical card registry and book record
+6. create embeddings within each structured section
+7. replace that book's old unstructured chunks
+
+`npm run ingest` remains available for non-tarot source material, but tarot books should use a source-specific parser and `ingest:tarot` so card metadata is never discarded.
 
 ## 7. Run AskVela
 
@@ -235,8 +270,8 @@ Do **not** create a second database or RAG system. Add another metadata record a
 
 Every chunk must preserve its source identity. Multi-book output must present agreements and disagreements explicitly instead of blending authors together.
 
-## Next knowledge-quality upgrade
+## Current Phase 1 status
 
-The current ingestion semantically chunks the complete book, but does not yet create reliable card-specific metadata such as `card_id`, `card_name`, `upright`, `reversed`, section type, or precise source location.
+The repository now contains the first complete structured-parser implementation for Waite. Its automated test extracts the committed PDF and verifies all 78 cards, Major and Minor Arcana, upright and reversed evidence, and traceable source locations.
 
-The next implementation phase is the **Tarot structure parser** in [ROADMAP.md](ROADMAP.md). It must recognize all 78 card sections in _The Pictorial Key to the Tarot_ and attach structured metadata before the complete draw-and-interpretation flow is built.
+Phase 1 is not complete until migration `002` has been applied to the actual Supabase project, the structured output has been ingested, and representative live queries have been checked in Traditional Chinese. Continue to use [ROADMAP.md](ROADMAP.md) as the source of truth.
