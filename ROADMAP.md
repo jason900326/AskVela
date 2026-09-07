@@ -4,7 +4,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 3 — Interpretation engine / multi-source curation and validation**
+- Current phase: **Phase 3 — final live fixed-draw smoke check**
 - V1 scope: frozen in [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Existing foundation: Next.js, OpenAI, Supabase/pgvector, PDF extraction, ingestion, grounded Q&A API
 - Primary source: Arthur Edward Waite, *The Pictorial Key to the Tarot*
@@ -75,7 +75,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Add evaluation cases for source fidelity and hallucination
 - [x] Keep the existing `/api/ask` endpoint as an internal knowledge-quality tool
 
-### Multi-source curation before Phase 4
+### Multi-source curation and live validation
 
 - [x] Add Mathers 1888 as a second public-domain historical comparison source
 - [x] Add Mathers metadata without falsely labeling it as Rider-Waite-Smith
@@ -89,14 +89,19 @@ This file is the single development checklist for AskVela. Work follows the phas
 - [x] Require author-by-author attribution when sources differ instead of creating a false consensus
 - [x] Add parser, curation, evidence-balancing, and prompt regression tests
 - [x] Validate extraction, 78-card parsing, and structured-source validation against both committed PDFs in CI
-- [ ] Apply migration `003_historical_comparison_sources.sql` to the active Supabase project
-- [ ] Re-ingest Waite through the new curation layer
-- [ ] Ingest the curated Mathers structured source
-- [ ] Run live two-book retrieval checks for representative Major, Minor, upright, reversed, and court-card cases
-- [ ] Run live reading evaluations for relationship/person questions and confirm the model does not call the user or another person bad, wicked, vicious, deceitful, toxic, foolish, or untrustworthy as a character judgment
-- [ ] Confirm disagreements between Waite and Mathers remain explicitly attributed to their respective authors
+- [x] Apply migration `003_historical_comparison_sources.sql` to the active Supabase project
+- [x] Re-ingest Waite through the new curation layer
+- [x] Ingest the curated Mathers structured source
+- [x] Run live two-book knowledge retrieval checks for Major, Minor, reversed, court-card, and author-comparison cases
+- [x] Confirm live knowledge answers preserve difficult themes without directly labeling the user or a third party as bad, wicked, vicious, deceitful, toxic, foolish, or untrustworthy
+- [x] Confirm disagreements between Waite and Mathers remain explicitly attributed to their respective authors
+- [x] Make `/api/ask` respect an explicitly requested author instead of showing unrelated source books
+- [x] Mark curated retrieval wording as non-verbatim and prohibit quote-style presentation of normalized source text
+- [x] Make fixed-reading retrieval query both V1 books separately and fail loudly instead of silently degrading to one source
+- [x] Add a `smoke:reading` command that exercises the real fixed draw → evidence → Layer A/B/C interpretation pipeline
+- [ ] Run the final live `npm run smoke:reading` check against the active Supabase/OpenAI environment
 
-**Exit condition:** A valid draw produces a coherent Traditional Chinese reading grounded in the curated source set; Waite and Mathers remain separately attributable, historical person-label wording cannot become a direct character attack, and live two-book evaluations pass before UX work begins.
+**Exit condition:** A valid fixed draw produces a coherent Traditional Chinese reading grounded in both curated V1 sources; Waite and Mathers remain separately attributable, historical person-label wording cannot become a direct character attack, and the live `smoke:reading` check passes before UX work begins.
 
 ## Phase 4 — Core V1 UX
 
