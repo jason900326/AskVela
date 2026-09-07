@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./reading.css";
 import "./follow-up.css";
+import "./immersive-reading.css";
 
 export const metadata = {
   title: "AskVela",
