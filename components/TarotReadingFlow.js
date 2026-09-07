@@ -254,7 +254,7 @@ export default function TarotReadingFlow() {
 
       {stage === "result" && result && (
         <article className="readingResult">
-          <div className="resultIntro"><div className="eyebrow">VELA'S READING</div><h2>{result.synthesis?.overview || "這次的牌面已經展開。"}</h2><p>{result.synthesis?.narrative}</p></div>
+          <div className="resultIntro"><div className="eyebrow">VELA&apos;S READING</div><h2>{result.synthesis?.overview || "這次的牌面已經展開。"}</h2><p>{result.synthesis?.narrative}</p></div>
           <div className="resultCards">
             {result.cards.map((card) => (
               <section className="resultCard" key={`${card.cardId}-${card.position}`}>
