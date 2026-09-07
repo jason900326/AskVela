@@ -31,23 +31,32 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
   const selectedSign = useMemo(() => ZODIAC_SIGNS.find((sign) => sign.id === signId) || null, [signId]);
 
   useEffect(() => {
-    try {
-      const raw = window.sessionStorage.getItem(ASTROLOGY_SESSION_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (saved?.version === 1 && saved?.kind === "astrology" && saved?.readingId && saved?.result) {
-          setReading(saved);
-          setSignId(saved.sign?.id || "");
-          setPeriod(saved.period || "daily");
-        } else {
-          window.sessionStorage.removeItem(ASTROLOGY_SESSION_KEY);
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      try {
+        const raw = window.sessionStorage.getItem(ASTROLOGY_SESSION_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved?.version === 1 && saved?.kind === "astrology" && saved?.readingId && saved?.result) {
+            setReading(saved);
+            setSignId(saved.sign?.id || "");
+            setPeriod(saved.period || "daily");
+          } else {
+            window.sessionStorage.removeItem(ASTROLOGY_SESSION_KEY);
+          }
         }
+      } catch {
+        window.sessionStorage.removeItem(ASTROLOGY_SESSION_KEY);
+      } finally {
+        if (!cancelled) setSessionRestored(true);
       }
-    } catch {
-      window.sessionStorage.removeItem(ASTROLOGY_SESSION_KEY);
-    } finally {
-      setSessionRestored(true);
-    }
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
