@@ -10,6 +10,7 @@ import "./astrology.css";
 import "./dream.css";
 import "./phase8-polish.css";
 import "./phase9-ui.css";
+import "./phase9-accessibility.css";
 
 export const metadata = {
   title: "Vela",
