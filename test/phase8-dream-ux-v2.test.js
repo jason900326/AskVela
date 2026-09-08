@@ -25,6 +25,7 @@ test("Dream result prioritizes meaning and mindset while secondary material is c
   assert.match(flow, /<details className="dreamDetails">/u);
   assert.match(flow, /如果你想再往下想一點（可選）/u);
   assert.match(flow, /解讀依據 · Freud 為主/u);
+  assert.match(flow, /解讀依據 · Freud 原文檢索/u);
   assert.doesNotMatch(flow, /這次解讀用了哪些依據/u);
 });
 
@@ -48,11 +49,14 @@ test("Dream entry headline is compact on mobile", async () => {
   assert.match(css, /@media \(max-width: 720px\)[\s\S]*\.dreamIntroHero h1\s*\{[^}]*font-size:\s*1\.7rem/isu);
 });
 
-test("runtime source contract explicitly identifies curated Freud-first principles", async () => {
+test("runtime source contract prefers Freud full-book RAG and keeps an explicit curated fallback", async () => {
   const source = await readFile(sourcePath, "utf8");
-  assert.match(source, /mode: "curated-public-domain-principles"/u);
+  assert.match(source, /fullRagMode: "freud-full-book-rag"/u);
+  assert.match(source, /fallbackMode: "curated-public-domain-principles"/u);
   assert.match(source, /primaryBookId: DREAM_BOOKS\.freud\.id/u);
-  assert.match(source, /不是每次回答都對完整書籍做逐段 RAG 檢索/u);
+  assert.match(source, /primaryBookSlug: DREAM_BOOKS\.freud\.slug/u);
+  assert.match(source, /若 Freud 全文已完成向量索引/u);
+  assert.match(source, /若索引尚未建立，才退回/u);
   const themeBlock = source.slice(source.indexOf("export const DREAM_THEME_EVIDENCE"), source.indexOf("export const DREAM_SOURCE_GUARDRAILS"));
   assert.doesNotMatch(themeBlock, /symbolicMotif|compensation/u);
 });
