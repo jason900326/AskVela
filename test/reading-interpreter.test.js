@@ -110,6 +110,7 @@ test("interpretation executes A then B then C then grounded Vela speech", async 
   assert.equal(calls[1].text.format.name, "askvela_context_interpretation");
   assert.equal(calls[2].text.format.name, "askvela_synthesis");
   assert.equal(calls[3].text.format.name, "askvela_speech");
+  assert.equal(calls[3].max_output_tokens, 520);
   assert.match(calls[1].input, /原典牌義 1/u);
   assert.match(calls[2].input, /情境解讀 1/u);
   assert.match(calls[3].input, /分析層把牌面整理/u);
@@ -125,6 +126,7 @@ test("interpretation executes A then B then C then grounded Vela speech", async 
   assert.equal(result.synthesis.crossCardPattern, "過去到未來的推進");
   assert.equal(result.velaSpeech.status, "rendered");
   assert.equal(result.velaSpeech.version, "tarot-speech-v1");
+  assert.deepEqual(result.velaSpeech.fallbackFields, []);
   assert.match(result.disclaimer, /不保證未來/u);
 });
 
@@ -155,6 +157,7 @@ test("speech renderer failure falls back to grounded Layer C without failing the
     );
     assert.equal(callIndex, 4);
     assert.equal(result.velaSpeech.status, "fallback");
+    assert.deepEqual(result.velaSpeech.fallbackFields, ["overview", "narrative"]);
     assert.equal(result.synthesis.overview, "分析層摘要");
     assert.equal(result.synthesis.narrative, "分析層把牌面整理成一段連續的轉變。");
     assert.deepEqual(result.analysisSynthesis, {
