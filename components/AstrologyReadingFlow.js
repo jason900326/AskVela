@@ -34,6 +34,8 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
   const [sessionRestored, setSessionRestored] = useState(false);
 
   const selectedSign = useMemo(() => ZODIAC_SIGNS.find((sign) => sign.id === signId) || null, [signId]);
+  const speechOverview = reading?.velaSpeech?.overview || reading?.result?.overview || "";
+  const speechNarrative = reading?.velaSpeech?.narrative || reading?.result?.overall || "";
 
   useEffect(() => {
     let cancelled = false;
@@ -222,43 +224,47 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
             <div>
               <div className="eyebrow">VELA&apos;S ASTROLOGY NOTE</div>
               <small>{reading.sign?.nameZhTw} · {reading.period === "daily" ? "今日運勢" : "本週運勢"} · {reading.skyContext?.dateRange?.start}{reading.period === "weekly" ? ` ～ ${reading.skyContext?.dateRange?.end}` : ""}</small>
-              <h2>{reading.result?.overview}</h2>
+              <h2>{speechOverview}</h2>
+              <p className="velaSummary">{speechNarrative}</p>
             </div>
           </header>
 
-          <div className="astrologyResultGrid">
-            <section><span>01</span><h3>整體</h3><p>{reading.result?.overall}</p></section>
-            <section><span>02</span><h3>關係</h3><p>{reading.result?.relationships}</p></section>
-            <section><span>03</span><h3>工作／學習</h3><p>{reading.result?.workStudy}</p></section>
-            <section><span>04</span><h3>能量與節奏</h3><p>{reading.result?.energy}</p></section>
-          </div>
-
-          <section className="astrologyGuidance">
-            <div className="eyebrow">今天可以先做</div>
-            <ul>{(reading.result?.practicalGuidance || []).map((item) => <li key={item}>{item}</li>)}</ul>
-          </section>
-
-          <section className="astrologyReflection">
-            <div className="eyebrow">留給你的問題</div>
-            <p>{reading.result?.reflectionQuestion}</p>
-          </section>
-
-          <details className="astrologyBasis">
-            <summary>這次解讀是怎麼來的？</summary>
+          <details className="astrologyBasis astrologyFullAnalysis">
+            <summary>查看完整星座分析</summary>
             <div>
-              <p>{reading.result?.basisNote}</p>
-              <p>{reading.sources?.methodNote}</p>
-              <div className="eyebrow">實際天象</div>
-              <ul>{(reading.skyContext?.signals || []).map((signal) => <li key={signal}>{signal}</li>)}</ul>
-              <div className="eyebrow">參考來源</div>
-              <ul>
-                {(reading.sources?.references || []).map((reference) => (
-                  <li key={`${reference.sourceId}-${reference.location}`}>
-                    <strong>{reference.author}</strong> — <em>{reference.title}</em>，{reference.edition}，{reference.location}
-                  </li>
-                ))}
-              </ul>
-              <small>{reading.skyContext?.method?.precisionNote}</small>
+              <div className="astrologyResultGrid">
+                <section><span>01</span><h3>整體</h3><p>{reading.result?.overall}</p></section>
+                <section><span>02</span><h3>關係</h3><p>{reading.result?.relationships}</p></section>
+                <section><span>03</span><h3>工作／學習</h3><p>{reading.result?.workStudy}</p></section>
+                <section><span>04</span><h3>能量與節奏</h3><p>{reading.result?.energy}</p></section>
+              </div>
+
+              <section className="astrologyGuidance">
+                <div className="eyebrow">可以怎麼做</div>
+                <ul>{(reading.result?.practicalGuidance || []).map((item) => <li key={item}>{item}</li>)}</ul>
+              </section>
+
+              <section className="astrologyReflection">
+                <div className="eyebrow">留給你的問題</div>
+                <p>{reading.result?.reflectionQuestion}</p>
+              </section>
+
+              <section className="astrologyMethodDetail">
+                <div className="eyebrow">這次解讀是怎麼來的？</div>
+                <p>{reading.result?.basisNote}</p>
+                <p>{reading.sources?.methodNote}</p>
+                <div className="eyebrow">實際天象</div>
+                <ul>{(reading.skyContext?.signals || []).map((signal) => <li key={signal}>{signal}</li>)}</ul>
+                <div className="eyebrow">參考來源</div>
+                <ul>
+                  {(reading.sources?.references || []).map((reference) => (
+                    <li key={`${reference.sourceId}-${reference.location}`}>
+                      <strong>{reference.author}</strong> — <em>{reference.title}</em>，{reference.edition}，{reference.location}
+                    </li>
+                  ))}
+                </ul>
+                <small>{reading.skyContext?.method?.precisionNote}</small>
+              </section>
             </div>
           </details>
 
