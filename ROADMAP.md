@@ -4,11 +4,14 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 7 — Astrology (deployment acceptance)**
+- Current phase: **Phase 8 — Dream interpretation (deployment acceptance)**
+- Phase 7 note: Astrology code/source grounding is complete; production migration `005` and deployed smoke tests remain acceptance items
 - Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
 - Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Astrology contract: [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md)
 - Astrology source provenance: [docs/ASTROLOGY_SOURCES.md](docs/ASTROLOGY_SOURCES.md)
+- Dream contract: [docs/DREAM_SPEC.md](docs/DREAM_SPEC.md)
+- Dream source provenance: [docs/DREAM_SOURCES.md](docs/DREAM_SOURCES.md)
 - Vela voice contract: [docs/VELA_VOICE.md](docs/VELA_VOICE.md)
 
 ## Phase 0 — Product foundation ✅
@@ -102,7 +105,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Replace the Tarot / Astrology / Dream tab-first landing with a conversation-first Vela home
 - [x] Place Vela / fortune-teller stage in the center and let the user describe what they care about first
 - [x] Let Vela recommend Tarot, Astrology, or Dream based on that message
-- [x] Keep Dream visible but unavailable until its own source system exists
+- [x] Keep Dream source-gated until its own source system exists
 - [x] Add 12-sign selection UI and optional birthday-to-sign helper
 - [x] Add daily / weekly toggle
 - [x] Reduce daily/weekly result headline typography for mobile readability
@@ -133,13 +136,46 @@ Login remains optional; anonymous use is never blocked.
 **Exit condition:** source-grounded daily/weekly readings work on production with visible references, private astrology history survives a new session, Tarot history still works, and CI is green.
 
 ## Phase 8 — Dream interpretation
-- [ ] Define source method and what counts as evidence
-- [ ] Extract dream entities/themes/emotions from user text
-- [ ] Build grounded dream-symbol / psychology retrieval
-- [ ] Separate source claims from Vela contextual interpretation
-- [ ] Add Dream UI and follow-up boundaries
-- [ ] Add private Dream history to **我的紀錄**
-- [ ] Test sensitive-content framing and avoid treating symbolic interpretations as diagnosis
+
+### 8.1 Source method and interpretation contract
+- [x] Define what counts as Dream evidence and explicitly reject a universal fixed-symbol dictionary
+- [x] Verify public-domain runtime provenance for Freud *The Interpretation of Dreams* (1913 Brill translation) and Havelock Ellis *The World of Dreams* (1922)
+- [x] Curate historical theory/observation into attributable evidence items with usage boundaries
+- [x] Treat historical dream psychology as reflective source material, not modern clinical consensus
+
+### 8.2 Dream extraction and grounded engine
+- [x] Extract deterministic emotions, recurring forms, themes, symbols/entities, and retrieval tags from user text
+- [x] Build evidence selection from extracted features before model interpretation
+- [x] Add validated `/api/dreams/reading` with deterministic reading IDs and strict structured output
+- [x] Reject model citations to evidence IDs the server did not provide
+- [x] Separate source observations from Vela contextual interpretation
+- [x] Prevent diagnosis, prophecy, recovered-memory/trauma claims, paranormal certainty, and fixed symbol equations
+
+### 8.3 Functional UI and boundaries
+- [x] Enable Dream from the conversation-first Vela home instead of the previous unavailable placeholder
+- [x] Carry the user's dream text from home into the Dream flow
+- [x] Add dream text + optional waking-context input
+- [x] Add progressive result UI for dream summary, emotional thread, source observations, possible connections, reflection questions, and basis disclosure
+- [x] Keep Dream follow-up bounded in V1 rather than creating an unbounded therapy-like chat
+- [x] Add responsive Dream styling
+
+### 8.4 Private history integration
+- [x] Add `dream_readings` migration with RLS and 365-day retention
+- [x] Add Dream history collection/detail/delete APIs
+- [x] Recompute extraction and canonical Dream evidence before accepting a saved browser snapshot
+- [x] Merge Tarot + Astrology + Dream into the account's **我的紀錄** UI
+- [x] Support cross-mode reopen and deletion of saved Dream records
+- [ ] Apply migration `006_dream_history.sql` to the active Supabase project
+
+### 8.5 Tests and finish
+- [x] Test Dream extraction and normalization
+- [x] Test deterministic IDs, evidence sufficiency, and unprovided-evidence rejection
+- [x] Test history canonicalization / RLS contract
+- [x] Test Dream UI wiring and sensitive-content prompt boundaries
+- [x] Confirm Phase 8 PR CI lint / test / source validation / build green
+- [ ] Run deployed Dream generation + save/reopen/delete smoke tests on mobile and desktop
+
+**Exit condition:** Dream generation works on production with visible attributable source references, signed-in Dream history survives a new session, Tarot/Astrology history still works, sensitive symbolic content stays non-diagnostic, and CI is green.
 
 ## Phase 9 — Final Vela UI / UX
 - [ ] Replace the current CSS fortune-teller placeholder with the final illustrated Vela character

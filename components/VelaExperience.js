@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AstrologyReadingFlow from "./AstrologyReadingFlow.js";
+import DreamReadingFlow from "./DreamReadingFlow.js";
 import TarotReadingFlow from "./TarotReadingFlow.js";
 import VelaAccount from "./VelaAccount.js";
 
@@ -47,7 +48,7 @@ function recommendExperience(message) {
       mode: "dream",
       eyebrow: "VELA 建議 · 解夢",
       title: "這件事比較適合先從夢的內容開始看。",
-      message: "你在意的是夢本身帶來的感受與象徵，所以我會優先選解夢，而不是硬把它塞進塔羅或星座。不過解夢的來源資料庫還在準備；如果你想現在就整理，也可以先用塔羅看看這個夢碰到了你哪個現實議題。",
+      message: "你在意的是夢本身留下的感受與畫面。解夢會先忠實整理夢的內容，再參考 Freud 與 Havelock Ellis 的歷史夢心理學來源，把來源觀察和 Vela 的情境化反思分開；不會用固定夢辭典硬套一個唯一答案。",
     };
   }
 
@@ -83,6 +84,7 @@ export default function VelaExperience() {
   const [guidedStep, setGuidedStep] = useState("area");
   const [guidedAnswers, setGuidedAnswers] = useState({ area: "", feeling: "", goal: "" });
   const [tarotHandoffQuestion, setTarotHandoffQuestion] = useState("");
+  const [dreamHandoffText, setDreamHandoffText] = useState("");
   const recommendation = useMemo(() => guideResult || null, [guideResult]);
   const guidedQuestion = useMemo(() => {
     if (!guidedAnswers.area || !guidedAnswers.feeling || !guidedAnswers.goal) return "";
@@ -91,7 +93,7 @@ export default function VelaExperience() {
 
   useEffect(() => {
     function handleExperience(event) {
-      if (["home", "tarot", "astrology"].includes(event?.detail)) setExperience(event.detail);
+      if (["home", "tarot", "astrology", "dream"].includes(event?.detail)) setExperience(event.detail);
     }
     window.addEventListener("vela:experience", handleExperience);
     return () => window.removeEventListener("vela:experience", handleExperience);
@@ -135,6 +137,11 @@ export default function VelaExperience() {
   function beginTarot(question = "") {
     setTarotHandoffQuestion(String(question || guideInput).trim());
     setExperience("tarot");
+  }
+
+  function beginDream(text = "") {
+    setDreamHandoffText(String(text || guideInput).trim());
+    setExperience("dream");
   }
 
   if (experience === "home") {
@@ -274,8 +281,8 @@ export default function VelaExperience() {
               {recommendation.mode === "astrology" && <button className="primaryButton" type="button" onClick={() => setExperience("astrology")}>看看最近的星象節奏</button>}
               {recommendation.mode === "dream" && (
                 <>
-                  <button className="primaryButton" type="button" disabled>解夢資料庫準備中</button>
-                  <button className="ghostButton" type="button" onClick={() => beginTarot(guideInput)}>先用塔羅整理這個夢帶來的感受</button>
+                  <button className="primaryButton" type="button" onClick={() => beginDream(guideInput)}>好，整理這個夢</button>
+                  <button className="ghostButton" type="button" onClick={() => beginTarot(guideInput)}>改用塔羅看看這個夢碰到的現實議題</button>
                 </>
               )}
               <button className="ghostButton" type="button" onClick={() => { setGuideInput(""); setGuideResult(null); }}>換一件事問 Vela</button>
@@ -286,15 +293,21 @@ export default function VelaExperience() {
     );
   }
 
+  const modeLabel = experience === "astrology" ? "星座" : experience === "dream" ? "解夢" : "塔羅";
+
   return (
     <section className="velaExperienceHub">
       <div className="experienceModeHeader">
         <button type="button" onClick={() => setExperience("home")}>← 回到 Vela</button>
-        <span>{experience === "astrology" ? "星座" : "塔羅"}</span>
+        <span>{modeLabel}</span>
       </div>
-      {experience === "astrology"
-        ? <AstrologyReadingFlow onExperienceChange={setExperience} />
-        : <TarotReadingFlow initialQuestion={tarotHandoffQuestion} onExperienceChange={setExperience} />}
+      {experience === "astrology" ? (
+        <AstrologyReadingFlow onExperienceChange={setExperience} />
+      ) : experience === "dream" ? (
+        <DreamReadingFlow initialDream={dreamHandoffText} onExperienceChange={setExperience} />
+      ) : (
+        <TarotReadingFlow initialQuestion={tarotHandoffQuestion} onExperienceChange={setExperience} />
+      )}
     </section>
   );
 }
