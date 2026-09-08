@@ -72,3 +72,48 @@ jobs:
           else
             echo 'No source change to commit.'
           fi
+
+      - name: Check Dream RAG ingestion secrets
+        id: rag-secrets
+        shell: bash
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${OPENAI_API_KEY:-}" ] && [ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ] && [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+            echo 'Dream RAG secrets are available; full-book ingestion will run.'
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Dream RAG secrets are not all configured in GitHub Actions; source import is complete but vector ingestion will be skipped.'
+          fi
+
+      - name: Setup Node for Dream RAG
+        if: steps.rag-secrets.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies for Dream RAG
+        if: steps.rag-secrets.outputs.ready == 'true'
+        run: npm install
+
+      - name: Ingest Freud full book into Supabase
+        if: steps.rag-secrets.outputs.ready == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+        run: node scripts/ingest-dream-book.js data/metadata/freud-interpretation-of-dreams-1913.json data/raw/public-domain/dream/freud-interpretation-of-dreams-1913.txt
+
+      - name: Explain how to finish Dream RAG if secrets are missing
+        if: steps.rag-secrets.outputs.ready != 'true'
+        run: |
+          echo 'To activate full-book Dream RAG, add these GitHub Actions repository secrets:'
+          echo '  OPENAI_API_KEY'
+          echo '  NEXT_PUBLIC_SUPABASE_URL'
+          echo '  SUPABASE_SERVICE_ROLE_KEY'
+          echo 'Then re-run this workflow. No book upload is needed.'
