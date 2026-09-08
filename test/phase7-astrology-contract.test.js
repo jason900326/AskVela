@@ -79,7 +79,7 @@ test("Vela home starts with conversation and recommendation instead of three pri
   assert.match(hub, /今天想從哪件事開始/u);
   assert.match(hub, /讓 Vela 幫我選/u);
   assert.match(hub, /recommendExperience/u);
-  assert.match(hub, /解夢資料庫準備中/u);
+  assert.match(hub, /VELA 建議 · 解夢/u);
   assert.doesNotMatch(hub, /experienceTabs/u);
 });
 
