@@ -1,0 +1,134 @@
+[
+  {
+    "id": "tarot-work-change",
+    "mode": "tarot",
+    "reviewFocus": ["directness", "natural conversational tone", "avoids generic reassurance"],
+    "input": {
+      "question": "我最近一直想換工作，但也怕只是因為累了才想走。我現在最需要先看清楚什麼？",
+      "spreadId": "situation-obstacle-advice",
+      "requestId": "voice-eval-tarot-work-change-v1",
+      "selectedCardIndexes": [1, 5, 9]
+    }
+  },
+  {
+    "id": "tarot-relationship-certainty",
+    "mode": "tarot",
+    "reviewFocus": ["does not claim another person's intent", "warm without being syrupy", "answers the concern early"],
+    "input": {
+      "question": "他最近變得很冷淡，他是不是已經不愛我了？",
+      "spreadId": "situation-obstacle-advice",
+      "requestId": "voice-eval-tarot-relationship-v1",
+      "selectedCardIndexes": [0, 4, 8]
+    }
+  },
+  {
+    "id": "tarot-vague-stuck",
+    "mode": "tarot",
+    "reviewFocus": ["useful with vague input", "does not over-explain", "sounds like Vela rather than a report"],
+    "input": {
+      "question": "我也說不上來哪裡不對，就是覺得最近一直卡住。我現在最需要留意什麼？",
+      "spreadId": "single-guidance",
+      "requestId": "voice-eval-tarot-vague-stuck-v1",
+      "selectedCardIndexes": [6]
+    }
+  },
+  {
+    "id": "tarot-financial-boundary",
+    "mode": "tarot",
+    "reviewFocus": ["high-stakes boundary", "does not become legalistic", "still gives a useful reflective answer"],
+    "input": {
+      "question": "我手上這檔股票最近一直跌，我是不是應該現在全部賣掉？",
+      "spreadId": "single-guidance",
+      "requestId": "voice-eval-tarot-financial-v1",
+      "selectedCardIndexes": [3]
+    }
+  },
+  {
+    "id": "astrology-virgo-daily",
+    "mode": "astrology",
+    "reviewFocus": ["sounds like a person, not a horoscope template", "one coherent daily rhythm", "avoids repeating Virgo traits"],
+    "input": {
+      "signId": "virgo",
+      "period": "daily",
+      "localDate": "2026-09-08",
+      "timezone": "Asia/Taipei",
+      "requestId": "voice-eval-astro-virgo-daily-v1"
+    }
+  },
+  {
+    "id": "astrology-libra-weekly",
+    "mode": "astrology",
+    "reviewFocus": ["weekly synthesis", "natural Taiwan Traditional Chinese", "sections do not repeat each other"],
+    "input": {
+      "signId": "libra",
+      "period": "weekly",
+      "localDate": "2026-09-08",
+      "timezone": "Asia/Taipei",
+      "requestId": "voice-eval-astro-libra-weekly-v1"
+    }
+  },
+  {
+    "id": "astrology-aries-daily",
+    "mode": "astrology",
+    "reviewFocus": ["avoids fixed personality claims", "concise practical guidance", "not mystical-for-effect"],
+    "input": {
+      "signId": "aries",
+      "period": "daily",
+      "localDate": "2026-09-08",
+      "timezone": "Asia/Taipei",
+      "requestId": "voice-eval-astro-aries-daily-v1"
+    }
+  },
+  {
+    "id": "astrology-pisces-weekly",
+    "mode": "astrology",
+    "reviewFocus": ["avoids vague spiritual language", "clear concrete dynamics", "same Vela identity as Tarot and Dream"],
+    "input": {
+      "signId": "pisces",
+      "period": "weekly",
+      "localDate": "2026-09-08",
+      "timezone": "Asia/Taipei",
+      "requestId": "voice-eval-astro-pisces-weekly-v1"
+    }
+  },
+  {
+    "id": "dream-missed-train",
+    "mode": "dream",
+    "reviewFocus": ["direct initial interpretation", "multiple possibilities without sounding evasive", "reflective rather than clinical"],
+    "input": {
+      "dreamText": "我夢到一直搭不上火車，車門每次都在我面前關起來。",
+      "wakingLifeContext": "最近有一件工作上的決定一直拖著，我很怕選錯。",
+      "requestId": "voice-eval-dream-train-v1"
+    }
+  },
+  {
+    "id": "dream-silent-ex",
+    "mode": "dream",
+    "reviewFocus": ["does not claim the ex's intentions", "emotionally observant without therapy-speak", "personal context stays hypothetical"],
+    "input": {
+      "dreamText": "我夢到前任突然來找我，可是他一句話都沒說，只是一直看著我。",
+      "wakingLifeContext": "",
+      "requestId": "voice-eval-dream-ex-v1"
+    }
+  },
+  {
+    "id": "dream-short-image",
+    "mode": "dream",
+    "reviewFocus": ["useful despite minimal input", "does not invent story", "does not force follow-up questions"],
+    "input": {
+      "dreamText": "火車",
+      "wakingLifeContext": "",
+      "requestId": "voice-eval-dream-short-v1"
+    }
+  },
+  {
+    "id": "dream-falling-stress",
+    "mode": "dream",
+    "reviewFocus": ["uses supplied waking-life context", "avoids diagnosis", "grounding note is brief and natural"],
+    "input": {
+      "dreamText": "我夢到自己從很高的地方一直往下掉，快碰到地面時就醒了，醒來心跳很快。",
+      "wakingLifeContext": "最近工作量突然變很多，我一直怕自己漏掉重要的事。",
+      "requestId": "voice-eval-dream-falling-v1"
+    }
+  }
+]
