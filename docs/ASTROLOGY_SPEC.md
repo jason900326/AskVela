@@ -1,135 +1,170 @@
 # AskVela Phase 7 — Astrology Specification
 
-> Status: **source grounding reopened**. The calculation/UI prototype exists, but production astrology generation is intentionally paused until traceable book sources are ingested and cited.
+> Status: **source-grounded implementation complete; deployment acceptance remains.** Runtime generation now uses attributable Sepharial + Alan Leo source principles, actual computed Sun/Moon sky context, visible source references, and explicit natal/transit boundaries.
+
+See [ASTROLOGY_SOURCES.md](ASTROLOGY_SOURCES.md) for edition provenance and source-content policy.
 
 ## Product principle
 
-AskVela should not present a polished AI horoscope as trustworthy merely because the astronomical inputs are deterministic. The product promise is stronger: interpretation should also have a traceable knowledge source.
+A deterministic sky calculation alone is not enough, and a book excerpt alone is not an interpretation. Formal AskVela Astrology results combine three separately labelled layers:
 
-Therefore Phase 7 now separates three things:
+1. **Selected Sun sign** — a broad baseline only; V1 does not know the user's exact natal Sun degree.
+2. **Current sky context** — approximate current Sun/Moon longitudes, Moon phase, and actual current Sun–Moon angular relationship.
+3. **Source evidence** — scoped, attributable principles from legally usable historical astrology references.
 
-1. **Deterministic sky context** — approximate Sun/Moon positions, Moon phase, and a small supported aspect set.
-2. **Astrology knowledge source** — books or other legally usable, attributable source material that has been ingested and can be retrieved.
-3. **Vela interpretation** — contextual Traditional Chinese writing grounded in both the deterministic context and retrieved source material.
-
-Until step 2 is complete, step 3 stays disabled in production.
+Vela then performs a fourth step: **contextual synthesis**. It must explain the relationship between those layers rather than paraphrasing a paragraph from a book.
 
 ## Intended user flow
-
-The site no longer starts with three equal mode tabs. The canonical entry is Vela herself:
 
 ```text
 進入 AskVela
 → 先跟中央的 Vela 說目前在意什麼
-→ Vela 判斷比較適合塔羅 / 星座 / 解夢
-→ 使用者確認後進入對應流程
-```
-
-For Astrology after Vela recommends it:
-
-```text
-選擇太陽星座（或用生日協助選擇）
+→ Vela 建議塔羅 / 星座 / 解夢
+→ 使用者確認星座
+→ 選擇太陽星座（或用生日協助選擇）
 → 選擇今日 / 本週
-→ 檢索可追溯的占星來源
-→ 程式計算同一日期下的近似太陽、月亮、月相與支援的相位訊號
-→ Vela 只根據來源 + 結構化天象產生繁體中文反思
-→ 顯示可理解的來源資訊
-→ 登入使用者可保存並跨裝置重開
+→ 程式計算當前 Sun/Moon context
+→ deterministic evidence selector 取得符合 scope 的書籍原則
+→ Vela 做「書中原則 → 當天天象 → 情境化延伸」
+→ 顯示解讀 + 實際天象 + 人類可讀來源
+→ 登入者可保存並跨裝置重開
 ```
 
-This is **not** a natal-chart engine. Phase 7 does not collect birth time or birthplace and does not calculate houses, ascendant, full planetary ephemerides, synastry, or a complete birth chart.
+This is **not** a natal-chart engine. V1 does not collect birth time/place and does not calculate houses, ascendant, a complete ephemeris, synastry, or a full natal chart.
 
-## Current trust gate
+## Source set
 
-`lib/astrology-source-status.js` is the explicit launch gate.
+### Sepharial
 
-- `ASTROLOGY_SOURCE_READY = false` while there is no ingested astrology source set.
-- The UI still allows the sign/period interaction to be previewed, but the generate button stays disabled.
-- `/api/astrology/reading` also returns `503 ASTROLOGY_SOURCES_NOT_READY`, so the gate cannot be bypassed through a direct API call.
-- Old prototype astrology outputs without `sourceGrounded: true` are no longer restored as formal readings.
+- *Astrology: How to Make and Read Your Own Horoscope*
+- Revised and Enlarged Edition, 1920
+- Project Gutenberg #46963
+- Used especially for zodiac structure, aspects, transit method, and synthesis method.
 
-This gate should only be removed after source ingestion, retrieval, attribution, and source-fidelity tests exist.
+### Alan Leo
 
-## Source-grounding requirements
+- *Astrology for All*
+- Runtime rights/source edition: 4th edition, enlarged, 1910
+- Casa Fernando Pessoa source is marked Public Domain Mark 1.0.
+- Used especially for the twelve Sun-sign baselines, Sun/Moon principles, zodiac classification, and historical aspect doctrine.
+- The user's uploaded 1931 sixth edition was cross-checked but is not the public-repository rights source.
 
-Before astrology generation is re-enabled:
+## Evidence architecture
 
-- At least one legally usable astrology source must be uploaded and documented.
-- Source metadata must include title, author, edition/year where available, and source location/chapter information.
-- Retrieval must distinguish source claims from Vela's contextual interpretation.
-- The result UI must expose human-readable source references.
-- If retrieval is insufficient, the system must refuse to invent an interpretation.
-- Multiple authors must remain separately attributable rather than blended into false consensus.
+Runtime evidence is not a model-generated citation and does not rely on asking the model to remember a book.
 
-## Astrology model
+`lib/astrology-source-corpus.js` contains concise attributable paraphrases with explicit scopes such as:
 
-### Zodiac
+- `natal_sun_sign`
+- `planet_principle`
+- `zodiac_structure`
+- `transit_method`
+- `aspect_principle`
+- `interpretation_method`
+- `application_boundary`
 
-- System: tropical zodiac
-- Signs: 12
-- Birthday helper uses conventional fixed date boundaries.
-- Boundary/cusp dates are intentionally approximate because this phase does not collect birth time.
-- Users who already know their sun sign can manually override the birthday helper.
-- Birthday remains in browser state and is not sent to or stored by the server. Only the selected sun sign is sent.
+`lib/astrology-evidence.js` selects the required evidence deterministically and creates the human-readable references returned with the reading.
 
-### Sky context
+If required evidence is absent, `createAstrologyReading()` throws `AstrologySourceError` and the API returns `503` rather than inventing a reading.
 
-The existing prototype computes only:
+## Corrected sky model
 
-- approximate Sun ecliptic longitude
-- approximate Moon ecliptic longitude
-- Sun sign
-- Moon sign
-- Moon phase
-- major aspects (0°, 60°, 90°, 120°, 180°) between the Sun/Moon and the center of the selected sun sign within documented orbs
+The first Phase 7 prototype incorrectly compared the current Sun/Moon longitude to the **center of the selected Sun sign** and described that as an aspect. That created false precision because a sign midpoint is not the user's natal Sun degree.
 
-Reference time is 12:00 UTC for each selected calendar date. This is suitable as lightweight context for reflective sun-sign content, not precision electional astrology or a natal chart.
+The corrected model computes only:
+
+- approximate current Sun ecliptic longitude;
+- approximate current Moon ecliptic longitude;
+- current Sun sign;
+- current Moon sign;
+- Moon phase;
+- supported **current Sun–Moon** aspects: 0°, 60°, 90°, 120°, 180° within the configured orb.
+
+No personal natal aspect is claimed without a real natal degree.
+
+Reference time is 12:00 UTC for each selected calendar date. This remains a lightweight reflective calculation, not a precision electional or natal-chart service.
 
 ### Daily
 
-One sky snapshot for the selected local calendar date.
+One current sky snapshot for the chosen local calendar date.
 
 ### Weekly
 
-Monday through Sunday containing the selected local calendar date, with seven snapshots and a compact Moon-sign / Moon-phase / aspect summary.
+Monday through Sunday containing the chosen date, with seven snapshots, Moon-sign sequence, phase progression, and any supported current Sun–Moon aspect highlights.
 
-## AI contract after source ingestion
+## Natal vs transit boundary
+
+Alan Leo's Moon-in-sign and Sun–Moon combination chapters are primarily natal doctrine. AskVela may use them to understand the author's historical framework, but it must **not** transform a current transiting Moon into a natal-Moon personality claim.
+
+Likewise:
+
+- selected Sun sign = broad baseline;
+- current Moon sign = current sky context;
+- current Sun–Moon aspect = relationship between the two currently computed bodies;
+- none of these is an Ascendant, house placement, exact natal Sun aspect, or complete birth chart.
+
+## AI contract
 
 Vela may:
 
-- summarize retrieved astrology source material in Traditional Chinese
-- translate the structured sky context into approachable language
-- connect supported source themes to relationships, work/study, pace, attention, and reflection
-- provide small practical suggestions
+- express sourced Sun-sign themes in modern Traditional Chinese;
+- connect actual current Sun/Moon signals to general pace, attention, relationships, work/study and reflection;
+- synthesize multiple supported signals rather than listing them mechanically;
+- provide three small practical suggestions.
 
 Vela must not:
 
-- invent Mercury/Venus/Mars/Jupiter/Saturn/etc. positions that are not in the input
-- invent houses, ascendant, natal aspects, retrogrades, or a full birth chart
-- invent source claims, page numbers, quotations, or author consensus
-- state that an event will definitely happen
-- turn a sun-sign description into a fixed judgment of the user's personality
-- replace medical, legal, financial, or other professional judgment
+- copy or lightly reword book paragraphs as the result;
+- use a natal Moon passage as direct evidence for today's transiting Moon;
+- invent Mercury/Venus/Mars/Jupiter/Saturn or outer-planet positions;
+- invent retrogrades, houses, ascendant, natal aspects, or a full birth chart;
+- invent source claims, pages, quotations, or author consensus;
+- present historical medical, death, moral, physiognomic, gender, racial/national/class claims as modern facts;
+- state that an event will definitely happen;
+- turn Sun-sign material into a fixed personality judgment;
+- replace medical, legal, financial, safety, or other professional judgment.
+
+Historical `benefic/malefic` or `good/evil` aspect language is translated into non-deterministic interaction language such as more harmonious, more fluid, more tense, or requiring adjustment.
+
+## Output and attribution
+
+The structured result contains:
+
+- `overview`
+- `overall`
+- `relationships`
+- `workStudy`
+- `energy`
+- `practicalGuidance` (3 items)
+- `reflectionQuestion`
+- `basisNote`
+
+The API also returns:
+
+- selected sign, period, local date, timezone;
+- server-generated `skyContext`;
+- deterministic `readingId`;
+- `sourceGrounded: true`;
+- `sources.references` with author/title/edition/source location;
+- disclaimer.
+
+The result UI exposes both **actual sky signals** and **reference sources** under “這次解讀是怎麼來的？”.
 
 ## Privacy and history
 
-- Birthday is not saved.
-- Once source-grounded generation is enabled, only selected sign/date/period, generated interpretation, source references, and server-recomputed sky context may be saved.
-- Saved astrology records use a separate `astrology_readings` table.
-- RLS uses `auth.uid() = user_id` for select/insert/update/delete.
-- Records expire 365 days after the latest save.
-- Tarot and Astrology are shown together in the account's **我的紀錄** panel but are never silently injected into a new model request.
+- Birthday stays client-side and is not saved.
+- History stores the selected sign/date/period, interpretation, and sky context.
+- On save/restore, server code recomputes source evidence from canonical code rather than trusting client-provided source references.
+- Records use `astrology_readings`, RLS ownership, and 365-day retention.
+- Tarot and Astrology can share **我的紀錄**, but saved readings are not silently injected into new model requests.
 
-## Revised Phase 7 exit criteria
+## Remaining Phase 7 deployment acceptance
 
-Phase 7 cannot be closed until all of the following are true:
+Source design and source-fidelity implementation are complete. Phase 7 closes after:
 
-1. Choose and upload the astrology source set.
-2. Add ingestion/retrieval and human-readable source attribution.
-3. Add source-fidelity and insufficient-evidence tests.
-4. Remove the source-readiness gate only after those tests pass.
-5. Apply `supabase/migrations/005_astrology_history.sql` to the active Supabase project.
-6. Verify daily + weekly source-grounded readings on mobile and desktop.
-7. Verify signed-in astrology history survives reload/sign-out/sign-in and can be reopened.
-8. Verify Tarot history remains unaffected.
-9. Confirm CI lint, tests, and build are green.
+1. apply `supabase/migrations/005_astrology_history.sql` to the active Supabase project;
+2. CI lint/tests/build pass for the source-grounding PR;
+3. deploy and smoke-test at least one daily and one weekly reading on mobile and desktop;
+4. verify visible source references and correct Sun/Moon wording;
+5. verify signed-in Astrology history survives reload/sign-out/sign-in and can be reopened;
+6. verify Tarot history remains unaffected.
