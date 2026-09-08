@@ -19,6 +19,14 @@ const ASTROLOGY_WAITING_LINES = [
   "再一下，我把最重要的地方先說給你聽。",
 ];
 
+const ASTROLOGY_FOLLOW_UP_LINES = [
+  "好，我把你剛剛的回答放回這次星象裡。",
+  "這個回答讓其中一個角度更明顯了。",
+  "我先不重算，只看原本哪一段需要調整。",
+  "有個地方現在比剛才更值得留意。",
+  "再一下，我把變得不一樣的地方告訴你。",
+];
+
 function makeRequestId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `astrology-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -40,6 +48,10 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
   const [error, setError] = useState("");
   const [sessionRestored, setSessionRestored] = useState(false);
   const [shareNotice, setShareNotice] = useState("");
+  const [followUpAnswer, setFollowUpAnswer] = useState("");
+  const [followUpNote, setFollowUpNote] = useState(null);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpError, setFollowUpError] = useState("");
 
   const selectedSign = useMemo(() => getZodiacByBirthday(birthday), [birthday]);
   const restoredSign = useMemo(() => {
@@ -89,6 +101,9 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
     setLoading(true);
     setError("");
     setShareNotice("");
+    setFollowUpAnswer("");
+    setFollowUpNote(null);
+    setFollowUpError("");
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     const requestId = makeRequestId();
 
@@ -118,11 +133,50 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
     }
   }
 
+  async function submitCuriosity(event) {
+    event.preventDefault();
+    const answer = followUpAnswer.trim();
+    if (!answer || !reading || !result?.reflectionQuestion || followUpLoading || followUpNote) return;
+    setFollowUpLoading(true);
+    setFollowUpError("");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    try {
+      const response = await fetch("/api/astrology/follow-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signName: reading.sign?.nameZhTw || "星座",
+          periodLabel: reading.period === "daily" ? "今日" : "本週",
+          localDate: reading.localDate,
+          question: result.reflectionQuestion,
+          userAnswer: answer,
+          headline,
+          overall: result.overall,
+          workStudy: result.workStudy,
+          relationships: result.relationships,
+          focusAreas: result.focusAreas || [],
+          skySignals: reading.skyContext?.signals || [],
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "目前無法接著看這個回答。");
+      setFollowUpNote({ ...data, userAnswer: answer });
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } catch (err) {
+      setFollowUpError(err.message || "目前無法接著看這個回答。");
+    } finally {
+      setFollowUpLoading(false);
+    }
+  }
+
   function restoreSavedAstrology(saved) {
     if (!saved?.readingId || saved?.kind !== "astrology" || !saved?.result) return;
     setReading(saved);
     setPeriod(saved.period || "daily");
     setError("");
+    setFollowUpAnswer("");
+    setFollowUpNote(null);
+    setFollowUpError("");
     setSessionRestored(true);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
@@ -132,6 +186,9 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
     setReading(null);
     setError("");
     setShareNotice("");
+    setFollowUpAnswer("");
+    setFollowUpNote(null);
+    setFollowUpError("");
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
@@ -144,10 +201,10 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
     if (!reading) return;
     try {
       const message = await shareVelaResultCard({
-        modeLabel: `ASTROLOGY · ${reading.sign?.nameZhTw || "星座"}`,
+        modeLabel: "ASTROLOGY · 星座",
         headline,
-        subline: reading.period === "daily" ? "今日運勢" : "本週運勢",
-        details: ["整體節奏", "工作與學業", "感情與關係", ...(result?.focusAreas || []).map((item) => item.title)],
+        subline: result?.overall || "",
+        details: [],
       });
       setShareNotice(message);
     } catch (err) {
@@ -155,11 +212,15 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
     }
   }
 
-  if (loading) {
+  if (loading || followUpLoading) {
     return (
       <section className="astrologyExperience finalModeFlow">
         <VelaAccount experience="astrology" onExperienceChange={onExperienceChange} />
-        <VelaWaitingStage lines={ASTROLOGY_WAITING_LINES} glyph={selectedSign?.glyph || restoredSign?.glyph || "☾"} className="astrologyWaiting" />
+        <VelaWaitingStage
+          lines={followUpLoading ? ASTROLOGY_FOLLOW_UP_LINES : ASTROLOGY_WAITING_LINES}
+          glyph={selectedSign?.glyph || restoredSign?.glyph || "☾"}
+          className="astrologyWaiting"
+        />
       </section>
     );
   }
@@ -223,6 +284,18 @@ export default function AstrologyReadingFlowV2({ onExperienceChange }) {
           <section className="velaCuriosityCard finalCuriosityCard">
             <div className="eyebrow">VELA 想問你</div>
             <p>{result.reflectionQuestion}</p>
+            {!followUpNote ? (
+              <form className="curiosityReplyForm" onSubmit={submitCuriosity}>
+                <textarea rows={3} maxLength={1200} value={followUpAnswer} onChange={(event) => setFollowUpAnswer(event.target.value)} placeholder="把你第一個想到的答案告訴我就好。" />
+                <button className="primaryButton" type="submit" disabled={!followUpAnswer.trim()}>回答 Vela</button>
+              </form>
+            ) : (
+              <div className="curiosityResponse">
+                <small>{followUpNote.changedAngle}</small>
+                <p>{followUpNote.response}</p>
+              </div>
+            )}
+            {followUpError && <div className="clarifierError" role="alert">{followUpError}</div>}
           </section>
         )}
 
