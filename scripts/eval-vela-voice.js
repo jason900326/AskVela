@@ -11,10 +11,13 @@ const RESULTS_DIR = resolve(ROOT, "eval/results");
 
 const STYLE_PATTERNS = Object.freeze({
   reportFiller: /綜合來看|整體而言|總而言之|這組牌顯示|這張牌代表|這張牌顯示|在這個位置/gu,
+  polishedContrast: /不是[^。！？\n]{0,32}(?:而是|反而是)|與其[^。！？\n]{0,32}不如|真正(?:的)?(?:重點|問題|需要|值得)|核心(?:在於|是)/gu,
   deterministic: /一定會|肯定會|絕對會|注定|命中注定|必然會|對方就是|你就是/gu,
   theatricalMysticism: /宇宙(?:正在)?告訴你|命運(?:正在)?(?:推著|告訴)|靈魂(?:正在)?(?:提醒|呼喚)|能量(?:正在)?告訴你/gu,
   genericReassurance: /不要擔心|一切都會好起來|你只需要相信|相信宇宙|一切都有安排/gu,
 });
+
+const SPOKEN_TEXTURE_PATTERN = /嗯……|我想一下|怎麼說(?:……|…)?|這裡有點微妙|我會先看這個|——|……/gu;
 
 function collectStrings(value) {
   if (typeof value === "string") return value.trim() ? [value.trim()] : [];
@@ -80,6 +83,14 @@ function deterministicMatches(text) {
     .map((match) => match[0]);
 }
 
+function shortSpokenSentenceCount(text) {
+  return text
+    .split(/[。！？\n]+/u)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 2 && part.length <= 12)
+    .length;
+}
+
 function evaluateStyle(mode, presentation) {
   const text = collectStrings(presentation).join("\n");
   const flags = Object.fromEntries(
@@ -89,6 +100,8 @@ function evaluateStyle(mode, presentation) {
     ]),
   );
   const hedgeCount = (text.match(/可能|比較像|可以留意|也許|如果/gu) || []).length;
+  const spokenTextureCount = matches(text, SPOKEN_TEXTURE_PATTERN).length;
+  const shortSentenceCount = shortSpokenSentenceCount(text);
   const warnings = [];
 
   for (const [name, found] of Object.entries(flags)) {
@@ -98,16 +111,18 @@ function evaluateStyle(mode, presentation) {
 
   const overviewLength = String(presentation.overview || "").length;
   if (mode === "tarot" && overviewLength > 45) warnings.push(`Tarot overview is long (${overviewLength} chars)`);
-  if (mode === "astrology" && overviewLength > 50) warnings.push(`Astrology overview is long (${overviewLength} chars)`);
-  if (mode === "dream" && overviewLength > 140) warnings.push(`Dream overview is long (${overviewLength} chars)`);
+  if (mode === "astrology" && overviewLength > 55) warnings.push(`Astrology overview is long (${overviewLength} chars)`);
+  if (mode === "dream" && overviewLength > 170) warnings.push(`Dream overview is long (${overviewLength} chars)`);
 
-  if (mode === "astrology" && text.length > 650) warnings.push(`Astrology response is long (${text.length} chars)`);
-  if (mode === "dream" && text.length > 720) warnings.push(`Dream response is long (${text.length} chars)`);
+  if (mode === "astrology" && text.length > 720) warnings.push(`Astrology response is long (${text.length} chars)`);
+  if (mode === "dream" && text.length > 800) warnings.push(`Dream response is long (${text.length} chars)`);
 
   return {
     totalCharacters: text.length,
     overviewCharacters: overviewLength,
     hedgeCount,
+    spokenTextureCount,
+    shortSentenceCount,
     flags,
     warnings,
   };
@@ -157,7 +172,7 @@ function buildMarkdown(results, meta) {
   const successful = results.filter((item) => item.ok);
   const failed = results.filter((item) => !item.ok);
   const lines = [
-    "# Vela Voice Baseline Evaluation",
+    "# Vela Voice Evaluation",
     "",
     `Generated: ${meta.generatedAt}`,
     `Cases: ${results.length} (${successful.length} succeeded, ${failed.length} failed)`,
@@ -166,8 +181,8 @@ function buildMarkdown(results, meta) {
     "",
     "For each case, judge the actual wording rather than whether you agree with tarot/astrology/dream symbolism. Use 1–5 for the five dimensions, then mark the verdict as `good`, `mixed`, or `bad`.",
     "",
-    "- Naturalness: sounds like a real person using Taiwan Traditional Chinese.",
-    "- Directness: reaches the useful point early without report-style preamble.",
+    "- Naturalness: sounds like a real person using Taiwan Traditional Chinese, including occasional imperfect rhythm when it helps.",
+    "- Directness: reaches the useful point early without report-style preamble or polished AI antithesis.",
     "- Vela consistency: feels like the same Vela across Tarot, Astrology, and Dream.",
     "- Grounding / boundaries: stays source-grounded and avoids certainty, diagnosis, or invented intent.",
     "- Usefulness: leaves the user with a clear insight or next thing to notice.",
@@ -204,6 +219,8 @@ function buildMarkdown(results, meta) {
       lines.push("- No automatic style warnings. Human review is still required.");
     }
     lines.push(`- Total user-facing characters: ${item.automaticReview.totalCharacters}`);
+    lines.push(`- Spoken-texture markers: ${item.automaticReview.spokenTextureCount} (diagnostic only; zero is not automatically bad)`);
+    lines.push(`- Short spoken sentences/fragments: ${item.automaticReview.shortSentenceCount} (diagnostic only)`);
     lines.push("");
     lines.push("### Human review");
     lines.push("");
@@ -233,7 +250,7 @@ if (!selected.length) {
   throw new Error(`No Vela voice cases matched '${filter}'. Use all, tarot, astrology, dream, or part of a case ID.`);
 }
 
-console.log(`=== Vela voice baseline: ${selected.length} case(s) ===`);
+console.log(`=== Vela voice evaluation: ${selected.length} case(s) ===`);
 console.log(`Do not treat automatic flags as the final verdict; they only surface patterns for human review.`);
 
 const results = [];

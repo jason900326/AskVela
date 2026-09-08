@@ -10,7 +10,7 @@ test("the three prompt layers keep source, context, and synthesis responsibiliti
   const safety = { isHighStakes: false, categories: [] };
   assert.match(buildLayerAInstructions(), /Do not apply the card to the user's question/u);
   assert.match(buildLayerBInstructions(safety), /spread position/u);
-  assert.match(buildLayerCInstructions(safety), /Do not merely repeat/u);
+  assert.match(buildLayerCInstructions(safety), /Synthesize the cards/u);
 });
 
 test("high-stakes context is explicitly passed into context and synthesis layers", () => {
@@ -28,16 +28,19 @@ test("all interpretation layers prohibit converting difficult source themes into
   assert.match(buildLayerCInstructions(safety), /declare another person bad/u);
 });
 
-test("Vela voice instructions prefer concise conversational output over report-like prose", () => {
+test("Vela voice instructions prefer spoken Tarot prose over report-like or slogan-like output", () => {
   const safety = { isHighStakes: false, categories: [] };
   const layerB = buildLayerBInstructions(safety);
   const layerC = buildLayerCInstructions(safety);
 
   assert.match(layerB, /1-2 sentences/u);
   assert.match(layerB, /not like a formal report or textbook/u);
+  assert.match(layerB, /same sentence rhythm/u);
   assert.match(layerC, /voice users experience as Vela/u);
-  assert.match(layerC, /18-32 Traditional Chinese characters/u);
-  assert.match(layerC, /120-220 Traditional Chinese characters/u);
+  assert.match(layerC, /14-36 Traditional Chinese characters/u);
+  assert.match(layerC, /not a polished headline, slogan, or clever antithesis/u);
+  assert.match(layerC, /120-260 Traditional Chinese characters/u);
+  assert.match(layerC, /one sentence can be very short/u);
   assert.match(layerC, /at most 2 focused items/u);
   assert.match(layerC, /at most 1 focused question/u);
   assert.match(layerC, /這組牌顯示/u);
