@@ -27,14 +27,27 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   }
 
   useEffect(() => {
+    let restoreTimer = null;
     try {
       const raw = window.sessionStorage.getItem(SESSION_KEY);
-      if (!raw) return;
+      if (!raw) return undefined;
       const saved = JSON.parse(raw);
-      if (saved?.version === 1 && saved?.reading?.kind === "dream") restoreDream(saved.reading);
+      if (saved?.version === 1 && saved?.reading?.kind === "dream") {
+        const restored = saved.reading;
+        restoreTimer = window.setTimeout(() => {
+          setReading(restored);
+          setDreamText(restored.dreamText || "");
+          setWakingLifeContext(restored.wakingLifeContext || "");
+          setRequestId(restored.requestId || newRequestId());
+          setError("");
+        }, 0);
+      }
     } catch {
       window.sessionStorage.removeItem(SESSION_KEY);
     }
+    return () => {
+      if (restoreTimer !== null) window.clearTimeout(restoreTimer);
+    };
   }, []);
 
   useEffect(() => {
