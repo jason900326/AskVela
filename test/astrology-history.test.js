@@ -14,11 +14,40 @@ const result = {
   basisNote: "basis",
 };
 
-test("history re-computes sky context instead of trusting the browser snapshot", () => {
+test("history re-computes sky context and canonical evidence instead of trusting browser snapshots", () => {
   const request = normalizeAstrologyRequest({ signId: "virgo", period: "daily", localDate: "2026-09-07", timezone: "Asia/Taipei", requestId: "request-123" });
-  const snapshot = normalizeAstrologyHistorySnapshot({ kind: "astrology", readingId: astrologyReadingId(request), requestId: request.requestId, sign: { id: "virgo" }, period: request.period, localDate: request.localDate, timezone: request.timezone, skyContext: { fake: true }, result });
+  const snapshot = normalizeAstrologyHistorySnapshot({
+    kind: "astrology",
+    sourceGrounded: true,
+    readingId: astrologyReadingId(request),
+    requestId: request.requestId,
+    sign: { id: "virgo" },
+    period: request.period,
+    localDate: request.localDate,
+    timezone: request.timezone,
+    skyContext: { fake: true },
+    sources: { references: [{ fake: true }] },
+    result,
+  });
   assert.equal(snapshot.skyContext.period, "daily");
   assert.equal(snapshot.skyContext.fake, undefined);
+  assert.equal(snapshot.sourceGrounded, true);
+  assert.ok(snapshot.sources.references.length >= 2);
+  assert.equal(snapshot.sources.references.some((reference) => reference.fake), false);
+});
+
+test("history refuses pre-source prototype snapshots", () => {
+  const request = normalizeAstrologyRequest({ signId: "virgo", period: "daily", localDate: "2026-09-07", timezone: "Asia/Taipei", requestId: "request-123" });
+  assert.throws(() => normalizeAstrologyHistorySnapshot({
+    kind: "astrology",
+    readingId: astrologyReadingId(request),
+    requestId: request.requestId,
+    sign: { id: "virgo" },
+    period: request.period,
+    localDate: request.localDate,
+    timezone: request.timezone,
+    result,
+  }));
 });
 
 test("history summary is typed for the unified Vela history UI", () => {
