@@ -1,3 +1,4 @@
+import PendingAuthResume from "../components/PendingAuthResume.js";
 import VelaBrandLink from "../components/VelaBrandLink.js";
 import "./globals.css";
 import "./reading.css";
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
           <VelaBrandLink />
         </div>
         {children}
+        <PendingAuthResume />
       </body>
     </html>
   );
