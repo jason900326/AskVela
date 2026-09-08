@@ -251,6 +251,29 @@ export default function VelaAccount({
     setHistoryError("");
     setHistoryNotice("");
 
+    if (activeEntry) {
+      const fingerprint = entryFingerprint(activeEntry);
+      if (fingerprint !== lastSavedFingerprint.current) {
+        setSaveState("saving");
+        try {
+          const response = await authorizedFetch(
+            client,
+            historyEndpoint(activeEntry.kind),
+            { method: "POST", body: JSON.stringify(activeEntry) },
+          );
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "目前無法保存這次解讀。");
+          lastSavedFingerprint.current = fingerprint;
+          setSaveState("saved");
+        } catch (error) {
+          setSaveState("error");
+          setHistoryError(error.message || "這次解讀尚未保存，請再試一次。");
+          setHistoryLoading(false);
+          return;
+        }
+      }
+    }
+
     const [tarotResult, astrologyResult, dreamResult] = await Promise.all([
       historyCollection(client, "/api/readings/history"),
       historyCollection(client, "/api/astrology/history"),
