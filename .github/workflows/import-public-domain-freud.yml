@@ -1,0 +1,74 @@
+name: Import public-domain Freud dream source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-public-domain-freud.yml'
+      - 'data/metadata/freud-interpretation-of-dreams-1913.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-book:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download The Interpretation of Dreams
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='data/raw/public-domain/dream/freud-interpretation-of-dreams-1913.txt'
+          mkdir -p "$(dirname "$target")"
+
+          if [ -s "$target" ]; then
+            echo 'Book is already present; nothing to do.'
+            exit 0
+          fi
+
+          urls=(
+            'https://www.gutenberg.org/cache/epub/66048/pg66048.txt'
+            'https://www.gutenberg.org/ebooks/66048.txt.utf-8'
+          )
+
+          downloaded=0
+          for url in "${urls[@]}"; do
+            echo "Trying $url"
+            if curl -L --fail --retry 3 --connect-timeout 20 --max-time 180 "$url" -o "$target.tmp"; then
+              if grep -q 'START OF THE PROJECT GUTENBERG EBOOK THE INTERPRETATION OF DREAMS' "$target.tmp" \
+                && grep -q 'SIGMUND FREUD' "$target.tmp" \
+                && [ "$(wc -c < "$target.tmp")" -gt 500000 ]; then
+                mv "$target.tmp" "$target"
+                downloaded=1
+                break
+              fi
+            fi
+            rm -f "$target.tmp"
+          done
+
+          if [ "$downloaded" -ne 1 ]; then
+            echo 'Could not download a valid Freud source text.' >&2
+            exit 1
+          fi
+
+          echo "Downloaded $(wc -c < "$target") bytes to $target"
+
+      - name: Commit book to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='data/raw/public-domain/dream/freud-interpretation-of-dreams-1913.txt'
+          if git status --porcelain -- "$target" | grep -q .; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$target"
+            git commit -m 'Add Freud The Interpretation of Dreams source text'
+            git push
+          else
+            echo 'No source change to commit.'
+          fi
