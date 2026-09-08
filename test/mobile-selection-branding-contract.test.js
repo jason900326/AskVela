@@ -3,17 +3,20 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const layoutPath = new URL("../app/layout.js", import.meta.url);
+const brandPath = new URL("../components/VelaBrandLink.js", import.meta.url);
 const brandCssPath = new URL("../app/brand.css", import.meta.url);
 const selectionCssPath = new URL("../app/mobile-selection.css", import.meta.url);
 const interpretRoutePath = new URL("../app/api/readings/interpret/route.js", import.meta.url);
 
 test("active pages keep a compact Vela wordmark", async () => {
-  const [layout, brandCss] = await Promise.all([
+  const [layout, brand, brandCss] = await Promise.all([
     readFile(layoutPath, "utf8"),
+    readFile(brandPath, "utf8"),
     readFile(brandCssPath, "utf8"),
   ]);
 
-  assert.match(layout, /<span>VELA<\/span>/u);
+  assert.match(brand, /<span>VELA<\/span>/u);
+  assert.match(brand, /className="brandMark"/u);
   assert.match(layout, /title: "Vela"/u);
   assert.match(brandCss, /\.brandMark/u);
   assert.match(brandCss, /VELA · TAROT READING/u);

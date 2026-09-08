@@ -1,4 +1,4 @@
-import Link from "next/link";
+import VelaBrandLink from "../components/VelaBrandLink.js";
 import "./globals.css";
 import "./reading.css";
 import "./follow-up.css";
@@ -7,6 +7,7 @@ import "./mobile-selection.css";
 import "./account.css";
 import "./astrology.css";
 import "./dream.css";
+import "./phase8-polish.css";
 
 export const metadata = {
   title: "Vela",
@@ -18,10 +19,7 @@ export default function RootLayout({ children }) {
     <html lang="zh-Hant">
       <body>
         <div className="brandBar">
-          <Link className="brandMark" href="/" aria-label="Vela 首頁">
-            <span className="brandMarkIcon" aria-hidden="true">☾</span>
-            <span>VELA</span>
-          </Link>
+          <VelaBrandLink />
         </div>
         {children}
       </body>
