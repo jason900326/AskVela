@@ -88,9 +88,9 @@ function sameSelection(left = [], right = []) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-export default function TarotReadingFlow() {
+export default function TarotReadingFlow({ initialQuestion = "" }) {
   const [stage, setStage] = useState("welcome");
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(() => String(initialQuestion || "").slice(0, 500));
   const [spreads, setSpreads] = useState([]);
   const [spreadId, setSpreadId] = useState("");
   const [requestId, setRequestId] = useState("");
