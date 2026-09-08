@@ -69,9 +69,10 @@ function SourceList({ sources = [] }) {
 }
 
 function compactInitialReading(result) {
+  const analysis = result?.analysisSynthesis || result?.synthesis || {};
   return {
-    overview: result?.synthesis?.overview || "",
-    narrative: result?.synthesis?.narrative || "",
+    overview: analysis.overview || "",
+    narrative: analysis.narrative || "",
     cards: (result?.cards || []).map((card) => ({
       cardId: card.cardId,
       contextInterpretation: card.contextInterpretation || "",
@@ -545,23 +546,6 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
             <p className="velaSummary">{result.synthesis?.narrative}</p>
           </div>
 
-          <div className="resultCards" aria-label="各張牌的重點解讀">
-            {result.cards.map((card) => (
-              <section className="resultCard" key={`${card.cardId}-${card.position}`}>
-                <div className="resultCardHeading"><div><small>{card.positionLabelZhTw}</small><h3>{card.nameZhTw} <span>{card.nameEn}</span></h3></div><em>{ORIENTATION_LABELS[card.orientation]}</em></div>
-                <p>{card.contextInterpretation}</p>
-                {card.practicalFocus && <div className="practicalFocus"><strong>可以留意</strong><span>{card.practicalFocus}</span></div>}
-              </section>
-            ))}
-          </div>
-
-          {result.synthesis?.practicalGuidance?.length > 0 && (
-            <section className="quickGuidance">
-              <div className="eyebrow">VELA 的建議</div>
-              <ul>{result.synthesis.practicalGuidance.map((item) => <li key={item}>{item}</li>)}</ul>
-            </section>
-          )}
-
           <section className="followUpPanel" aria-labelledby="follow-up-title">
             <div className="followUpHeading">
               <div>
@@ -608,9 +592,34 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
           <details className="deepReading">
             <summary>
               <span>查看完整牌義與分析</span>
-              <small>原典牌義、牌與牌之間、參考來源</small>
+              <small>完整整理、各張牌、原典與參考來源</small>
             </summary>
             <div className="deepReadingBody">
+              {result.analysisSynthesis && (
+                <section className="synthesisBlock">
+                  <div className="eyebrow">完整整理</div>
+                  <h3>{result.analysisSynthesis.overview}</h3>
+                  <p>{result.analysisSynthesis.narrative}</p>
+                </section>
+              )}
+
+              <div className="resultCards" aria-label="各張牌的重點解讀">
+                {result.cards.map((card) => (
+                  <section className="resultCard" key={`${card.cardId}-${card.position}`}>
+                    <div className="resultCardHeading"><div><small>{card.positionLabelZhTw}</small><h3>{card.nameZhTw} <span>{card.nameEn}</span></h3></div><em>{ORIENTATION_LABELS[card.orientation]}</em></div>
+                    <p>{card.contextInterpretation}</p>
+                    {card.practicalFocus && <div className="practicalFocus"><strong>可以留意</strong><span>{card.practicalFocus}</span></div>}
+                  </section>
+                ))}
+              </div>
+
+              {result.synthesis?.practicalGuidance?.length > 0 && (
+                <section className="quickGuidance">
+                  <div className="eyebrow">可以怎麼做</div>
+                  <ul>{result.synthesis.practicalGuidance.map((item) => <li key={item}>{item}</li>)}</ul>
+                </section>
+              )}
+
               <section className="sourceMeaningSection">
                 <div className="eyebrow">原典牌義</div>
                 <div className="sourceMeaningGrid">
