@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   AstrologyOutputError,
+  AstrologySourceError,
   AstrologyValidationError,
   createAstrologyReading,
 } from "../../../../lib/astrology-reading.js";
-import {
-  ASTROLOGY_SOURCE_MESSAGE,
-  ASTROLOGY_SOURCE_NEXT_STEP,
-  ASTROLOGY_SOURCE_READY,
-} from "../../../../lib/astrology-source-status.js";
 
 export const runtime = "nodejs";
 
@@ -20,24 +16,16 @@ function noStoreJson(body, status = 200) {
 }
 
 export async function POST(request) {
-  if (!ASTROLOGY_SOURCE_READY) {
-    return noStoreJson(
-      {
-        error: ASTROLOGY_SOURCE_MESSAGE,
-        detail: ASTROLOGY_SOURCE_NEXT_STEP,
-        code: "ASTROLOGY_SOURCES_NOT_READY",
-      },
-      503,
-    );
-  }
-
   try {
     const body = await request.json();
     const reading = await createAstrologyReading(body);
-    return noStoreJson({ ...reading, sourceGrounded: true });
+    return noStoreJson(reading);
   } catch (error) {
     if (error instanceof AstrologyValidationError) {
       return noStoreJson({ error: error.message, code: error.code }, 400);
+    }
+    if (error instanceof AstrologySourceError) {
+      return noStoreJson({ error: error.message, code: error.code }, 503);
     }
     if (error instanceof AstrologyOutputError) {
       console.error("POST /api/astrology/reading invalid model output", error);

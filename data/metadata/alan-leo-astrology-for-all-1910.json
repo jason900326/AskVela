@@ -1,0 +1,35 @@
+{
+  "slug": "alan-leo-astrology-for-all-1910",
+  "domain": "astrology",
+  "title": "Astrology for All: Individual and Personal Characteristics as Represented by the Sun and Moon",
+  "author": "Alan Leo",
+  "edition": "4th edition, enlarged",
+  "publication_year": 1910,
+  "language": "en",
+  "public_domain": true,
+  "source_provider": "Biblioteca Particular Fernando Pessoa / Casa Fernando Pessoa",
+  "source_url": "https://bibliotecaparticular.casafernandopessoa.pt/1-91",
+  "rights_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+  "rights_note": "The 1910 scan is explicitly presented by Casa Fernando Pessoa with a Public Domain Mark 1.0.",
+  "source_note": "The user uploaded a 1931 sixth enlarged edition for verification. AskVela does not commit or attribute the source corpus to that later scan; it uses the clearly public-domain 1910 fourth edition as the repository/source-of-truth edition instead.",
+  "user_upload_cross_check": {
+    "filename": "Astrology for All.pdf",
+    "edition": "6th edition, enlarged",
+    "publication_year": 1931,
+    "sha256": "e3bed8cd553f8a6258bdd574a57956126f65adac7f59b49fab7730612e991158",
+    "pages": 368,
+    "verified_title_page": true,
+    "verified_contents": true,
+    "committed_to_public_repo": false,
+    "reason": "The later edition is not the rights-clearest version available; the 1910 edition is explicitly marked public domain by the source institution."
+  },
+  "relevant_sections": [
+    "Chapter III — The Sun and the Zodiac",
+    "Chapters IV–XV — Individual and Personal Character of the Twelve Signs",
+    "Chapter XVI — The Nature of the Twelve Signs of the Zodiac",
+    "Aspects",
+    "Chapter XVII — The Moon and the Zodiac",
+    "Chapter XVIII — The Soli-Lunar Combinations or Polarities (preliminary method notes only)"
+  ],
+  "usage_policy": "Treat Sun/Moon sign and soli-lunar passages as natal doctrine unless a section explicitly discusses transits. Do not present natal Moon or natal Sun–Moon combinations as if they directly described the current transiting Moon. Historical medical, moral, physiognomic, gender, racial/national, fate, and death claims are excluded from Vela output."
+}

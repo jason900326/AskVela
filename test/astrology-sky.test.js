@@ -18,14 +18,15 @@ test("approximate solar longitude remains near the tropical seasonal anchors", (
   assert.ok(angularDistance(approximateSunLongitude("2026-12-21"), 270) < 3);
 });
 
-test("daily sky context is deterministic and limited to sun/moon signals", () => {
+test("daily sky context is deterministic and limited to current Sun/Moon signals", () => {
   const first = buildDailySkyContext({ signId: "virgo", localDate: "2026-09-07" });
   const second = buildDailySkyContext({ signId: "virgo", localDate: "2026-09-07" });
   assert.deepEqual(first, second);
   assert.equal(first.snapshots.length, 1);
-  assert.equal(first.method.scope, "sun-sign + approximate solar/lunar transits");
+  assert.equal(first.method.scope, "selected sun-sign + approximate current Sun/Moon sky");
   assert.ok(first.signals.some((signal) => signal.includes("太陽")));
   assert.ok(first.signals.some((signal) => signal.includes("月亮")));
+  assert.equal("aspectsToSunSign" in first.snapshots[0], false);
 });
 
 test("weekly sky context spans Monday through Sunday", () => {
@@ -33,4 +34,5 @@ test("weekly sky context spans Monday through Sunday", () => {
   assert.equal(context.dateRange.start, "2026-09-07");
   assert.equal(context.dateRange.end, "2026-09-13");
   assert.equal(context.snapshots.length, 7);
+  assert.ok(context.snapshots.every((snapshot) => !("aspectsToSunSign" in snapshot)));
 });

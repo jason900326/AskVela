@@ -1,0 +1,30 @@
+{
+  "slug": "sepharial-astrology-how-to-make-and-read-1920",
+  "domain": "astrology",
+  "title": "Astrology: How to Make and Read Your Own Horoscope",
+  "author": "Sepharial",
+  "edition": "Revised and Enlarged Edition",
+  "publication_year": 1920,
+  "language": "en",
+  "public_domain": true,
+  "source_provider": "Project Gutenberg",
+  "source_url": "https://www.gutenberg.org/ebooks/46963",
+  "machine_readable_url": "https://www.gutenberg.org/files/46963/46963-0.txt",
+  "source_note": "Project Gutenberg eBook #46963. The uploaded PDF was a browser/print rendering of this eBook; the canonical Gutenberg text is preferred for extraction because the uploaded PDF is image-only.",
+  "user_upload": {
+    "filename": "How to Make and Read Your Own Horoscope.pdf",
+    "sha256": "1d0423a7d6142dc907be2f26d4a65294d8b697f3f272702a99ce20e4a2bd0d27",
+    "pages": 77,
+    "verified_title_page": true,
+    "verified_contents": true
+  },
+  "relevant_sections": [
+    "Section I, Chapter I — The Planets, Their Natures and Types",
+    "Section I, Chapter II — The Signs of the Zodiac",
+    "Section I, Chapter IV — The Astronomical Aspects",
+    "Section II, Chapter IV — Planetary Transits",
+    "Section IV, Chapter II — The Effects of Transits",
+    "Section IV, Chapter III — How to Summarise a Horoscope"
+  ],
+  "usage_policy": "Use as a historical astrological source. Preserve source attribution, but do not repeat deterministic health, death, moral, physiognomic, gender, national, or other harmful historical claims as modern factual guidance."
+}

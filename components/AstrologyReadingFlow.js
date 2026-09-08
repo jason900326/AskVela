@@ -47,7 +47,9 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
             && saved?.kind === "astrology"
             && saved?.readingId
             && saved?.result
-            && saved?.sourceGrounded === true;
+            && saved?.sourceGrounded === true
+            && Array.isArray(saved?.sources?.references)
+            && saved.sources.references.length > 0;
 
           if (trustworthySavedReading) {
             setReading(saved);
@@ -110,7 +112,9 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法完成星座解讀。");
-      if (data.sourceGrounded !== true) throw new Error("這次星座解讀沒有通過來源驗證，因此不顯示結果。");
+      if (data.sourceGrounded !== true || !data.sources?.references?.length) {
+        throw new Error("這次星座解讀沒有通過來源驗證，因此不顯示結果。");
+      }
       setReading(data);
     } catch (err) {
       setError(err.message || "目前無法完成星座解讀。");
@@ -131,9 +135,9 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
 
   function restoreSavedAstrology(saved) {
     if (!saved?.readingId || saved?.kind !== "astrology" || !saved?.result) return;
-    if (saved.sourceGrounded !== true) {
+    if (saved.sourceGrounded !== true || !saved.sources?.references?.length) {
       setReading(null);
-      setError("這筆是星座來源庫完成前產生的舊版測試解讀。為了避免把沒有書籍依據的內容當成正式運勢，現在不再顯示它。");
+      setError("這筆是來源系統完成前產生的舊版測試解讀。為了避免把沒有書籍依據的內容當成正式運勢，現在不再顯示它。");
       return;
     }
     setReading(saved);
@@ -159,17 +163,15 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
             <div>
               <div className="eyebrow">ASKVELA · ASTROLOGY</div>
               <h1>今天，想看看哪個星座的節奏？</h1>
-              <p>生日只用來協助選擇太陽星座。正式運勢會等書籍來源與引用流程補齊後才重新開放，不會只靠模型自由發揮。</p>
+              <p>生日只用來協助選擇太陽星座。Vela 會先查閱 Alan Leo 與 Sepharial 的可追溯占星原則，再對照當天實際計算出的太陽與月亮位置做綜合，不會把本命月亮章節直接套成今日行運。</p>
             </div>
           </header>
 
-          {!ASTROLOGY_SOURCE_READY && (
-            <aside className="astrologySourceGate" role="status">
-              <strong>星座來源資料庫尚未完成</strong>
-              <span>{ASTROLOGY_SOURCE_MESSAGE}</span>
-              <small>{ASTROLOGY_SOURCE_NEXT_STEP}</small>
-            </aside>
-          )}
+          <aside className="astrologySourceGate" role="status">
+            <strong>來源解讀已啟用</strong>
+            <span>{ASTROLOGY_SOURCE_MESSAGE}</span>
+            <small>{ASTROLOGY_SOURCE_NEXT_STEP}</small>
+          </aside>
 
           <form className="astrologyPanel" onSubmit={submitReading}>
             <section className="astrologyInputGroup">
@@ -245,7 +247,17 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
             <summary>這次解讀是怎麼來的？</summary>
             <div>
               <p>{reading.result?.basisNote}</p>
+              <p>{reading.sources?.methodNote}</p>
+              <div className="eyebrow">實際天象</div>
               <ul>{(reading.skyContext?.signals || []).map((signal) => <li key={signal}>{signal}</li>)}</ul>
+              <div className="eyebrow">參考來源</div>
+              <ul>
+                {(reading.sources?.references || []).map((reference) => (
+                  <li key={`${reference.sourceId}-${reference.location}`}>
+                    <strong>{reference.author}</strong> — <em>{reference.title}</em>，{reference.edition}，{reference.location}
+                  </li>
+                ))}
+              </ul>
               <small>{reading.skyContext?.method?.precisionNote}</small>
             </div>
           </details>
