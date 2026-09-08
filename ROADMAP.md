@@ -5,6 +5,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 ## Current status
 
 - Current phase: **Phase 8 — Dream interpretation (database/deployment acceptance)**
+- Phase 9 note: **the code-side Vela UI foundation has landed ahead of final artwork; Phase 9 remains open until approved character art and deployed visual acceptance are complete**
 - Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
 - Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Astrology contract: [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md)
@@ -182,10 +183,16 @@ Login remains optional; anonymous use is never blocked.
 **Exit condition:** source-grounded Dream readings work on production with visible references, private Dream history survives a new session, Tarot/Astrology history still works, sensitive-content framing remains non-diagnostic, and CI is green.
 
 ## Phase 9 — Final Vela UI / UX
-- [ ] Replace the current CSS fortune-teller placeholder with the final illustrated Vela character
-- [ ] Refine the dialogue-first landing around the final artwork and crystal-ball composition
-- [ ] Finalize responsive navigation, account UI, loading/error/empty states
-- [ ] Audit accessibility and motion preferences
+- [x] Extract the home fortune-teller scene into a reusable `VelaStage` component
+- [x] Make the crystal ball a real accessible CTA into the conversation-first flow
+- [x] Refine the dialogue-first landing with a pink/purple stage atmosphere and responsive desktop/mobile composition
+- [x] Add shared focus, disabled, loading/error, and cross-mode atmosphere states
+- [x] Respect `prefers-reduced-motion` and keep interaction understandable without animation
+- [x] Add an automatic final-art slot at `public/vela/vela-home.webp` with graceful fallback
+- [ ] Replace the fallback character with the approved final illustrated Vela artwork
+- [ ] Run deployed visual acceptance on mobile and desktop after final artwork is installed
+
+**Status:** code-side foundation merged in PR #25. Phase 9 remains open until final artwork and deployed visual acceptance are complete.
 
 ## Phase 10 — Art assets
 - [ ] Vela main character and mode-specific variants
