@@ -12,7 +12,7 @@ const RESULTS_DIR = resolve(ROOT, "eval/results");
 const STYLE_PATTERNS = Object.freeze({
   reportFiller: /綜合來看|整體而言|總而言之|這組牌顯示|這張牌代表|這張牌顯示|在這個位置/gu,
   polishedContrast: /不是[^。！？\n]{0,32}(?:而是|反而是)|與其[^。！？\n]{0,32}不如|真正(?:的)?(?:重點|問題|需要|值得)|核心(?:在於|是)/gu,
-  deterministic: /一定會|肯定會|絕對會|注定|命中注定|必然會|對方就是|你就是/gu,
+  deterministic: /一定會|肯定會|絕對會|注定|命中注定|必然會|你(?:一定|肯定)是|對方(?:一定|肯定)(?:是|會)/gu,
   theatricalMysticism: /宇宙(?:正在)?告訴你|命運(?:正在)?(?:推著|告訴)|靈魂(?:正在)?(?:提醒|呼喚)|能量(?:正在)?告訴你/gu,
   genericReassurance: /不要擔心|一切都會好起來|你只需要相信|相信宇宙|一切都有安排/gu,
 });
@@ -26,39 +26,33 @@ function collectStrings(value) {
   return Object.values(value).flatMap(collectStrings);
 }
 
-function presentationFor(mode, reading) {
+function legacyPresentation(mode, reading) {
   if (mode === "tarot") {
     return {
-      overview: reading.velaSpeech?.overview || reading.synthesis?.overview || "",
-      narrative: reading.velaSpeech?.narrative || reading.synthesis?.narrative || "",
+      overview: reading.synthesis?.overview || "",
+      narrative: reading.synthesis?.narrative || "",
     };
   }
-
   if (mode === "astrology") {
-    const result = reading.result || {};
     return {
-      overview: result.overview || "",
-      overall: result.overall || "",
-      relationships: result.relationships || "",
-      workStudy: result.workStudy || "",
-      energy: result.energy || "",
-      practicalGuidance: result.practicalGuidance || [],
-      reflectionQuestion: result.reflectionQuestion || "",
+      overview: reading.result?.overview || "",
+      narrative: reading.result?.overall || "",
     };
   }
-
-  const result = reading.result || {};
   return {
-    overview: result.overview || "",
-    whatStandsOut: result.whatStandsOut || [],
-    hypotheses: (result.hypotheses || []).map((item) => ({
-      title: item.title,
-      interpretation: item.interpretation,
-    })),
-    wakingLifeConnection: result.wakingLifeConnection || "",
-    reflectionQuestions: result.reflectionQuestions || [],
-    groundingNote: result.groundingNote || "",
+    overview: reading.result?.overview || "",
+    narrative: reading.result?.hypotheses?.[0]?.interpretation || reading.result?.wakingLifeConnection || "",
   };
+}
+
+function presentationFor(mode, reading) {
+  if (reading?.velaSpeech?.overview && reading?.velaSpeech?.narrative) {
+    return {
+      overview: reading.velaSpeech.overview,
+      narrative: reading.velaSpeech.narrative,
+    };
+  }
+  return legacyPresentation(mode, reading);
 }
 
 function matches(text, pattern) {
@@ -99,16 +93,11 @@ function evaluateStyle(mode, presentation) {
   for (const [name, found] of Object.entries(flags)) {
     if (found.length) warnings.push(`${name}: ${[...new Set(found)].join("、")}`);
   }
-  if (hedgeCount > 14) warnings.push(`hedging may be repetitive (${hedgeCount} conditional phrases)`);
+  if (hedgeCount > 9) warnings.push(`hedging may be repetitive (${hedgeCount} conditional phrases)`);
 
   const overviewLength = String(presentation.overview || "").length;
-  if (mode === "tarot" && overviewLength > 90) warnings.push(`Tarot spoken opening is long (${overviewLength} chars)`);
-  if (mode === "astrology" && overviewLength > 55) warnings.push(`Astrology overview is long (${overviewLength} chars)`);
-  if (mode === "dream" && overviewLength > 170) warnings.push(`Dream overview is long (${overviewLength} chars)`);
-
-  if (mode === "tarot" && text.length > 450) warnings.push(`Tarot primary speech is long (${text.length} chars)`);
-  if (mode === "astrology" && text.length > 720) warnings.push(`Astrology response is long (${text.length} chars)`);
-  if (mode === "dream" && text.length > 800) warnings.push(`Dream response is long (${text.length} chars)`);
+  if (overviewLength > 90) warnings.push(`${mode} spoken opening is long (${overviewLength} chars)`);
+  if (text.length > 450) warnings.push(`${mode} primary speech is long (${text.length} chars)`);
 
   return {
     totalCharacters: text.length,
@@ -140,9 +129,9 @@ async function runCase(testCase) {
     ...testCase,
     durationMs: Date.now() - startedAt,
     presentation,
-    speechRendererStatus: testCase.mode === "tarot" ? (reading.velaSpeech?.status || "legacy") : null,
-    speechRendererAttempts: testCase.mode === "tarot" ? (reading.velaSpeech?.attempts || 0) : null,
-    speechRendererViolations: testCase.mode === "tarot" ? (reading.velaSpeech?.violations || []) : null,
+    speechRendererStatus: reading.velaSpeech?.status || "legacy",
+    speechRendererAttempts: reading.velaSpeech?.attempts || 0,
+    speechRendererViolations: reading.velaSpeech?.violations || [],
     automaticReview: evaluateStyle(testCase.mode, presentation),
     rawReading: reading,
   };
@@ -175,12 +164,12 @@ function buildMarkdown(results, meta) {
     "",
     "## How to review",
     "",
-    "For Tarot, this worksheet now judges only the primary Vela Speech layer; the full grounded analysis remains in rawReading for verification. Astrology and Dream still show their current full user-facing structures.",
+    "This worksheet judges only each mode's primary Vela Speech layer. Full grounded analysis remains in rawReading for verification and in the product behind progressive disclosure.",
     "",
     "- Naturalness: sounds like a real person using Taiwan Traditional Chinese, including occasional imperfect rhythm when it helps.",
     "- Directness: reaches the useful point early without report-style preamble or polished AI antithesis.",
     "- Vela consistency: feels like the same Vela across Tarot, Astrology, and Dream.",
-    "- Grounding / boundaries: stays source-grounded and avoids certainty, diagnosis, or invented intent.",
+    "- Grounding / boundaries: stays source-grounded and avoids certainty, diagnosis, invented intent, or high-stakes directives.",
     "- Usefulness: leaves the user with a clear insight or next thing to notice.",
     "",
   ];
@@ -189,13 +178,11 @@ function buildMarkdown(results, meta) {
     lines.push(`## ${item.id} · ${item.mode}`);
     lines.push("");
     lines.push(`**Review focus:** ${(item.reviewFocus || []).join(" / ")}`);
-    if (item.mode === "tarot") {
-      lines.push("");
-      lines.push(`**Speech renderer:** ${item.speechRendererStatus || "unknown"}`);
-      lines.push(`**Speech attempts:** ${item.speechRendererAttempts || 0}`);
-      if (item.speechRendererViolations?.length) {
-        lines.push(`**Speech violations before fallback/retry:** ${item.speechRendererViolations.join(", ")}`);
-      }
+    lines.push("");
+    lines.push(`**Speech renderer:** ${item.speechRendererStatus || "unknown"}`);
+    lines.push(`**Speech attempts:** ${item.speechRendererAttempts || 0}`);
+    if (item.speechRendererViolations?.length) {
+      lines.push(`**Speech violations before fallback/retry:** ${item.speechRendererViolations.join(", ")}`);
     }
     lines.push("");
     lines.push("**Input**");
@@ -255,7 +242,7 @@ if (!selected.length) {
 }
 
 console.log(`=== Vela voice evaluation: ${selected.length} case(s) ===`);
-console.log(`Do not treat automatic flags as the final verdict; they only surface patterns for human review.`);
+console.log("Do not treat automatic flags as the final verdict; they only surface patterns for human review.");
 
 const results = [];
 for (let index = 0; index < selected.length; index += 1) {
