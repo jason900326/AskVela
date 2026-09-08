@@ -272,30 +272,27 @@ export default function VelaExperience() {
         )}
 
         {entryMode !== "guided" && recommendation && (
-          <section className="guideRecommendation" aria-live="polite">
-            <div className="eyebrow">{recommendation.eyebrow}</div>
-            <h2>{recommendation.title}</h2>
-            <p>{recommendation.message}</p>
-            <div className="guideRecommendationActions">
-              {recommendation.mode === "tarot" && <button className="primaryButton" type="button" onClick={() => beginTarot(guideInput)}>好，開始塔羅</button>}
-              {recommendation.mode === "astrology" && <button className="primaryButton" type="button" onClick={() => setExperience("astrology")}>看看最近的星象節奏</button>}
-              {recommendation.mode === "dream" && <button className="primaryButton" type="button" onClick={() => beginDream(guideInput)}>好，從這個夢開始</button>}
-              <button className="ghostButton" type="button" onClick={() => { setGuideInput(""); setGuideResult(null); }}>換一件事問 Vela</button>
-            </div>
-          </section>
+          <div className="guideRecommendationOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setGuideResult(null); }}>
+            <section className="guideRecommendation" role="dialog" aria-modal="true" aria-labelledby="vela-recommendation-title">
+              <button className="guideRecommendationClose" type="button" onClick={() => setGuideResult(null)} aria-label="關閉建議">×</button>
+              <div className="eyebrow">{recommendation.eyebrow}</div>
+              <h2 id="vela-recommendation-title">{recommendation.title}</h2>
+              <p>{recommendation.message}</p>
+              <div className="guideRecommendationActions">
+                {recommendation.mode === "tarot" && <button className="primaryButton" type="button" onClick={() => beginTarot(guideInput)}>好，開始塔羅</button>}
+                {recommendation.mode === "astrology" && <button className="primaryButton" type="button" onClick={() => setExperience("astrology")}>看看最近的星象節奏</button>}
+                {recommendation.mode === "dream" && <button className="primaryButton" type="button" onClick={() => beginDream(guideInput)}>好，從這個夢開始</button>}
+                <button className="ghostButton" type="button" onClick={() => { setGuideInput(""); setGuideResult(null); }}>換一件事問 Vela</button>
+              </div>
+            </section>
+          </div>
         )}
       </section>
     );
   }
 
-  const experienceLabel = experience === "astrology" ? "星座" : experience === "dream" ? "解夢" : "塔羅";
-
   return (
     <section className="velaExperienceHub">
-      <div className="experienceModeHeader">
-        <button type="button" onClick={() => setExperience("home")}>← 回到 Vela</button>
-        <span>{experienceLabel}</span>
-      </div>
       {experience === "astrology" ? (
         <AstrologyReadingFlow onExperienceChange={setExperience} />
       ) : experience === "dream" ? (
