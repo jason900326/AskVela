@@ -7,6 +7,7 @@ const ORIENTATION_LABELS = { upright: "正位", reversed: "逆位" };
 const READING_SESSION_KEY = "askvela.current-reading.v2";
 const MAX_FOLLOW_UPS = 6;
 const MAX_FOLLOW_UP_MESSAGE_LENGTH = 320;
+const MAX_CLARIFIERS = 2;
 const SELECTION_POOL_SIZE = 12;
 
 function makeRequestId() {
@@ -102,6 +103,8 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
   const [followUpMessage, setFollowUpMessage] = useState("");
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
+  const [clarifierLoading, setClarifierLoading] = useState(false);
+  const [clarifierError, setClarifierError] = useState("");
   const [sessionRestored, setSessionRestored] = useState(false);
 
   const activeReading = useMemo(() => {
@@ -124,6 +127,8 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
   const cardsNeeded = selectedSpread?.positions?.length || 0;
   const selectionComplete = cardsNeeded > 0 && selectedCardIndexes.length === cardsNeeded;
   const followUpLimitReached = followUps.length >= MAX_FOLLOW_UPS;
+  const clarifiers = Array.isArray(result?.clarifiers) ? result.clarifiers : [];
+  const clarifierLimitReached = clarifiers.length >= MAX_CLARIFIERS;
 
   useEffect(() => {
     if (routedQuestion) {
@@ -252,6 +257,7 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
     setFollowUps([]);
     setFollowUpMessage("");
     setFollowUpError("");
+    setClarifierError("");
     setRevealedCount(0);
     setError("");
     setStage("select");
@@ -275,6 +281,7 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
     setFollowUps([]);
     setFollowUpMessage("");
     setFollowUpError("");
+    setClarifierError("");
     setRevealedCount(0);
 
     try {
@@ -308,6 +315,7 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
     setLoading(true);
     setError("");
     setStage("interpreting");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
     try {
       const response = await fetch("/api/readings/interpret", {
@@ -321,12 +329,56 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
       if (!response.ok) throw new Error(data.error || "目前無法完成解讀。");
       setResult(data);
       setFollowUps([]);
+      setClarifierError("");
       setStage("result");
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     } catch (err) {
       setError(err.message || "目前無法完成解讀。");
       setStage("reveal");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function drawClarifier() {
+    if (!draw || !result || !requestId || clarifierLoading || clarifierLimitReached) return;
+    const existingClarifiers = Array.isArray(result.clarifiers) ? result.clarifiers : [];
+    setClarifierLoading(true);
+    setClarifierError("");
+
+    try {
+      const response = await fetch("/api/readings/clarifier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": `${requestId}:clarifier:${existingClarifiers.length + 1}` },
+        body: JSON.stringify({
+          readingId: draw.readingId,
+          requestId,
+          question: question.trim(),
+          spreadId,
+          selectedCardIndexes,
+          clarifierCount: existingClarifiers.length,
+          initialReading: compactInitialReading(result),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "目前無法補抽這張牌。");
+
+      const alreadyUsed = new Set([
+        ...draw.cards.map((card) => card.cardId),
+        ...existingClarifiers.map((item) => item.card?.cardId),
+      ]);
+      if (!data?.card?.cardId || alreadyUsed.has(data.card.cardId) || data.ordinal !== existingClarifiers.length + 1) {
+        throw new Error("補充牌與原本牌面不一致，這次先不顯示。");
+      }
+
+      setResult((current) => ({
+        ...current,
+        clarifiers: [...(Array.isArray(current?.clarifiers) ? current.clarifiers : []), data],
+      }));
+    } catch (err) {
+      setClarifierError(err.message || "目前無法補抽這張牌；原本的解讀不會改變。");
+    } finally {
+      setClarifierLoading(false);
     }
   }
 
@@ -384,6 +436,8 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
     setFollowUps([]);
     setFollowUpMessage("");
     setFollowUpError("");
+    setClarifierLoading(false);
+    setClarifierError("");
     setError("");
   }
 
@@ -399,6 +453,8 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
     setFollowUps(Array.isArray(saved.followUps) ? saved.followUps.slice(0, MAX_FOLLOW_UPS) : []);
     setFollowUpMessage("");
     setFollowUpError("");
+    setClarifierLoading(false);
+    setClarifierError("");
     setError("");
     setSessionRestored(true);
     setStage("result");
@@ -610,6 +666,48 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
               {result.synthesis?.reflectionQuestions?.length > 0 && <section className="synthesisBlock"><div className="eyebrow">留給你的問題</div><ul>{result.synthesis.reflectionQuestions.map((item) => <li key={item}>{item}</li>)}</ul></section>}
             </div>
           </details>
+
+          <section className="clarifierPanel" aria-labelledby="clarifier-title">
+            <div className="clarifierHeading">
+              <div>
+                <div className="eyebrow">還想抽牌？</div>
+                <h3 id="clarifier-title">有一個地方還沒看清楚，可以補一張。</h3>
+                <p>補充牌不會重算前面的牌陣，只是沿著同一個問題再照亮一個角度。這次最多補 {MAX_CLARIFIERS} 張。</p>
+              </div>
+              <span className="clarifierCount">{clarifiers.length}/{MAX_CLARIFIERS}</span>
+            </div>
+
+            {clarifiers.length > 0 && (
+              <div className="clarifierList" aria-live="polite">
+                {clarifiers.map((item) => (
+                  <article className="clarifierCard" key={`clarifier-${item.ordinal}-${item.card.cardId}`}>
+                    <div className={`clarifierCardArt ${item.card.orientation === "reversed" ? "isReversed" : ""}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={tarotImagePath(item.card)} alt={`${item.card.nameZhTw}（${ORIENTATION_LABELS[item.card.orientation]}）`} draggable="false" />
+                    </div>
+                    <div className="clarifierCardBody">
+                      <small>第 {item.ordinal} 張補充牌</small>
+                      <h4>{item.card.nameZhTw} · {ORIENTATION_LABELS[item.card.orientation]}</h4>
+                      <p>{item.interpretation}</p>
+                      {item.practicalFocus && <div className="clarifierFocus">{item.practicalFocus}</div>}
+                      <details className="readingSources">
+                        <summary>看這張補充牌的原典牌義</summary>
+                        <p>{item.sourceMeaning}</p>
+                      </details>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            <div className="clarifierActions">
+              <small>{clarifierLimitReached ? "補充牌已經夠了。再抽下去容易把原本的訊息越看越散。" : `還可以補 ${MAX_CLARIFIERS - clarifiers.length} 張。`}</small>
+              <button className="primaryButton" type="button" onClick={drawClarifier} disabled={clarifierLoading || clarifierLimitReached}>
+                {clarifierLoading ? "Vela 正在補一張牌…" : clarifierLimitReached ? "這次先看到這裡" : "還想抽牌"}
+              </button>
+            </div>
+            {clarifierError && <div className="clarifierError" role="alert">{clarifierError}</div>}
+          </section>
 
           <p className="readingDisclaimer">{result.disclaimer}</p>
           <div className="flowActions centered"><button className="ghostButton" type="button" onClick={resetReading}>開始新的占卜</button></div>
