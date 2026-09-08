@@ -19,6 +19,7 @@ import "./phase10-tarot-immersion.css";
 import "./phase10-tarot-flow-v2.css";
 import "./phase10-tarot-dialogue.css";
 import "./phase10-home-journey.css";
+import "./phase10-cross-mode-polish.css";
 
 export const metadata = {
   title: "Vela",
