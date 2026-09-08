@@ -37,17 +37,19 @@ test("Vela voice baseline contains four stable cases for each launch mode", asyn
   }
 });
 
-test("voice runner exercises all three real engines and evaluates Tarot primary speech separately", async () => {
+test("voice runner exercises all three real engines and judges only primary shared speech", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /interpretTarotReading/u);
   assert.match(runner, /createAstrologyReading/u);
   assert.match(runner, /createDreamReading/u);
   assert.match(runner, /selected\.slice/u);
-  assert.match(runner, /reading\.velaSpeech\?\.overview/u);
-  assert.match(runner, /reading\.velaSpeech\?\.narrative/u);
+  assert.match(runner, /reading\?\.velaSpeech\?\.overview/u);
+  assert.match(runner, /reading\.velaSpeech\.narrative/u);
+  assert.match(runner, /legacyPresentation/u);
   assert.match(runner, /speechRendererStatus/u);
   assert.match(runner, /Speech renderer/u);
-  assert.doesNotMatch(runner.slice(runner.indexOf("if (mode === \"tarot\")"), runner.indexOf("if (mode === \"astrology\")")), /cardInterpretations/u);
+  assert.match(runner, /Speech attempts/u);
+  assert.match(runner, /This worksheet judges only each mode's primary Vela Speech layer/u);
   assert.match(runner, /reportFiller/u);
   assert.match(runner, /polishedContrast/u);
   assert.match(runner, /不是\[\^。！？\\n\]/u);
@@ -55,6 +57,7 @@ test("voice runner exercises all three real engines and evaluates Tarot primary 
   assert.match(runner, /deterministic/u);
   assert.match(runner, /deterministicMatches/u);
   assert.match(runner, /不代表\|不等於/u);
+  assert.doesNotMatch(runner, /對方就是\|你就是/u);
   assert.match(runner, /theatricalMysticism/u);
   assert.match(runner, /SPOKEN_TEXTURE_PATTERN/u);
   assert.match(runner, /spokenTextureCount/u);

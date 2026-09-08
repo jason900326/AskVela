@@ -1,7 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeDreamHistorySnapshot, dreamHistoryRowToSummary } from "../lib/dream-history.js";
+import {
+  dreamHistoryRowToSnapshot,
+  dreamHistoryRowToSummary,
+  normalizeDreamHistorySnapshot,
+} from "../lib/dream-history.js";
 import { dreamReadingId } from "../lib/dream-reading.js";
+
+const velaSpeech = {
+  version: "shared-speech-v2",
+  status: "rendered",
+  attempts: 1,
+  fallbackFields: [],
+  violations: [],
+  safeFallback: false,
+  overview: "我會先停在那個來不及的感覺。",
+  narrative: "火車離開這個畫面可以先沿著等待感看，先不用急著替它定義一個固定意思。",
+};
 
 function sampleDream() {
   const request = {
@@ -31,17 +46,19 @@ function sampleDream() {
       groundingNote: "把夢當成情緒線索，而不是預言。",
       basisNote: "依據近期生活素材與濃縮的歷史解夢原則。",
     },
+    velaSpeech,
     sourceGrounded: true,
     disclaimer: "反思用途。",
   };
 }
 
-test("dream history snapshot recomputes id and source evidence", () => {
+test("dream history snapshot recomputes id and source evidence and stores speech metadata", () => {
   const normalized = normalizeDreamHistorySnapshot(sampleDream());
   assert.equal(normalized.kind, undefined);
   assert.match(normalized.readingId, /^dream_[0-9a-f]{32}$/u);
   assert.ok(normalized.sources.some((source) => source.id === "personal-associations"));
   assert.ok(normalized.sources.some((source) => source.id === "day-residue"));
+  assert.equal(normalized.result._velaSpeech.overview, velaSpeech.overview);
 });
 
 test("dream history rejects a tampered reading id", () => {
@@ -50,16 +67,39 @@ test("dream history rejects a tampered reading id", () => {
   assert.throws(() => normalizeDreamHistorySnapshot(snapshot), /不一致/u);
 });
 
-test("dream history summary does not expose the full dream as primary UI text", () => {
-  const summary = dreamHistoryRowToSummary({
-    id: sampleDream().readingId,
-    dream_text: sampleDream().dreamText,
-    extraction: sampleDream().extraction,
-    reading_result: sampleDream().result,
+test("dream history summary prefers speech but remains compatible with old rows", () => {
+  const dream = sampleDream();
+  const rowBase = {
+    id: dream.readingId,
+    dream_text: dream.dreamText,
+    extraction: dream.extraction,
     updated_at: "2026-09-08T00:00:00Z",
     expires_at: "2027-09-08T00:00:00Z",
+  };
+  const summary = dreamHistoryRowToSummary({
+    ...rowBase,
+    reading_result: { ...dream.result, _velaSpeech: velaSpeech },
   });
+  const legacy = dreamHistoryRowToSummary({ ...rowBase, reading_result: dream.result });
   assert.equal(summary.kind, "dream");
   assert.equal(summary.title, "趕不上火車後回到高中教室");
   assert.equal(summary.themeCount, 2);
+  assert.equal(summary.overview, velaSpeech.overview);
+  assert.equal(legacy.overview, dream.result.overview);
+});
+
+test("dream history row restores stored speech separately from canonical analysis", () => {
+  const normalized = normalizeDreamHistorySnapshot(sampleDream());
+  const restored = dreamHistoryRowToSnapshot({
+    id: normalized.readingId,
+    request_id: normalized.requestId,
+    dream_text: normalized.dreamText,
+    waking_life_context: normalized.wakingLifeContext,
+    extraction: normalized.extraction,
+    reading_result: normalized.result,
+    disclaimer: normalized.disclaimer,
+  });
+  assert.equal(restored.result.overview, sampleDream().result.overview);
+  assert.equal(restored.result._velaSpeech, undefined);
+  assert.equal(restored.velaSpeech.overview, velaSpeech.overview);
 });
