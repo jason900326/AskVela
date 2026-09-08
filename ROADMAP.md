@@ -4,10 +4,11 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 7 — Astrology (source grounding pending)**
+- Current phase: **Phase 7 — Astrology (deployment acceptance)**
 - Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
 - Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Astrology contract: [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md)
+- Astrology source provenance: [docs/ASTROLOGY_SOURCES.md](docs/ASTROLOGY_SOURCES.md)
 - Vela voice contract: [docs/VELA_VOICE.md](docs/VELA_VOICE.md)
 
 ## Phase 0 — Product foundation ✅
@@ -77,21 +78,25 @@ Login remains optional; anonymous use is never blocked.
 - [x] Add 12-sign structured registry with Traditional Chinese labels
 - [x] Add fixed-date birthday helper with manual override
 - [x] Add approximate solar and lunar ecliptic longitude calculation
-- [x] Add Moon phase and major-aspect signal generation
+- [x] Add Moon phase and supported Sun–Moon aspect signal generation
 - [x] Add deterministic daily and Monday–Sunday weekly context
+- [x] Remove false “aspect to the center of the selected Sun sign” precision; never claim a natal aspect without an actual natal degree
 
 ### 7.3 Source-grounded Vela astrology engine
 - [x] Add validated `/api/astrology/reading`
 - [x] Add strict structured output schema
-- [x] Prevent invented planets, houses, natal placements, and unsupported aspects
-- [x] Add a hard source gate: no astrology interpretation is generated while the astrology book knowledge base is empty
-- [x] Reject previously generated pre-source astrology results from session/history restore
-- [ ] Select at least one astrology reference book with legally usable source material
-- [ ] Upload/extract the source material
-- [ ] Define structured astrology source metadata and ingestion
-- [ ] Retrieve relevant source evidence for sign/period/sky signals before model interpretation
-- [ ] Require human-readable source references in each astrology result
-- [ ] Re-enable daily/weekly generation only after the source-grounding acceptance tests pass
+- [x] Prevent invented planets, houses, natal placements, retrogrades, and unsupported aspects
+- [x] Reject pre-source prototype astrology results from formal session/history restore
+- [x] Verify Sepharial *Astrology: How to Make and Read Your Own Horoscope* (1920) and its Project Gutenberg source
+- [x] Verify Alan Leo *Astrology for All* content and use the clearly public-domain 1910 fourth edition as runtime provenance
+- [x] Add source metadata, upload fingerprints, edition notes, and public-domain provenance
+- [x] Add a structured, attributable astrology source corpus for all 12 Sun signs, Sun/Moon principles, zodiac structure, aspects, transit method, and synthesis method
+- [x] Add deterministic evidence selection for sign + actual sky signals before model interpretation
+- [x] Separate natal doctrine from current-transit application and explicitly prohibit natal-Moon → transiting-Moon substitution
+- [x] Require the model to reason as “book principle → actual sky → contextual synthesis” rather than paraphrasing source prose
+- [x] Exclude historical medical/death/physiognomic/gender/racial/class/moral deterministic claims from Vela output
+- [x] Return human-readable source references with each formal reading
+- [x] Re-enable daily/weekly generation only when canonical source evidence is sufficient
 
 ### 7.4 Functional UI
 - [x] Replace the Tarot / Astrology / Dream tab-first landing with a conversation-first Vela home
@@ -102,15 +107,16 @@ Login remains optional; anonymous use is never blocked.
 - [x] Add daily / weekly toggle
 - [x] Reduce daily/weekly result headline typography for mobile readability
 - [x] Pin account avatar and **我的紀錄** controls to the top-right consistently across modes
-- [x] Add responsive structured result view and expandable method/source area
+- [x] Show interpretation basis, actual sky signals, and attributable book references in the result
 
 ### 7.5 Account history integration
 - [x] Add `astrology_readings` migration with RLS and 365-day retention
 - [x] Add astrology history collection/detail/delete APIs
 - [x] Recompute sky context server-side before accepting a saved snapshot
+- [x] Recompute canonical source evidence on save/restore instead of trusting client-provided citations
 - [x] Merge Tarot + Astrology into the account's **我的紀錄** UI
 - [x] Support reopening a saved record even when it belongs to the other experience
-- [ ] Apply migration `005_astrology_history.sql` to the active Supabase project before source-grounded astrology history is enabled
+- [ ] Apply migration `005_astrology_history.sql` to the active Supabase project
 
 ### 7.6 Tests and finish
 - [x] Test 12-sign registry and birthday boundaries
@@ -118,11 +124,13 @@ Login remains optional; anonymous use is never blocked.
 - [x] Test request validation and deterministic astrology IDs
 - [x] Test prompt contract against invented chart data
 - [x] Test unified history / RLS contract
-- [x] Test the source gate and conversation-first landing contract
-- [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop **after astrology sources are ingested**
-- [x] Confirm Phase 7 base implementation PR CI lint / test / build green (PR #14)
+- [x] Test conversation-first landing and fixed account controls
+- [x] Add source-fidelity contract tests for natal/transit boundaries, historical-content curation, and source attribution
+- [x] Add unit coverage proving all 12 signs have Alan Leo + Sepharial evidence and no sign-center aspect is fabricated
+- [ ] Confirm source-grounding PR CI lint / test / build green
+- [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop
 
-**Exit condition:** astrology has a real source corpus, every result is evidence-grounded with visible source references, daily/weekly readings work on production, private astrology history survives a new session, Tarot history still works, and CI is green.
+**Exit condition:** source-grounded daily/weekly readings work on production with visible references, private astrology history survives a new session, Tarot history still works, and CI is green.
 
 ## Phase 8 — Dream interpretation
 - [ ] Define source method and what counts as evidence
