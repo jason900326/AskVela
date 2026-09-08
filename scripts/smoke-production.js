@@ -61,7 +61,10 @@ function validateAstrology(reading, period) {
   assert(/^astro_[0-9a-f]{32}$/u.test(String(reading?.readingId || "")), `${period} astrology reading ID is invalid.`);
   assert(reading?.period === period, `${period} astrology response changed the requested period.`);
   assert(reading?.sourceGrounded === true, `${period} astrology response is not source-grounded.`);
-  assert(Array.isArray(reading?.sources) && reading.sources.length > 0, `${period} astrology response has no attributable sources.`);
+  assert(
+    Array.isArray(reading?.sources?.references) && reading.sources.references.length > 0,
+    `${period} astrology response has no attributable sources.`,
+  );
   assert(String(reading?.result?.overview || "").trim(), `${period} astrology response has no overview.`);
 }
 
