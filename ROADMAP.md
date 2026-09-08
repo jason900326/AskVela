@@ -5,6 +5,7 @@ This file is the single development checklist for AskVela. Work follows the phas
 ## Current status
 
 - Current phase: **Phase 8 — Dream interpretation (database/deployment acceptance)**
+- Phase 8 production acceptance: [docs/PHASE8_PRODUCTION_ACCEPTANCE.md](docs/PHASE8_PRODUCTION_ACCEPTANCE.md)
 - Phase 9 note: **the code-side Vela UI foundation has landed ahead of final artwork; Phase 9 remains open until approved character art and deployed visual acceptance are complete**
 - Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
 - Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
@@ -177,7 +178,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Test deterministic evidence selection and rejection of unselected evidence IDs
 - [x] Test private Dream history snapshot validation
 - [x] Test safety framing against diagnosis/prediction/fixed-symbol certainty
-- [ ] Confirm Phase 8 PR CI lint / test / build green
+- [x] Confirm Phase 8 PR CI lint / test / build green
 - [ ] Run deployed Dream reading + history smoke tests on mobile and desktop
 
 **Exit condition:** source-grounded Dream readings work on production with visible references, private Dream history survives a new session, Tarot/Astrology history still works, sensitive-content framing remains non-diagnostic, and CI is green.
