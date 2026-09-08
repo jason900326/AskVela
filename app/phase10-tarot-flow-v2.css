@@ -1,0 +1,221 @@
+/* Routed Tarot flow v2: remove duplicate questions and keep the ritual inside one clear scene. */
+
+/* Routed handoff: brief neutral preparation state, never another welcome/question screen. */
+.stage-routing {
+  min-height: calc(100svh - 76px);
+  display: grid;
+  align-items: center;
+}
+.stage-routing .routingPanel {
+  width: min(560px, calc(100% - 28px));
+  margin: 0 auto;
+  min-height: 280px;
+}
+
+/* Spread choice: no Vela artwork here. The three choices are the whole task. */
+.stage-spread::before {
+  background: radial-gradient(circle at 50% 10%, rgba(181,126,239,.13), transparent 34rem) !important;
+  background-image: radial-gradient(circle at 50% 10%, rgba(181,126,239,.13), transparent 34rem) !important;
+  opacity: 1 !important;
+}
+.stage-spread .readingPanel,
+.stage-spread .spreadChoicePanel {
+  position: relative !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: min(820px, calc(100% - 28px)) !important;
+  max-height: none !important;
+  margin: 34px auto 28px !important;
+  transform: none !important;
+  overflow: visible !important;
+  padding: 22px !important;
+}
+.stage-spread .panelHeading {
+  margin-bottom: 14px;
+}
+.stage-spread .panelHeading h2 {
+  margin: 0;
+}
+.stage-spread .spreadGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+.stage-spread .spreadOption {
+  min-height: 154px !important;
+  padding: 16px !important;
+}
+.stage-spread .spreadOption strong {
+  margin-top: 10px !important;
+}
+.stage-spread .spreadOption p {
+  margin: 6px 0 8px !important;
+}
+
+/* Card choice: Vela is part of the panel, directly above the invitation. */
+.stage-select .selectionPanel {
+  width: min(920px, calc(100% - 20px)) !important;
+  margin: 22px auto 28px !important;
+  padding: 14px 18px 18px !important;
+}
+.tarotSelectionVela {
+  height: 190px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+  margin: -4px auto 4px;
+  pointer-events: none;
+}
+.tarotSelectionVela img {
+  width: min(300px, 62vw);
+  height: auto;
+  transform: translateY(-8px);
+  filter: drop-shadow(0 18px 38px rgba(0,0,0,.38));
+}
+.stage-select .selectionHeading {
+  margin: 0 0 8px !important;
+}
+.stage-select .selectionHeading h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+.stage-select .selectionHeading p {
+  margin-top: 5px !important;
+}
+.stage-select .selectionPositions {
+  margin: 0 0 2px !important;
+}
+.stage-select .cardFan {
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 24px !important;
+  padding-bottom: 28px !important;
+}
+.stage-select .selectionHint {
+  margin-top: 0 !important;
+}
+.stage-select .flowActions {
+  margin-top: 12px !important;
+}
+
+/* Account/save CTA belongs after the reading summary, not before it. */
+.stage-result .resultIntro + .accountDock + .saveReadingPrompt,
+.stage-result .resultIntro + .saveReadingPrompt {
+  margin-top: 22px;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 760px) {
+  .stage-routing {
+    min-height: calc(100svh - 64px);
+  }
+
+  /* All three spread options should be visible without wasting half the screen on art. */
+  .stage-spread .readingPanel,
+  .stage-spread .spreadChoicePanel {
+    width: calc(100% - 18px) !important;
+    margin: 20px auto 24px !important;
+    padding: 16px !important;
+  }
+  .stage-spread .spreadGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .stage-spread .spreadOption {
+    min-height: 0 !important;
+    padding: 13px 14px !important;
+    border-radius: 17px !important;
+  }
+  .stage-spread .spreadOption > span {
+    min-height: 18px;
+    font-size: .8rem;
+  }
+  .stage-spread .spreadOption strong {
+    margin-top: 5px !important;
+    font-size: .95rem;
+  }
+  .stage-spread .spreadOption p {
+    margin: 4px 0 5px !important;
+    font-size: .74rem !important;
+    line-height: 1.45 !important;
+  }
+  .stage-spread .spreadOption small {
+    font-size: .69rem;
+  }
+  .stage-spread .flowActions {
+    margin-top: 12px !important;
+  }
+
+  /* Remove the large empty band from the selection scene. */
+  .stage-select .selectionPanel {
+    width: calc(100% - 14px) !important;
+    margin: 10px auto 18px !important;
+    padding: 12px 12px 14px !important;
+  }
+  .tarotSelectionVela {
+    height: 156px;
+    margin-bottom: 2px;
+  }
+  .tarotSelectionVela img {
+    width: min(255px, 72vw);
+    transform: translateY(-8px);
+  }
+  .stage-select .selectionHeading {
+    align-items: flex-end;
+    margin-bottom: 6px !important;
+  }
+  .stage-select .selectionHeading h2 {
+    font-size: 1.36rem;
+  }
+  .stage-select .selectionHeading p {
+    display: none !important;
+  }
+  .stage-select .selectionPositions {
+    gap: 5px !important;
+    margin-bottom: 0 !important;
+  }
+  .stage-select .selectionPositions span {
+    padding: 5px 8px !important;
+    font-size: .68rem !important;
+  }
+
+  /* 12 straight cards in two compact rows, fully visible in the selection scene. */
+  .stage-select .cardFan {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(42px, 1fr)) !important;
+    gap: 14px 4px !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 17px 0 24px !important;
+    overflow: visible !important;
+  }
+  .stage-select .selectionCard,
+  .stage-select .selectionCard:first-child {
+    width: 100% !important;
+    min-width: 42px !important;
+    max-width: 53px !important;
+    margin: 0 !important;
+    justify-self: center;
+  }
+  .stage-select .selectionOrder {
+    bottom: -24px !important;
+  }
+  .stage-select .selectionOrder small {
+    display: none !important;
+  }
+  .stage-select .selectionHint {
+    font-size: .72rem !important;
+  }
+  .stage-select .flowActions {
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+  .stage-select .flowActions button {
+    padding: 10px 13px !important;
+    font-size: .76rem;
+  }
+
+  .stage-result .saveReadingPrompt {
+    margin: 18px 0 4px !important;
+  }
+}
