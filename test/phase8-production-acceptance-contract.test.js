@@ -33,6 +33,8 @@ test("production smoke covers Astrology, Dream full-book RAG, authenticated hist
   assert.match(smoke, /\/api\/astrology\/reading/u);
   assert.match(smoke, /period: "daily"/u);
   assert.match(smoke, /period: "weekly"/u);
+  assert.match(smoke, /sources\?\.references/u);
+  assert.doesNotMatch(smoke, /Array\.isArray\(reading\?\.sources\) && reading\.sources\.length > 0, `\$\{period\} astrology/u);
   assert.match(smoke, /\/api\/dreams\/reading/u);
   assert.match(smoke, /dreamText: process\.env\.SMOKE_DREAM_TEXT \|\| "火車"/u);
   assert.match(smoke, /freud-full-book-rag/u);
