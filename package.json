@@ -16,7 +16,8 @@
     "ingest": "node --env-file=.env.local scripts/ingest-book.js",
     "ingest:tarot": "node --env-file=.env.local scripts/ingest-tarot-book.js",
     "ingest:dream": "node --env-file=.env.local scripts/ingest-dream-book.js",
-    "smoke:reading": "node --env-file=.env.local scripts/smoke-reading.js"
+    "smoke:reading": "node --env-file=.env.local scripts/smoke-reading.js",
+    "smoke:production": "node --env-file=.env.local scripts/smoke-production.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",
