@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { recommendExperience } from "../lib/vela-experience-router.js";
 import AstrologyReadingFlow from "./AstrologyReadingFlow.js";
 import DreamReadingFlow from "./DreamReadingFlow.js";
 import TarotReadingFlow from "./TarotReadingFlow.js";
 import VelaAccount from "./VelaAccount.js";
+
+const DREAM_SESSION_KEY = "askvela.current-dream.v1";
 
 const QUICK_PROMPTS = [
   "最近有件事讓我很猶豫，不知道該怎麼選。",
@@ -38,37 +41,6 @@ const GUIDED_GOALS = [
   "你幫我決定從哪裡看",
 ];
 
-function recommendExperience(message) {
-  const text = String(message || "").trim();
-  const dreamLike = /(夢到|夢見|做夢|惡夢|噩夢|夢境|昨晚.*夢|睡夢)/u.test(text);
-  const astrologyLike = /(今天|今日|本週|這週|這星期|這禮拜|運勢|星座|生日|整體.*節奏|近期.*狀態)/u.test(text);
-
-  if (dreamLike) {
-    return {
-      mode: "dream",
-      eyebrow: "VELA 建議 · 解夢",
-      title: "這件事比較適合先從夢的內容開始看。",
-      message: "你在意的是夢本身帶來的感受與象徵，所以我會優先從夢裡實際出現的人物、場景、動作與情緒開始整理。解讀會引用可追溯的歷史心理學來源，但不會把任何符號硬套成唯一答案。",
-    };
-  }
-
-  if (astrologyLike) {
-    return {
-      mode: "astrology",
-      eyebrow: "VELA 建議 · 星座",
-      title: "這比較像是在看一段時間的整體節奏。",
-      message: "你不是只問一個單一事件，而是想知道今天或這一週的整體狀態，這種問題比較適合星座運勢。星座功能會用固定的星象計算與可追溯來源來解讀，不會讓模型自己發明天空位置。",
-    };
-  }
-
-  return {
-    mode: "tarot",
-    eyebrow: "VELA 建議 · 塔羅",
-    title: "這件事比較適合用塔羅把問題拆開來看。",
-    message: "你問的是一個具體的猶豫、關係或下一步。這類問題用牌陣看現況、阻礙和建議會比較清楚，而且塔羅目前已經有 Waite 與 Mathers 的來源可以追溯。",
-  };
-}
-
 function buildGuidedQuestion({ area, feeling, goal }) {
   const areaText = area === "我也說不上來" ? "最近整體的生活" : area;
   const feelingText = feeling === "我連這個也不知道" ? "說不上來哪裡不對，但就是有點卡住" : feeling;
@@ -91,13 +63,32 @@ export default function VelaExperience() {
     return buildGuidedQuestion(guidedAnswers);
   }, [guidedAnswers]);
 
+  const changeExperience = useCallback((next) => {
+    if (!["home", "tarot", "astrology", "dream"].includes(next)) return;
+
+    if (next === "home") {
+      setExperience("home");
+      setEntryMode("choice");
+      setGuideInput("");
+      setGuideResult(null);
+      setGuidedStep("area");
+      setGuidedAnswers({ area: "", feeling: "", goal: "" });
+      setTarotHandoffQuestion("");
+      setDreamHandoffText("");
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      return;
+    }
+
+    setExperience(next);
+  }, []);
+
   useEffect(() => {
     function handleExperience(event) {
-      if (["home", "tarot", "astrology", "dream"].includes(event?.detail)) setExperience(event.detail);
+      changeExperience(event?.detail);
     }
     window.addEventListener("vela:experience", handleExperience);
     return () => window.removeEventListener("vela:experience", handleExperience);
-  }, []);
+  }, [changeExperience]);
 
   function askVela(event) {
     event?.preventDefault?.();
@@ -136,18 +127,20 @@ export default function VelaExperience() {
 
   function beginTarot(question = "") {
     setTarotHandoffQuestion(String(question || guideInput).trim());
-    setExperience("tarot");
+    changeExperience("tarot");
   }
 
   function beginDream(text = "") {
-    setDreamHandoffText(String(text || guideInput).trim());
-    setExperience("dream");
+    const nextDream = String(text || guideInput).trim();
+    window.sessionStorage.removeItem(DREAM_SESSION_KEY);
+    setDreamHandoffText(nextDream);
+    changeExperience("dream");
   }
 
   if (experience === "home") {
     return (
       <section className="velaExperienceHub velaGuideHome">
-        <VelaAccount experience="home" onExperienceChange={setExperience} />
+        <VelaAccount experience="home" onExperienceChange={changeExperience} />
 
         <div className="fortuneTellerStage">
           <div className="fortuneTellerPortrait" aria-hidden="true">
@@ -280,7 +273,7 @@ export default function VelaExperience() {
               <p>{recommendation.message}</p>
               <div className="guideRecommendationActions">
                 {recommendation.mode === "tarot" && <button className="primaryButton" type="button" onClick={() => beginTarot(guideInput)}>好，開始塔羅</button>}
-                {recommendation.mode === "astrology" && <button className="primaryButton" type="button" onClick={() => setExperience("astrology")}>看看最近的星象節奏</button>}
+                {recommendation.mode === "astrology" && <button className="primaryButton" type="button" onClick={() => changeExperience("astrology")}>看看最近的星象節奏</button>}
                 {recommendation.mode === "dream" && <button className="primaryButton" type="button" onClick={() => beginDream(guideInput)}>好，從這個夢開始</button>}
                 <button className="ghostButton" type="button" onClick={() => { setGuideInput(""); setGuideResult(null); }}>換一件事問 Vela</button>
               </div>
@@ -294,11 +287,11 @@ export default function VelaExperience() {
   return (
     <section className="velaExperienceHub">
       {experience === "astrology" ? (
-        <AstrologyReadingFlow onExperienceChange={setExperience} />
+        <AstrologyReadingFlow onExperienceChange={changeExperience} />
       ) : experience === "dream" ? (
-        <DreamReadingFlow initialDream={dreamHandoffText} onExperienceChange={setExperience} />
+        <DreamReadingFlow initialDream={dreamHandoffText} onExperienceChange={changeExperience} />
       ) : (
-        <TarotReadingFlow initialQuestion={tarotHandoffQuestion} onExperienceChange={setExperience} />
+        <TarotReadingFlow initialQuestion={tarotHandoffQuestion} onExperienceChange={changeExperience} />
       )}
     </section>
   );
