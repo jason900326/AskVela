@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import AstrologyReadingFlow from "./AstrologyReadingFlow.js";
-import DreamReadingFlow from "./DreamReadingFlow.js";
-import TarotReadingFlow from "./TarotReadingFlow.js";
+import AstrologyReadingFlowV2 from "./AstrologyReadingFlowV2.js";
+import DreamReadingFlowV2 from "./DreamReadingFlowV2.js";
+import TarotReadingFlowV4 from "./TarotReadingFlowV4.js";
 import VelaAccount from "./VelaAccount.js";
 import VelaStage from "./VelaStage.js";
 
@@ -290,11 +290,11 @@ export default function VelaExperience() {
   return (
     <section className="velaExperienceHub">
       {experience === "astrology" ? (
-        <AstrologyReadingFlow onExperienceChange={changeExperience} />
+        <AstrologyReadingFlowV2 onExperienceChange={changeExperience} />
       ) : experience === "dream" ? (
-        <DreamReadingFlow initialDream={dreamHandoffText} onExperienceChange={changeExperience} />
+        <DreamReadingFlowV2 initialDream={dreamHandoffText} onExperienceChange={changeExperience} />
       ) : (
-        <TarotReadingFlow initialQuestion={tarotHandoffQuestion} onExperienceChange={changeExperience} />
+        <TarotReadingFlowV4 initialQuestion={tarotHandoffQuestion} onExperienceChange={changeExperience} />
       )}
     </section>
   );
