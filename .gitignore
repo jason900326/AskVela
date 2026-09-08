@@ -18,3 +18,6 @@ data/raw/private/
 # Generated extraction output can be rebuilt.
 data/processed/*.txt
 data/processed/*.json
+
+# Generated model-evaluation output is reviewed locally and should not be committed by default.
+eval/results/
