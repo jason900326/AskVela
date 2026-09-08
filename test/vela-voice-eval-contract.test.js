@@ -37,12 +37,17 @@ test("Vela voice baseline contains four stable cases for each launch mode", asyn
   }
 });
 
-test("voice runner exercises all three real engines and keeps automatic review diagnostic-only", async () => {
+test("voice runner exercises all three real engines and evaluates Tarot primary speech separately", async () => {
   const runner = await readFile(runnerPath, "utf8");
   assert.match(runner, /interpretTarotReading/u);
   assert.match(runner, /createAstrologyReading/u);
   assert.match(runner, /createDreamReading/u);
   assert.match(runner, /selected\.slice/u);
+  assert.match(runner, /reading\.velaSpeech\?\.overview/u);
+  assert.match(runner, /reading\.velaSpeech\?\.narrative/u);
+  assert.match(runner, /speechRendererStatus/u);
+  assert.match(runner, /Speech renderer/u);
+  assert.doesNotMatch(runner.slice(runner.indexOf("if (mode === \"tarot\")"), runner.indexOf("if (mode === \"astrology\")")), /cardInterpretations/u);
   assert.match(runner, /reportFiller/u);
   assert.match(runner, /polishedContrast/u);
   assert.match(runner, /不是\[\^。！？\\n\]/u);
