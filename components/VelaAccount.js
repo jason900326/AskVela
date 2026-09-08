@@ -5,6 +5,7 @@ import { getSupabaseBrowser } from "../lib/supabase-browser.js";
 
 const TAROT_SESSION_KEY = "askvela.current-reading.v2";
 const ASTROLOGY_SESSION_KEY = "askvela.current-astrology.v1";
+const DREAM_SESSION_KEY = "askvela.current-dream.v1";
 
 function translateAuthError(error) {
   const message = String(error?.message || "").toLowerCase();
@@ -54,11 +55,37 @@ async function historyCollection(client, url) {
   }
 }
 
+function historyEndpoint(kind, readingId = "") {
+  const suffix = readingId ? `/${readingId}` : "";
+  if (kind === "astrology") return `/api/astrology/history${suffix}`;
+  if (kind === "dream") return `/api/dreams/history${suffix}`;
+  return `/api/readings/history${suffix}`;
+}
+
+function entryFingerprint(entry) {
+  if (!entry) return "";
+  if (entry.kind === "astrology") {
+    return JSON.stringify({ kind: "astrology", readingId: entry.readingId, result: entry.result });
+  }
+  if (entry.kind === "dream") {
+    return JSON.stringify({ kind: "dream", readingId: entry.readingId, result: entry.result });
+  }
+  return JSON.stringify({ kind: "tarot", readingId: entry.readingId, followUps: entry.followUps });
+}
+
+function historyLabel(item) {
+  if (item.kind === "astrology") return `${item.signNameZhTw} ${item.periodLabel}`;
+  if (item.kind === "dream") return item.title || "夢境解讀";
+  return item.question;
+}
+
 export default function VelaAccount({
   activeReading = null,
   activeAstrology = null,
+  activeDream = null,
   onRestoreReading = null,
   onRestoreAstrology = null,
+  onRestoreDream = null,
   experience = "tarot",
   onExperienceChange = null,
 }) {
@@ -79,7 +106,7 @@ export default function VelaAccount({
   const [saveState, setSaveState] = useState("idle");
   const [busyReadingId, setBusyReadingId] = useState("");
   const lastSavedFingerprint = useRef("");
-  const activeEntry = activeAstrology || activeReading;
+  const activeEntry = activeDream || activeAstrology || activeReading;
 
   function changeExperience(next) {
     if (onExperienceChange) onExperienceChange(next);
@@ -121,10 +148,7 @@ export default function VelaAccount({
 
   useEffect(() => {
     if (!client || !user || !activeEntry) return undefined;
-    const isAstrology = activeEntry.kind === "astrology";
-    const fingerprint = isAstrology
-      ? JSON.stringify({ kind: "astrology", readingId: activeEntry.readingId, result: activeEntry.result })
-      : JSON.stringify({ kind: "tarot", readingId: activeEntry.readingId, followUps: activeEntry.followUps });
+    const fingerprint = entryFingerprint(activeEntry);
     if (fingerprint === lastSavedFingerprint.current) return undefined;
 
     const timer = window.setTimeout(async () => {
@@ -132,7 +156,7 @@ export default function VelaAccount({
       try {
         const response = await authorizedFetch(
           client,
-          isAstrology ? "/api/astrology/history" : "/api/readings/history",
+          historyEndpoint(activeEntry.kind),
           { method: "POST", body: JSON.stringify(activeEntry) },
         );
         const data = await response.json();
@@ -227,20 +251,24 @@ export default function VelaAccount({
     setHistoryError("");
     setHistoryNotice("");
 
-    const [tarotResult, astrologyResult] = await Promise.all([
+    const [tarotResult, astrologyResult, dreamResult] = await Promise.all([
       historyCollection(client, "/api/readings/history"),
       historyCollection(client, "/api/astrology/history"),
+      historyCollection(client, "/api/dreams/history"),
     ]);
 
+    const results = [tarotResult, astrologyResult, dreamResult];
     const entries = [
       ...tarotResult.readings.map((item) => ({ ...item, kind: "tarot" })),
       ...astrologyResult.readings.map((item) => ({ ...item, kind: "astrology" })),
+      ...dreamResult.readings.map((item) => ({ ...item, kind: "dream" })),
     ].sort((left, right) => new Date(right.updatedAt || 0) - new Date(left.updatedAt || 0));
 
     setHistory(entries);
-    if (!tarotResult.ok && !astrologyResult.ok) {
-      setHistoryError(tarotResult.error || astrologyResult.error || "目前無法載入紀錄。");
-    } else if (!tarotResult.ok || !astrologyResult.ok) {
+    const failed = results.filter((result) => !result.ok);
+    if (failed.length === results.length) {
+      setHistoryError(failed[0]?.error || "目前無法載入紀錄。");
+    } else if (failed.length) {
       setHistoryNotice("部分紀錄暫時無法載入；已先顯示可用的內容。");
     }
     setHistoryLoading(false);
@@ -250,31 +278,32 @@ export default function VelaAccount({
     setBusyReadingId(item.readingId);
     setHistoryError("");
     try {
-      const isAstrology = item.kind === "astrology";
-      const response = await authorizedFetch(
-        client,
-        isAstrology ? `/api/astrology/history/${item.readingId}` : `/api/readings/history/${item.readingId}`,
-      );
+      const response = await authorizedFetch(client, historyEndpoint(item.kind, item.readingId));
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法開啟這筆紀錄。");
 
-      if (isAstrology) {
+      if (item.kind === "astrology") {
         if (experience === "astrology" && onRestoreAstrology) {
           onRestoreAstrology(data.reading);
         } else {
           window.sessionStorage.setItem(ASTROLOGY_SESSION_KEY, JSON.stringify({ version: 1, ...data.reading }));
           changeExperience("astrology");
         }
-        lastSavedFingerprint.current = JSON.stringify({ kind: "astrology", readingId: data.reading.readingId, result: data.reading.result });
-      } else {
-        if (experience === "tarot" && onRestoreReading) {
-          onRestoreReading(data.reading);
+      } else if (item.kind === "dream") {
+        if (experience === "dream" && onRestoreDream) {
+          onRestoreDream(data.reading);
         } else {
-          window.sessionStorage.setItem(TAROT_SESSION_KEY, JSON.stringify({ version: 2, ...data.reading }));
-          changeExperience("tarot");
+          window.sessionStorage.setItem(DREAM_SESSION_KEY, JSON.stringify({ version: 1, reading: data.reading }));
+          changeExperience("dream");
         }
-        lastSavedFingerprint.current = JSON.stringify({ kind: "tarot", readingId: data.reading.readingId, followUps: data.reading.followUps });
+      } else if (experience === "tarot" && onRestoreReading) {
+        onRestoreReading(data.reading);
+      } else {
+        window.sessionStorage.setItem(TAROT_SESSION_KEY, JSON.stringify({ version: 2, ...data.reading }));
+        changeExperience("tarot");
       }
+
+      lastSavedFingerprint.current = entryFingerprint(data.reading);
       setHistoryOpen(false);
     } catch (error) {
       setHistoryError(error.message || "目前無法開啟這筆紀錄。");
@@ -284,15 +313,12 @@ export default function VelaAccount({
   }
 
   async function deleteHistoryItem(item) {
-    const label = item.kind === "astrology" ? `${item.signNameZhTw} ${item.periodLabel}` : item.question;
+    const label = historyLabel(item);
     if (!window.confirm(`要永久刪除「${label}」這筆紀錄嗎？`)) return;
     setBusyReadingId(item.readingId);
     setHistoryError("");
     try {
-      const endpoint = item.kind === "astrology"
-        ? `/api/astrology/history/${item.readingId}`
-        : `/api/readings/history/${item.readingId}`;
-      const response = await authorizedFetch(client, endpoint, { method: "DELETE" });
+      const response = await authorizedFetch(client, historyEndpoint(item.kind, item.readingId), { method: "DELETE" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法刪除這筆紀錄。");
       setHistory((items) => items.filter((candidate) => !(candidate.kind === item.kind && candidate.readingId === item.readingId)));
@@ -311,6 +337,7 @@ export default function VelaAccount({
       const results = await Promise.all([
         authorizedFetch(client, "/api/readings/history", { method: "DELETE" }),
         authorizedFetch(client, "/api/astrology/history", { method: "DELETE" }),
+        authorizedFetch(client, "/api/dreams/history", { method: "DELETE" }),
       ]);
       const payloads = await Promise.all(results.map((response) => response.json()));
       const failed = results.findIndex((response) => !response.ok);
@@ -329,6 +356,12 @@ export default function VelaAccount({
   }
 
   if (!authReady) return <div className="accountDock" aria-hidden="true" />;
+
+  const savePromptTitle = activeEntry?.kind === "astrology"
+    ? "想把這次星座解讀留下來嗎？"
+    : activeEntry?.kind === "dream"
+      ? "想把這次夢境解讀留下來嗎？"
+      : "想把這次牌面留下來嗎？";
 
   return (
     <>
@@ -351,7 +384,7 @@ export default function VelaAccount({
       {client && activeEntry && !user && (
         <aside className="saveReadingPrompt">
           <div>
-            <strong>{activeEntry.kind === "astrology" ? "想把這次星座解讀留下來嗎？" : "想把這次牌面留下來嗎？"}</strong>
+            <strong>{savePromptTitle}</strong>
             <span>登入後會保存這次 Vela 解讀，之後可以跨裝置回來看。</span>
           </div>
           <button className="ghostButton" type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); setAuthOpen(true); }}>登入以保存</button>
@@ -401,19 +434,26 @@ export default function VelaAccount({
             {historyLoading && <p className="historyEmpty">正在整理你的 Vela 紀錄…</p>}
             {historyNotice && <div className="accountMessage" role="status">{historyNotice}</div>}
             {historyError && <div className="accountMessage isError" role="alert">{historyError}</div>}
-            {!historyLoading && !historyError && history.length === 0 && <p className="historyEmpty">還沒有保存的紀錄。登入後完成一次塔羅或星座解讀，就會出現在這裡。</p>}
+            {!historyLoading && !historyError && history.length === 0 && <p className="historyEmpty">還沒有保存的紀錄。登入後完成一次塔羅、星座或解夢，就會出現在這裡。</p>}
             {!historyLoading && history.length > 0 && (
               <div className="historyList">
                 {history.map((item) => {
                   const isAstrology = item.kind === "astrology";
-                  const title = isAstrology ? `${item.signNameZhTw} · ${item.periodLabel}` : item.question;
+                  const isDream = item.kind === "dream";
+                  const title = isAstrology ? `${item.signNameZhTw} · ${item.periodLabel}` : isDream ? item.title : item.question;
+                  const category = isAstrology ? `星座 · ${item.signNameZhTw}` : isDream ? "解夢" : `塔羅 · ${item.spreadNameZhTw}`;
+                  const meta = isAstrology
+                    ? `${item.periodLabel} · ${item.localDate}`
+                    : isDream
+                      ? `${item.themeCount || 0} 個夢境主題`
+                      : `${item.cardCount} 張牌${item.followUpCount ? ` · ${item.followUpCount} 次追問` : ""}`;
                   return (
                     <article className="historyItem" key={`${item.kind}-${item.readingId}`}>
                       <button className="historyOpenButton" type="button" onClick={() => openHistoryItem(item)} disabled={busyReadingId === item.readingId}>
-                        <small>{formatHistoryDate(item.updatedAt)} · {isAstrology ? `星座 · ${item.signNameZhTw}` : `塔羅 · ${item.spreadNameZhTw}`}</small>
+                        <small>{formatHistoryDate(item.updatedAt)} · {category}</small>
                         <strong>{title}</strong>
                         <span>{item.overview}</span>
-                        <em>{isAstrology ? `${item.periodLabel} · ${item.localDate}` : `${item.cardCount} 張牌${item.followUpCount ? ` · ${item.followUpCount} 次追問` : ""}`}</em>
+                        <em>{meta}</em>
                       </button>
                       <button className="historyDeleteButton" type="button" onClick={() => deleteHistoryItem(item)} disabled={busyReadingId === item.readingId} aria-label={`刪除：${title}`}>刪除</button>
                     </article>

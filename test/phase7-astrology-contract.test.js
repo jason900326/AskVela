@@ -73,13 +73,15 @@ test("historical astrology claims are curated instead of copied as modern fact",
   assert.match(prompt, /不得沿用書中的醫療診斷/u);
 });
 
-test("Vela home starts with conversation and recommendation instead of three primary mode tabs", async () => {
+test("Vela home stays conversation-first while later phases can enable additional grounded modes", async () => {
   const hub = await readFile(paths.hub, "utf8");
   assert.match(hub, /fortuneTellerStage/u);
   assert.match(hub, /今天想從哪件事開始/u);
   assert.match(hub, /讓 Vela 幫我選/u);
   assert.match(hub, /recommendExperience/u);
-  assert.match(hub, /解夢資料庫準備中/u);
+  assert.match(hub, /DreamReadingFlow/u);
+  assert.match(hub, /好，從這個夢開始/u);
+  assert.doesNotMatch(hub, /解夢資料庫準備中/u);
   assert.doesNotMatch(hub, /experienceTabs/u);
 });
 
