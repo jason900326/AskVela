@@ -1,0 +1,19 @@
+{
+  "slug": "freud-interpretation-of-dreams-1913",
+  "title": "The Interpretation of Dreams",
+  "author": "Sigmund Freud",
+  "tarot_system": null,
+  "publication_year": 1913,
+  "public_domain": true,
+  "metadata": {
+    "language": "en",
+    "translator": "A. A. Brill",
+    "edition": "Authorized English translation of the third edition",
+    "source_type": "book",
+    "role": "primary_dream_reference",
+    "gutenberg_ebook": 66048,
+    "source_url": "https://www.gutenberg.org/ebooks/66048",
+    "plain_text_url": "https://www.gutenberg.org/cache/epub/66048/pg66048.txt",
+    "notes": "Primary historical framework for AskVela Dream. Full-book retrieval source; historical psychoanalytic theory, not modern clinical consensus."
+  }
+}
