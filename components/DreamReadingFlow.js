@@ -18,17 +18,20 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  function restoreDream(restored) {
+    setReading(restored);
+    setDreamText(restored?.dreamText || "");
+    setWakingLifeContext(restored?.wakingLifeContext || "");
+    setRequestId(restored?.requestId || newRequestId());
+    setError("");
+  }
+
   useEffect(() => {
     try {
       const raw = window.sessionStorage.getItem(SESSION_KEY);
       if (!raw) return;
       const saved = JSON.parse(raw);
-      if (saved?.version === 1 && saved?.reading?.kind === "dream") {
-        setReading(saved.reading);
-        setDreamText(saved.reading.dreamText || "");
-        setWakingLifeContext(saved.reading.wakingLifeContext || "");
-        setRequestId(saved.reading.requestId || newRequestId());
-      }
+      if (saved?.version === 1 && saved?.reading?.kind === "dream") restoreDream(saved.reading);
     } catch {
       window.sessionStorage.removeItem(SESSION_KEY);
     }
@@ -72,7 +75,12 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   if (reading) {
     return (
       <section className="dreamReadingFlow">
-        <VelaAccount experience="dream" />
+        <VelaAccount
+          experience="dream"
+          activeDream={reading}
+          onRestoreDream={restoreDream}
+          onExperienceChange={onExperienceChange}
+        />
         <header className="dreamHero compact">
           <div className="eyebrow">VELA · 解夢</div>
           <h1>我先不替這個夢下結論。</h1>
@@ -126,7 +134,7 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
 
   return (
     <section className="dreamReadingFlow">
-      <VelaAccount experience="dream" />
+      <VelaAccount experience="dream" onExperienceChange={onExperienceChange} onRestoreDream={restoreDream} />
       <header className="dreamHero">
         <div className="eyebrow">VELA · 解夢</div>
         <h1>把你還記得的夢告訴我。</h1>
