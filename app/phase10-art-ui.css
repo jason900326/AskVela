@@ -1,0 +1,74 @@
+/* Phase 10: artwork-led home and tarot interaction */
+.readingShell:has(.velaGuideHome) {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+.velaGuideHome { min-height: 100svh; }
+.velaHomeStageLayout { min-height: 100svh; margin: 0; }
+.velaStage { min-height: 100svh; border-radius: 0; border-inline: 0; }
+.velaArtFrame { min-height: 100svh; }
+.velaCharacterSlot { top: clamp(42px, 7vh, 88px); height: calc(100svh - 70px); }
+.velaCharacterArtwork { transition: opacity 560ms ease, filter 560ms ease, transform 760ms cubic-bezier(.2,.8,.2,1); }
+.velaHoodedArtwork { opacity: 1; }
+.velaHoodedArtwork.isHidden { opacity: 0; filter: blur(7px); transform: translateY(-5px) scale(1.015); }
+.velaRevealedArtwork { opacity: 0; }
+.velaRevealedArtwork.isVisible { opacity: 1; }
+
+.velaCrystalButton { bottom: clamp(36px, 6vh, 78px); width: clamp(176px, 19vw, 244px); height: clamp(176px, 19vw, 244px); }
+.velaCrystalArtwork { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; filter: drop-shadow(0 0 22px rgba(201,151,255,.45)); transition: opacity 240ms ease, transform 220ms ease, filter 220ms ease; }
+.velaCrystalArtwork.isLoaded { opacity: 1; }
+.velaCrystalButton:hover .velaCrystalArtwork, .velaCrystalButton:focus-visible .velaCrystalArtwork { transform: translateY(-6px) scale(1.045); filter: drop-shadow(0 0 38px rgba(219,177,255,.8)); }
+.velaCrystalHint { bottom: -20px; padding: 8px 13px; border: 1px solid rgba(235,213,255,.18); border-radius: 999px; background: rgba(13,9,18,.64); backdrop-filter: blur(9px); }
+
+.velaHomeEntry { position: relative; z-index: 12; width: min(900px, calc(100% - 32px)); margin: -35vh auto 0; padding-bottom: 12vh; }
+.velaStage.isAwake { filter: saturate(.94); }
+.velaStage.isAwake::after { content:""; position:absolute; inset:0; z-index:6; pointer-events:none; background: linear-gradient(180deg, rgba(8,5,12,.05), rgba(8,5,12,.72) 74%, #0d0a12 100%); }
+.velaDialogueBubble { width: min(620px, 88%); margin: 0 auto 20px; text-align: center; animation: velaBubbleIn 520ms cubic-bezier(.2,.8,.2,1) both; }
+.velaDialogueBubble::before { left: 50%; top: -11px; transform: translateX(-50%) rotate(135deg); }
+.velaDialogueBubble h1 { font-size: clamp(2rem, 4vw, 3rem); }
+.velaDialogueBubble p { margin-inline: auto; }
+.velaEntryChoices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.velaDirectModes { display:grid; justify-items:center; gap:10px; margin-top:20px; color:var(--muted); font-size:.8rem; }
+.velaDirectModes > div { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.velaDirectModes button { padding:8px 14px; border:1px solid var(--line); border-radius:999px; color:#dfd2e7; background:rgba(255,255,255,.025); }
+.velaDirectModes button:hover { border-color:rgba(199,167,255,.5); background:rgba(199,167,255,.08); }
+
+.selectionCardBack, .tarotCardBack {
+  background: #120d18 url("/images/vela/tarot-card-back.webp") center/cover no-repeat;
+  border-color: rgba(239,214,255,.36);
+}
+.selectionCardBack::before, .selectionCardBack::after, .tarotCardBack::before, .tarotCardBack::after { display:none; }
+.tarotCardFront { padding:0; background:#120d18; }
+.tarotCardFront > img { width:100%; height:100%; object-fit:cover; transform:rotate(0deg); transition:transform 650ms ease; }
+.tarotCardFront.isReversed > img { transform:rotate(180deg); }
+.tarotCardCaption { position:absolute; left:7px; right:7px; bottom:7px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 6px; padding:7px 8px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(13,9,18,.78); backdrop-filter:blur(8px); text-align:left; }
+.tarotCardCaption small { position:static; grid-column:1/-1; color:#d7bfff; font-size:.62rem; }
+.tarotCardCaption strong { font:700 .78rem/1.15 Inter, sans-serif; }
+.tarotCardCaption em { position:static; transform:none; padding:3px 6px; font-size:.58rem; }
+
+.readingExperience { position:relative; }
+.tarotVelaGuide { position:fixed; right:max(10px, calc((100vw - 1200px)/2)); bottom:0; z-index:0; width:min(28vw,330px); height:min(64vh,620px); pointer-events:none; opacity:.72; filter:drop-shadow(0 18px 42px rgba(0,0,0,.5)); }
+.tarotVelaGuide img { width:100%; height:100%; object-fit:contain; object-position:bottom right; }
+.readingExperience > :not(.tarotVelaGuide) { position:relative; z-index:1; }
+.stage-select .readingPanel, .stage-drawing .readingPanel, .stage-reveal .readingPanel, .stage-interpreting .readingPanel { margin-right:min(18vw,180px); }
+.stage-drawing .tarotVelaGuide img, .stage-interpreting .tarotVelaGuide img { animation:tarotVelaBreathe 3s ease-in-out infinite; }
+
+@keyframes velaBubbleIn { from { opacity:0; transform:translateY(18px) scale(.97); } to { opacity:1; transform:none; } }
+@keyframes tarotVelaBreathe { 50% { transform:translateY(-7px); } }
+
+@media (max-width: 760px) {
+  .velaCharacterSlot { top: 25px; height: calc(100svh - 55px); transform:translateX(-50%) scale(.92); }
+  .velaCrystalButton { bottom:54px; width:158px; height:158px; }
+  .velaHomeEntry { margin-top:-42vh; width:min(100% - 20px, 620px); padding-bottom:8vh; }
+  .velaDialogueBubble { width:100%; }
+  .velaEntryChoices { grid-template-columns:1fr; }
+  .tarotVelaGuide { position:absolute; right:-34px; top:76px; bottom:auto; width:150px; height:260px; opacity:.32; }
+  .stage-select .readingPanel, .stage-drawing .readingPanel, .stage-reveal .readingPanel, .stage-interpreting .readingPanel { margin-right:0; }
+  .tarotCardCaption { left:4px; right:4px; bottom:4px; padding:5px; }
+  .tarotCardCaption strong { font-size:.64rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .velaCharacterArtwork, .velaCrystalArtwork, .velaDialogueBubble, .tarotVelaGuide img { animation:none!important; transition:none!important; }
+}
