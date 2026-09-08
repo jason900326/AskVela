@@ -1,0 +1,532 @@
+/* Phase 9: final Vela UI shell. The illustrated character can replace the fallback later without changing flow logic. */
+
+.velaGuideHome {
+  position: relative;
+  isolation: isolate;
+}
+
+.velaGuideHome::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(196, 134, 255, .14), transparent 32rem),
+    radial-gradient(circle at 20% 35%, rgba(244, 160, 210, .08), transparent 28rem),
+    radial-gradient(circle at 86% 28%, rgba(148, 114, 230, .08), transparent 26rem);
+}
+
+.velaHomeStageLayout {
+  display: grid;
+  grid-template-columns: minmax(320px, .94fr) minmax(340px, 1.06fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+  min-height: 520px;
+  margin: 4px 0 28px;
+}
+
+.velaStage {
+  position: relative;
+  min-height: 500px;
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+  border: 1px solid rgba(222, 196, 255, .13);
+  border-radius: 36px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.025), transparent 32%),
+    radial-gradient(circle at 50% 28%, rgba(197, 147, 255, .12), transparent 34%),
+    linear-gradient(180deg, rgba(26, 17, 38, .78), rgba(11, 8, 15, .92));
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.velaStage::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% 7% 8%;
+  height: 34%;
+  z-index: 1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(211, 149, 255, .16), transparent 64%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.velaStageGlow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  filter: blur(46px);
+  opacity: .28;
+  pointer-events: none;
+}
+
+.velaStageGlowLeft {
+  left: -110px;
+  top: 110px;
+  background: rgba(238, 157, 209, .42);
+}
+
+.velaStageGlowRight {
+  right: -110px;
+  top: 45px;
+  background: rgba(156, 119, 237, .46);
+}
+
+.velaStageStars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.velaStageStars i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 242, 255, .9);
+  box-shadow: 0 0 12px rgba(231, 201, 255, .85);
+  animation: velaTwinkle 3.8s ease-in-out infinite;
+}
+
+.velaStageStars i:nth-child(1) { left: 18%; top: 16%; animation-delay: -.6s; }
+.velaStageStars i:nth-child(2) { left: 78%; top: 20%; width: 3px; height: 3px; animation-delay: -1.7s; }
+.velaStageStars i:nth-child(3) { left: 67%; top: 43%; width: 5px; height: 5px; animation-delay: -2.8s; }
+.velaStageStars i:nth-child(4) { left: 27%; top: 49%; width: 3px; height: 3px; animation-delay: -3.2s; }
+.velaStageStars i:nth-child(5) { left: 87%; top: 58%; animation-delay: -1.1s; }
+
+.velaCharacterSlot {
+  position: absolute;
+  left: 50%;
+  top: 34px;
+  width: min(78%, 360px);
+  height: 330px;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.velaCharacterHalo {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  width: 250px;
+  height: 250px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(224, 194, 255, .14);
+  box-shadow:
+    0 0 60px rgba(185, 128, 246, .11),
+    inset 0 0 55px rgba(240, 176, 220, .05);
+}
+
+.velaCharacterHalo::before,
+.velaCharacterHalo::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  border: 1px dashed rgba(225, 205, 255, .09);
+}
+
+.velaCharacterHalo::after {
+  inset: 48px;
+  border-style: solid;
+  opacity: .6;
+}
+
+.velaCharacterFallback {
+  position: absolute;
+  inset: 0;
+  animation: velaFloat 5.4s ease-in-out infinite;
+}
+
+.velaFallbackHead {
+  position: absolute;
+  left: 50%;
+  top: 80px;
+  width: 82px;
+  height: 96px;
+  transform: translateX(-50%);
+  border-radius: 44% 44% 48% 48%;
+  background: linear-gradient(145deg, #d7b5ce, #ae879f);
+  box-shadow: 0 12px 35px rgba(0,0,0,.26);
+}
+
+.velaFallbackHat {
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  width: 150px;
+  height: 100px;
+  transform: translateX(-50%) rotate(-3deg);
+  clip-path: polygon(52% 0, 84% 65%, 100% 77%, 67% 82%, 53% 100%, 40% 83%, 2% 78%, 21% 63%);
+  background: linear-gradient(155deg, #5f4774, #2a2035 78%);
+  filter: drop-shadow(0 12px 20px rgba(0,0,0,.32));
+}
+
+.velaFallbackHat::after {
+  content: "✦";
+  position: absolute;
+  left: 67px;
+  top: 54px;
+  color: #e9c9ff;
+  font-size: 18px;
+  text-shadow: 0 0 14px rgba(222, 171, 255, .8);
+}
+
+.velaFallbackHair {
+  position: absolute;
+  top: 94px;
+  width: 72px;
+  height: 142px;
+  border-radius: 50% 46% 38% 34%;
+  background: linear-gradient(180deg, #33243f, #16101d);
+}
+
+.velaFallbackHairLeft { left: calc(50% - 76px); transform: rotate(8deg); }
+.velaFallbackHairRight { right: calc(50% - 76px); transform: rotate(-8deg); }
+
+.velaFallbackBody {
+  position: absolute;
+  left: 50%;
+  top: 164px;
+  width: 210px;
+  height: 190px;
+  transform: translateX(-50%);
+  border-radius: 52% 52% 12% 12%;
+  background: linear-gradient(155deg, rgba(103,72,124,.98), rgba(36,25,47,.98) 72%);
+  box-shadow: 0 24px 45px rgba(0,0,0,.28);
+}
+
+.velaFallbackBody::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 64px;
+  height: 78px;
+  transform: translateX(-50%);
+  border-radius: 48%;
+  border: 1px solid rgba(246, 200, 229, .25);
+  border-top-color: transparent;
+}
+
+.velaTable {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: 0;
+  height: 155px;
+  z-index: 3;
+  background:
+    linear-gradient(180deg, rgba(77, 48, 88, .96), rgba(31, 21, 38, .98)),
+    #24182c;
+  border-top: 1px solid rgba(243, 206, 255, .13);
+  box-shadow: 0 -16px 55px rgba(0,0,0,.2);
+}
+
+.velaTable::before {
+  content: "";
+  position: absolute;
+  inset: 12px 13% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(244,205,255,.16), transparent);
+}
+
+.velaTableEdge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(180deg, rgba(230,183,240,.12), rgba(0,0,0,.16));
+}
+
+.velaCrystalButton {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  z-index: 5;
+  width: 174px;
+  height: 174px;
+  transform: translateX(-50%);
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.velaCrystalAura {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 142px;
+  height: 142px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 170, 255, .28), rgba(240, 157, 211, .1) 48%, transparent 72%);
+  filter: blur(8px);
+  animation: velaCrystalPulse 3.4s ease-in-out infinite;
+}
+
+.velaCrystalBall {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 116px;
+  height: 116px;
+  transform: translateX(-50%);
+  overflow: hidden;
+  border: 1px solid rgba(247, 225, 255, .46);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(255,255,255,.45), transparent 10%),
+    radial-gradient(circle at 50% 58%, rgba(238, 153, 218, .4), transparent 42%),
+    linear-gradient(145deg, rgba(220, 188, 255, .62), rgba(103, 75, 154, .72));
+  box-shadow:
+    inset -18px -22px 34px rgba(40, 22, 69, .34),
+    inset 12px 10px 24px rgba(255,255,255,.12),
+    0 0 30px rgba(196, 137, 255, .32),
+    0 14px 35px rgba(0,0,0,.3);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.velaCrystalMist {
+  position: absolute;
+  width: 150%;
+  height: 52%;
+  left: -25%;
+  bottom: 6%;
+  border-radius: 50%;
+  background: rgba(255, 210, 239, .24);
+  filter: blur(9px);
+  animation: velaMistDrift 5s ease-in-out infinite alternate;
+}
+
+.velaCrystalStar {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 239, 253, .95);
+  font-size: 28px;
+  text-shadow: 0 0 18px rgba(255, 213, 242, .95);
+  animation: velaTwinkle 2.8s ease-in-out infinite;
+}
+
+.velaCrystalBase {
+  position: absolute;
+  left: 50%;
+  top: 116px;
+  width: 92px;
+  height: 32px;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 30% 30%;
+  background: linear-gradient(180deg, #9d75a8, #3b2945);
+  box-shadow: 0 12px 20px rgba(0,0,0,.28);
+}
+
+.velaCrystalHint {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: max-content;
+  max-width: 170px;
+  transform: translateX(-50%);
+  color: #d7c5df;
+  font-size: .72rem;
+  font-weight: 750;
+  letter-spacing: .04em;
+  opacity: .82;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.velaCrystalButton:hover .velaCrystalBall,
+.velaCrystalButton:focus-visible .velaCrystalBall {
+  transform: translateX(-50%) translateY(-4px) scale(1.035);
+  box-shadow:
+    inset -18px -22px 34px rgba(40, 22, 69, .3),
+    inset 12px 10px 24px rgba(255,255,255,.15),
+    0 0 46px rgba(212, 149, 255, .48),
+    0 16px 40px rgba(0,0,0,.34);
+}
+
+.velaCrystalButton:hover .velaCrystalHint,
+.velaCrystalButton:focus-visible .velaCrystalHint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.velaCrystalButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 7px;
+  border-radius: 40%;
+}
+
+.velaDialogueBubble {
+  position: relative;
+  margin: 0;
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid rgba(223, 198, 255, .16);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(240, 177, 220, .08), transparent 42%),
+    rgba(21, 15, 28, .82);
+  box-shadow: 0 24px 70px rgba(0,0,0,.25);
+  backdrop-filter: blur(18px);
+}
+
+.velaDialogueBubble::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 42%;
+  width: 22px;
+  height: 22px;
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(223, 198, 255, .16);
+  border-bottom: 1px solid rgba(223, 198, 255, .16);
+  background: rgba(21, 15, 28, .96);
+}
+
+.velaDialogueBubble h1 {
+  margin: 10px 0 16px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4.3vw, 3.6rem);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.04em;
+}
+
+.velaDialogueBubble p {
+  margin: 0;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.velaEntryChoices,
+.velaGuideForm,
+.guidedEntryPanel {
+  scroll-margin-top: 92px;
+}
+
+@keyframes velaFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes velaCrystalPulse {
+  0%, 100% { opacity: .7; transform: translate(-50%, -50%) scale(.96); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes velaMistDrift {
+  from { transform: translateX(-5%) rotate(-4deg); }
+  to { transform: translateX(8%) rotate(5deg); }
+}
+
+@keyframes velaTwinkle {
+  0%, 100% { opacity: .38; transform: scale(.82); }
+  50% { opacity: 1; transform: scale(1.16); }
+}
+
+@media (max-width: 900px) {
+  .velaHomeStageLayout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    gap: 18px;
+  }
+
+  .velaStage {
+    min-height: 390px;
+    width: min(100%, 600px);
+    margin-inline: auto;
+  }
+
+  .velaCharacterSlot {
+    top: 10px;
+    transform: translateX(-50%) scale(.86);
+    transform-origin: top center;
+  }
+
+  .velaTable { height: 132px; }
+  .velaCrystalButton { bottom: 25px; transform: translateX(-50%) scale(.9); }
+
+  .velaDialogueBubble {
+    width: min(100%, 600px);
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .velaDialogueBubble::before {
+    left: 50%;
+    top: -11px;
+    transform: translateX(-50%) rotate(135deg);
+  }
+
+  .velaDialogueBubble p { margin-inline: auto; }
+}
+
+@media (max-width: 620px) {
+  .velaGuideHome::before { opacity: .75; }
+
+  .velaHomeStageLayout {
+    margin-top: 2px;
+    margin-bottom: 20px;
+  }
+
+  .velaStage {
+    min-height: 340px;
+    border-radius: 28px;
+  }
+
+  .velaCharacterSlot {
+    top: -8px;
+    transform: translateX(-50%) scale(.72);
+  }
+
+  .velaTable { height: 112px; }
+
+  .velaCrystalButton {
+    bottom: 8px;
+    transform: translateX(-50%) scale(.78);
+  }
+
+  .velaDialogueBubble {
+    padding: 23px 20px;
+    border-radius: 24px;
+  }
+
+  .velaDialogueBubble h1 {
+    font-size: clamp(1.85rem, 9.5vw, 2.55rem);
+  }
+
+  .velaDialogueBubble p {
+    font-size: .94rem;
+    line-height: 1.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaCharacterFallback,
+  .velaCrystalAura,
+  .velaCrystalMist,
+  .velaCrystalStar,
+  .velaStageStars i {
+    animation: none !important;
+  }
+
+  .velaCrystalButton *,
+  .velaCrystalButton {
+    transition: none !important;
+  }
+}

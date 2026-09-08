@@ -75,7 +75,8 @@ test("historical astrology claims are curated instead of copied as modern fact",
 
 test("Vela home stays conversation-first while later phases can enable additional grounded modes", async () => {
   const hub = await readFile(paths.hub, "utf8");
-  assert.match(hub, /fortuneTellerStage/u);
+  assert.match(hub, /VelaStage/u);
+  assert.match(hub, /velaHomeStageLayout/u);
   assert.match(hub, /今天想從哪件事開始/u);
   assert.match(hub, /讓 Vela 幫我選/u);
   assert.match(hub, /recommendExperience/u);

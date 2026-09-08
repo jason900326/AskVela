@@ -1,0 +1,156 @@
+/* Phase 9 cross-mode polish: shared focus, status, motion and atmospheric treatment. */
+
+.velaCharacterArtwork {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 220ms ease, transform 220ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.velaCharacterSlot.hasArtwork .velaCharacterArtwork {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.velaCharacterSlot.hasArtwork .velaCharacterFallback {
+  opacity: 0;
+}
+
+.velaCharacterFallback {
+  transition: opacity 180ms ease;
+}
+
+.readingExperience,
+.astrologyExperience,
+.dreamReadingFlow {
+  position: relative;
+  isolation: isolate;
+}
+
+.readingExperience::before,
+.astrologyExperience::before,
+.dreamReadingFlow::before {
+  content: "";
+  position: absolute;
+  inset: -28px -22px auto;
+  z-index: -1;
+  height: min(72vh, 720px);
+  border-radius: 48px;
+  pointer-events: none;
+  opacity: .72;
+}
+
+.readingExperience::before {
+  background: radial-gradient(circle at 28% 12%, rgba(191, 137, 255, .11), transparent 48%);
+}
+
+.astrologyExperience::before {
+  background:
+    radial-gradient(circle at 72% 10%, rgba(150, 132, 255, .12), transparent 46%),
+    radial-gradient(circle at 20% 24%, rgba(227, 166, 245, .06), transparent 42%);
+}
+
+.dreamReadingFlow::before {
+  background:
+    radial-gradient(circle at 28% 12%, rgba(236, 154, 211, .1), transparent 46%),
+    radial-gradient(circle at 78% 25%, rgba(164, 129, 226, .07), transparent 42%);
+}
+
+button:focus-visible,
+a:focus-visible,
+textarea:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid rgba(218, 184, 255, .95);
+  outline-offset: 3px;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.primaryButton:disabled,
+.askActions button:disabled,
+.dreamSubmit:disabled {
+  opacity: .48;
+  filter: saturate(.72);
+}
+
+.errorBox,
+.accountMessage.isError {
+  border: 1px solid rgba(255, 182, 182, .24);
+  border-radius: 18px;
+  color: #ffd0d0;
+  background:
+    linear-gradient(135deg, rgba(255, 105, 125, .07), rgba(255,255,255,.015)),
+    rgba(20, 11, 17, .82);
+  box-shadow: 0 16px 42px rgba(0,0,0,.16);
+}
+
+.errorBox {
+  display: grid;
+  gap: 5px;
+}
+
+.errorBox strong,
+.accountMessage.isError strong {
+  color: #ffe4e4;
+}
+
+.loadingPanel {
+  min-height: 240px;
+  text-align: center;
+}
+
+.loadingPanel .shuffleGlyph,
+.loadingPanel .velaPulse {
+  filter: drop-shadow(0 0 18px rgba(208, 164, 255, .38));
+}
+
+.astrologySubmitRow,
+.dreamActions,
+.flowActions {
+  scroll-margin-bottom: 28px;
+}
+
+@media (max-width: 720px) {
+  .readingExperience::before,
+  .astrologyExperience::before,
+  .dreamReadingFlow::before {
+    inset: -18px -10px auto;
+    height: 520px;
+    border-radius: 32px;
+  }
+
+  button,
+  summary,
+  input,
+  textarea {
+    -webkit-tap-highlight-color: rgba(199, 167, 255, .12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

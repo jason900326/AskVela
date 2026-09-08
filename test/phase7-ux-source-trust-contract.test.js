@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
+const velaStagePath = new URL("../components/VelaStage.js", import.meta.url);
 const astrologyFlowPath = new URL("../components/AstrologyReadingFlow.js", import.meta.url);
 const astrologyRoutePath = new URL("../app/api/astrology/reading/route.js", import.meta.url);
 const astrologyCssPath = new URL("../app/astrology.css", import.meta.url);
@@ -11,9 +12,15 @@ const sourceStatusPath = new URL("../lib/astrology-source-status.js", import.met
 const evidencePath = new URL("../lib/astrology-evidence.js", import.meta.url);
 
 test("AskVela home is conversation-first instead of three equal mode tabs", async () => {
-  const experience = await readFile(experiencePath, "utf8");
+  const [experience, velaStage] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(velaStagePath, "utf8"),
+  ]);
 
-  assert.match(experience, /fortuneTellerStage/u);
+  assert.match(experience, /VelaStage/u);
+  assert.match(experience, /velaHomeStageLayout/u);
+  assert.match(velaStage, /velaCrystalButton/u);
+  assert.match(velaStage, /onCrystalClick/u);
   assert.match(experience, /今天想從哪件事開始/u);
   assert.match(experience, /讓 Vela 幫我選/u);
   assert.match(experience, /recommendExperience/u);
