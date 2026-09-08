@@ -31,6 +31,14 @@ const TAROT_CLARIFIER_LINES = [
   "再一下，我直接告訴你它補上了什麼。",
 ];
 
+const TAROT_CURIOSITY_LINES = [
+  "好，我把你剛剛的回答放回這組牌裡。",
+  "這個回答讓其中一張牌的重點更明顯了。",
+  "我不重抽，只沿著原本的牌再看一次。",
+  "有個地方現在和剛才不太一樣了。",
+  "再一下，我把需要補充的地方直接告訴你。",
+];
+
 const TAROT_DRAWING_LINES = [
   "我先把你選的牌收回來洗一下。",
   "牌的位置已經固定了。",
@@ -112,6 +120,10 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
   const [followUpMessage, setFollowUpMessage] = useState("");
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
+  const [curiosityAnswer, setCuriosityAnswer] = useState("");
+  const [curiosityResponse, setCuriosityResponse] = useState(null);
+  const [curiosityLoading, setCuriosityLoading] = useState(false);
+  const [curiosityError, setCuriosityError] = useState("");
   const [shareNotice, setShareNotice] = useState("");
 
   const selectedSpread = spreads.find((spread) => spread.id === spreadId);
@@ -121,6 +133,7 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
   const clarifiers = Array.isArray(result?.clarifiers) ? result.clarifiers : [];
   const clarifierLimitReached = clarifiers.length >= MAX_CLARIFIERS;
   const followUpLimitReached = followUps.length >= MAX_FOLLOW_UPS;
+  const reflectionQuestion = result?.synthesis?.reflectionQuestions?.[0] || "";
 
   const activeReading = useMemo(() => {
     if (stage !== "result" || !draw || !result || !requestId) return null;
@@ -231,6 +244,9 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
     setFollowUps([]);
     setClarifierSelecting(false);
     setClarifierError("");
+    setCuriosityAnswer("");
+    setCuriosityResponse(null);
+    setCuriosityError("");
     setRevealedCount(0);
     setStage("select");
   }
@@ -291,6 +307,9 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
       if (!response.ok) throw new Error(data.error || "目前無法完成解讀。");
       setResult(data);
       setFollowUps([]);
+      setCuriosityAnswer("");
+      setCuriosityResponse(null);
+      setCuriosityError("");
       setStage("result");
     } catch (err) {
       setError(err.message || "目前無法完成解讀。");
@@ -331,6 +350,41 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
       setClarifierError(err.message || "目前無法補抽這張牌。");
     } finally {
       setClarifierLoading(false);
+    }
+  }
+
+  async function submitCuriosity(event) {
+    event.preventDefault();
+    const answer = curiosityAnswer.trim();
+    if (!answer || !reflectionQuestion || !draw || !result || curiosityLoading || curiosityResponse) return;
+    setCuriosityLoading(true);
+    setCuriosityError("");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    try {
+      const message = `Vela 問我：「${reflectionQuestion.slice(0, 110)}」我的回答是：「${answer.slice(0, 150)}」。請沿用原本牌面，只補充這個回答讓你更在意或需要修正的地方。`;
+      const response = await fetch("/api/readings/follow-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": `${requestId}:vela-curiosity` },
+        body: JSON.stringify({
+          readingId: draw.readingId,
+          requestId,
+          question: question.trim(),
+          spreadId,
+          selectedCardIndexes,
+          message,
+          history: followUps.map((item) => ({ question: item.question, answer: item.answer })),
+          initialReading: compactInitialReading(result),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "目前無法接著看這個回答。");
+      if (data.readingId !== draw.readingId || cardSignature(data.fixedCards) !== cardSignature(draw.cards)) throw new Error("這次補充沒有沿用原本牌面。");
+      setCuriosityResponse({ answer: data.answer, practicalFocus: data.practicalFocus || "" });
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } catch (err) {
+      setCuriosityError(err.message || "目前無法接著看這個回答。");
+    } finally {
+      setCuriosityLoading(false);
     }
   }
 
@@ -377,6 +431,9 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
     setRevealedCount(saved.draw.cards?.length || 0);
     setResult(saved.result);
     setFollowUps(Array.isArray(saved.followUps) ? saved.followUps.slice(0, MAX_FOLLOW_UPS) : []);
+    setCuriosityAnswer("");
+    setCuriosityResponse(null);
+    setCuriosityError("");
     setStage("result");
     setSessionRestored(true);
   }
@@ -393,6 +450,9 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
     setFollowUpMessage("");
     setClarifierSelecting(false);
     setClarifierError("");
+    setCuriosityAnswer("");
+    setCuriosityResponse(null);
+    setCuriosityError("");
     setShareNotice("");
     setStage("question");
   }
@@ -408,8 +468,8 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
       const message = await shareVelaResultCard({
         modeLabel: "TAROT · 塔羅",
         headline: result.synthesis?.overview || result.analysisSynthesis?.overview || "這次的牌面已經展開。",
-        subline: question,
-        details: draw.cards.map((card) => `${card.positionLabelZhTw}｜${card.nameZhTw}・${ORIENTATION_LABELS[card.orientation]}`),
+        subline: result.analysisSynthesis?.narrative || result.cards?.[0]?.contextInterpretation || "",
+        details: [],
       });
       setShareNotice(message);
     } catch (err) {
@@ -426,12 +486,12 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
     );
   }
 
-  if (stage === "interpreting" || clarifierLoading || followUpLoading) {
+  if (stage === "interpreting" || clarifierLoading || followUpLoading || curiosityLoading) {
     return (
       <section className="readingExperience finalModeFlow stage-interpreting">
         <VelaAccount onRestoreReading={restoreSavedReading} />
         <VelaWaitingStage
-          lines={clarifierLoading ? TAROT_CLARIFIER_LINES : followUpLoading ? TAROT_INTERPRETING_LINES.slice(2) : TAROT_INTERPRETING_LINES}
+          lines={clarifierLoading ? TAROT_CLARIFIER_LINES : curiosityLoading ? TAROT_CURIOSITY_LINES : followUpLoading ? TAROT_INTERPRETING_LINES.slice(2) : TAROT_INTERPRETING_LINES}
           glyph="☾"
           className="tarotWaiting"
         />
@@ -527,8 +587,24 @@ export default function TarotReadingFlowV4({ initialQuestion = "", onExperienceC
             ))}
           </div>
 
-          {result.synthesis?.reflectionQuestions?.[0] && (
-            <section className="velaCuriosityCard finalCuriosityCard"><div className="eyebrow">VELA 想問你</div><p>{result.synthesis.reflectionQuestions[0]}</p></section>
+          {reflectionQuestion && (
+            <section className="velaCuriosityCard finalCuriosityCard">
+              <div className="eyebrow">VELA 想問你</div>
+              <p>{reflectionQuestion}</p>
+              {!curiosityResponse ? (
+                <form className="curiosityReplyForm" onSubmit={submitCuriosity}>
+                  <textarea rows={3} maxLength={150} value={curiosityAnswer} onChange={(event) => setCuriosityAnswer(event.target.value)} placeholder="把你第一個想到的答案告訴我就好。" />
+                  <button className="primaryButton" type="submit" disabled={!curiosityAnswer.trim()}>回答 Vela</button>
+                </form>
+              ) : (
+                <div className="curiosityResponse">
+                  <small>聽你這樣說，我會補充一個地方。</small>
+                  <p>{curiosityResponse.answer}</p>
+                  {curiosityResponse.practicalFocus && <span>{curiosityResponse.practicalFocus}</span>}
+                </div>
+              )}
+              {curiosityError && <div className="clarifierError" role="alert">{curiosityError}</div>}
+            </section>
           )}
 
           <details className="finalDeepDetails">
