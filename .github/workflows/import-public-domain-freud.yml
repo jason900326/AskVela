@@ -1,6 +1,7 @@
 name: Import public-domain Freud dream source
 
 # Re-running this workflow after configuring repository secrets will activate full-book Dream RAG ingestion.
+# Triggered again after confirming the exact repository secret names.
 
 on:
   push:
