@@ -1,92 +1,50 @@
-/* Phase 10: reveal fidelity, slower interpretation copy, and a more reciprocal Vela result. */
+/* Phase 10: reveal fidelity, interpretation dialogue, and reciprocal Vela result. */
 
-/* 1) Never crop the Rider-Waite artwork after a card is revealed. */
+/* Keep the Rider-Waite artwork fully present; the final sizing override lives in cross-mode-polish. */
 .stage-reveal .tarotCardFront {
   background: #100b15 !important;
 }
 
-.stage-reveal .tarotCardFront > img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  object-position: center !important;
-}
-
-/* 2) Interpretation can take a while, so make the wait feel like Vela is actually looking.
-   Three lines rotate every few seconds instead of leaving one static engine-status sentence. */
+/* Interpretation copy: one real line is always present. We change the CSS content discretely,
+   rather than cross-fading three separate pseudo-elements and leaving blank gaps. */
 .stage-interpreting .loadingPanel h2 {
   position: relative;
-  width: min(620px, 86vw);
-  min-height: 3.2rem;
-  margin: 20px auto 6px !important;
+  width: min(650px, 88vw);
+  min-height: 4.3rem;
+  margin: 22px auto 8px !important;
   font-size: 0 !important;
 }
 
-.stage-interpreting .loadingPanel h2::before,
-.stage-interpreting .loadingPanel h2::after,
-.stage-interpreting .progressLine::before {
+.stage-interpreting .loadingPanel h2::after {
+  content: "我先看看，哪張牌最先開口。";
+  display: grid;
+  place-items: center;
+  min-height: 4.3rem;
   color: #f3edf6;
   font-size: clamp(1.18rem, 3.8vw, 1.8rem);
   font-weight: 750;
-  line-height: 1.35;
+  line-height: 1.45;
   letter-spacing: .01em;
   text-align: center;
-}
-
-.stage-interpreting .loadingPanel h2::before,
-.stage-interpreting .loadingPanel h2::after {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  opacity: 0;
-}
-
-.stage-interpreting .loadingPanel h2::before {
-  content: "我先看看，哪張牌最先開口。";
-  animation: velaInterpretLineOne 9.6s ease-in-out infinite;
-}
-
-.stage-interpreting .loadingPanel h2::after {
-  content: "有些地方，正在和你剛剛說的事對上。";
-  animation: velaInterpretLineTwo 9.6s ease-in-out infinite;
+  animation: velaInterpretDialogue 19.2s steps(1, end) infinite;
 }
 
 .stage-interpreting .progressLine {
-  position: relative;
-  margin-top: 34px !important;
+  margin-top: 20px !important;
+}
+.stage-interpreting .progressLine::before { display: none !important; }
+
+@keyframes velaInterpretDialogue {
+  0%, 15.9% { content: "我先看看，哪張牌最先開口。"; }
+  16%, 31.9% { content: "先別急，我把你剛剛抽到的牌重新放在一起。"; }
+  32%, 47.9% { content: "有一張牌跟你問的那件事，對得比我預期更直接。"; }
+  48%, 63.9% { content: "我再看看它和旁邊那張牌，是在互相支持，還是在拉扯。"; }
+  64%, 79.9% { content: "有些地方不是單看一張牌就會看見的。"; }
+  80%, 91.9% { content: "我差不多知道，這次應該先從哪裡跟你說了。"; }
+  92%, 100% { content: "再一下，我想把最重要的那一段講清楚。"; }
 }
 
-.stage-interpreting .progressLine::before {
-  content: "再一下，我想把這幾張牌之間的關係看清楚。";
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 31px);
-  width: min(620px, 86vw);
-  transform: translateX(-50%);
-  opacity: 0;
-  animation: velaInterpretLineThree 9.6s ease-in-out infinite;
-}
-
-@keyframes velaInterpretLineOne {
-  0%, 27% { opacity: 1; transform: translateY(0); }
-  32%, 100% { opacity: 0; transform: translateY(-5px); }
-}
-
-@keyframes velaInterpretLineTwo {
-  0%, 29% { opacity: 0; transform: translateY(5px); }
-  34%, 60% { opacity: 1; transform: translateY(0); }
-  65%, 100% { opacity: 0; transform: translateY(-5px); }
-}
-
-@keyframes velaInterpretLineThree {
-  0%, 62% { opacity: 0; transform: translateX(-50%) translateY(5px); }
-  67%, 94% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
-}
-
-/* 3) Make the result feel reciprocal. The analysis engine already produces one
-   reflection question; surface it before the save/follow-up area so Vela gets a turn too. */
+/* Result order: reading first, save later, then continue the conversation. */
 .stage-result .readingResult {
   display: flex;
   flex-direction: column;
@@ -99,6 +57,7 @@
 .stage-result .readingDisclaimer { order: 5; }
 .stage-result .readingResult > .flowActions { order: 6; }
 
+/* Surface Vela's one reflection question without forcing the whole source drawer open. */
 .stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) {
   display: block !important;
   margin: 14px 0 2px;
@@ -146,35 +105,22 @@
 }
 
 @media (max-width: 760px) {
-  .stage-interpreting .loadingPanel h2 {
-    width: min(88vw, 520px);
-    min-height: 4.2rem;
+  .stage-interpreting .loadingPanel h2,
+  .stage-interpreting .loadingPanel h2::after {
+    width: min(90vw, 540px);
+    min-height: 5.2rem;
   }
-
-  .stage-interpreting .loadingPanel h2::before,
-  .stage-interpreting .loadingPanel h2::after,
-  .stage-interpreting .progressLine::before {
+  .stage-interpreting .loadingPanel h2::after {
     font-size: 1.08rem;
   }
-
-  .stage-interpreting .progressLine::before {
-    width: min(88vw, 520px);
-  }
-
   .stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) {
     padding: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage-interpreting .loadingPanel h2::before {
-    opacity: 1;
-    animation: none;
-  }
-
-  .stage-interpreting .loadingPanel h2::after,
-  .stage-interpreting .progressLine::before {
-    display: none;
+  .stage-interpreting .loadingPanel h2::after {
+    content: "我正在把你剛剛抽到的牌放回你的問題裡。";
     animation: none;
   }
 }
