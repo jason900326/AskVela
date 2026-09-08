@@ -45,6 +45,8 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   const [error, setError] = useState("");
 
   const sourceGroups = useMemo(() => groupDreamSources(reading?.sources || []), [reading]);
+  const retrievedSources = reading?.retrievedSources || [];
+  const hasFullBookRetrieval = reading?.sourceMode === "freud-full-book-rag" && retrievedSources.length > 0;
   const bareLead = isBareDreamLead(dreamText);
   const canInterpret = dreamText.trim().length >= 2 && !bareLead;
 
@@ -195,17 +197,28 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
         )}
 
         <details className="dreamDetails dreamSourcesCompact">
-          <summary>解讀依據 · Freud 為主</summary>
+          <summary>{hasFullBookRetrieval ? "解讀依據 · Freud 原文檢索" : "解讀依據 · Freud 為主"}</summary>
           <p>{reading.sourceNote || "目前解夢以可追溯的歷史心理學文本原則為參考。"}</p>
           <p>{reading.result.basisNote}</p>
           <div className="dreamSourceList compact">
-            {sourceGroups.map((source) => (
-              <article key={source.id}>
-                <strong>{source.author} · {source.title}</strong>
-                <span>{source.principles.join("、")}</span>
-                <a href={source.sourceUrl} target="_blank" rel="noreferrer">查看公版原文</a>
-              </article>
-            ))}
+            {hasFullBookRetrieval ? (
+              retrievedSources.slice(0, 4).map((source) => (
+                <article key={source.id}>
+                  <strong>{source.author} · {source.bookTitle}</strong>
+                  <span>{source.chapter || `全文檢索片段 #${source.chunkIndex + 1}`}</span>
+                  <p className="dreamSourceExcerpt">{source.excerpt}</p>
+                  <a href={source.sourceUrl} target="_blank" rel="noreferrer">查看 Project Gutenberg 公版原文</a>
+                </article>
+              ))
+            ) : (
+              sourceGroups.map((source) => (
+                <article key={source.id}>
+                  <strong>{source.author} · {source.title}</strong>
+                  <span>{source.principles.join("、")}</span>
+                  <a href={source.sourceUrl} target="_blank" rel="noreferrer">查看公版原文</a>
+                </article>
+              ))
+            )}
           </div>
         </details>
 
