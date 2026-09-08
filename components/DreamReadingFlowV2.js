@@ -163,8 +163,8 @@ export default function DreamReadingFlowV2({ initialDream = "", onExperienceChan
       const message = await shareVelaResultCard({
         modeLabel: "DREAM · 夢境解析",
         headline,
-        subline: primaryHypothesis?.title || "",
-        details: (result?.whatStandsOut || []).slice(0, 3),
+        subline: primaryHypothesis?.interpretation || result?.wakingLifeConnection || "",
+        details: [],
       });
       setShareNotice(message);
     } catch (err) {
