@@ -152,7 +152,7 @@ export default function VelaExperience() {
         <VelaAccount experience="home" onExperienceChange={changeExperience} />
 
         <div className="velaHomeStageLayout">
-          <VelaStage onCrystalClick={revealHomeEntry} />
+          <VelaStage onCrystalClick={revealHomeEntry} awakened={entryMode !== "landing"} />
         </div>
 
         {entryMode !== "landing" && (
@@ -178,8 +178,13 @@ export default function VelaExperience() {
                   </button>
                 </section>
 
-                <div className="velaQuickPrompts" aria-label="也可以快速開始">
-                  {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => applyQuickPrompt(text)}>{text}</button>)}
+                <div className="velaDirectModes" aria-label="直接選擇占卜方式">
+                  <span>已經知道想看什麼？</span>
+                  <div>
+                    <button type="button" onClick={() => changeExperience("tarot")}>塔羅</button>
+                    <button type="button" onClick={() => changeExperience("astrology")}>星座運勢</button>
+                    <button type="button" onClick={() => changeExperience("dream")}>解夢</button>
+                  </div>
                 </div>
               </>
             )}
