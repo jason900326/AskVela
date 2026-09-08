@@ -1,15 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  ASTROLOGY_SOURCE_MESSAGE,
-  ASTROLOGY_SOURCE_NEXT_STEP,
-  ASTROLOGY_SOURCE_READY,
-} from "../lib/astrology-source-status.js";
+import { ASTROLOGY_SOURCE_READY } from "../lib/astrology-source-status.js";
 import { getZodiacByBirthday, ZODIAC_SIGNS } from "../lib/zodiac.js";
 import VelaAccount from "./VelaAccount.js";
 
 const ASTROLOGY_SESSION_KEY = "askvela.current-astrology.v1";
+
+const ASTROLOGY_WAITING_LINES = [
+  "我先看看今天的太陽和月亮落在哪裡。",
+  "再把你選的星座放進今天的節奏裡。",
+  "有些天象比較像推力，有些比較像提醒。",
+  "我正在把今天的背景，和你真正需要留意的地方分開。",
+  "關係、工作、自己的步調，我一個個看。",
+  "有一兩個地方開始變得比較清楚了。",
+  "再一下，我想先把最值得你知道的那一段說給你聽。",
+];
 
 function makeRequestId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -30,12 +36,25 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
   const [period, setPeriod] = useState("daily");
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [waitingLine, setWaitingLine] = useState(0);
   const [error, setError] = useState("");
   const [sessionRestored, setSessionRestored] = useState(false);
+  const [shareNotice, setShareNotice] = useState("");
 
   const selectedSign = useMemo(() => ZODIAC_SIGNS.find((sign) => sign.id === signId) || null, [signId]);
   const speechOverview = reading?.velaSpeech?.overview || reading?.result?.overview || "";
   const speechNarrative = reading?.velaSpeech?.narrative || reading?.result?.overall || "";
+
+  useEffect(() => {
+    if (!loading) {
+      setWaitingLine(0);
+      return undefined;
+    }
+    const timer = window.setInterval(() => {
+      setWaitingLine((current) => (current + 1) % ASTROLOGY_WAITING_LINES.length);
+    }, 3100);
+    return () => window.clearInterval(timer);
+  }, [loading]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,11 +111,12 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
   async function submitReading(event) {
     event.preventDefault();
     if (!ASTROLOGY_SOURCE_READY) {
-      setError(`${ASTROLOGY_SOURCE_MESSAGE} ${ASTROLOGY_SOURCE_NEXT_STEP}`);
+      setError("目前沒有足夠的星座來源可以完成這次解讀。");
       return;
     }
     if (!signId || loading) return;
     setLoading(true);
+    setWaitingLine(0);
     setError("");
     const requestId = makeRequestId();
 
@@ -118,6 +138,7 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
         throw new Error("這次星座解讀沒有通過來源驗證，因此不顯示結果。");
       }
       setReading(data);
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     } catch (err) {
       setError(err.message || "目前無法完成星座解讀。");
     } finally {
@@ -133,6 +154,8 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
     }
     setReading(null);
     setError("");
+    setShareNotice("");
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   function restoreSavedAstrology(saved) {
@@ -149,74 +172,90 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
     setSessionRestored(true);
   }
 
+  function goHome() {
+    if (onExperienceChange) onExperienceChange("home");
+    else window.dispatchEvent(new CustomEvent("vela:experience", { detail: "home" }));
+  }
+
+  async function shareReading() {
+    if (!reading) return;
+    const title = `Vela｜${reading.sign?.nameZhTw}${reading.period === "daily" ? "今日" : "本週"}運勢`;
+    const text = `${speechOverview}\n\n${speechNarrative}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: window.location.href });
+        setShareNotice("分享完成");
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${title}\n${text}\n${window.location.href}`);
+        setShareNotice("已複製分享文字");
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") setShareNotice("這次沒有成功分享，可以再試一次。");
+    }
+  }
+
   return (
     <section className="astrologyExperience" aria-live="polite">
-      <VelaAccount
-        activeAstrology={reading}
-        onRestoreAstrology={restoreSavedAstrology}
-        experience="astrology"
-        onExperienceChange={onExperienceChange}
-      />
+      {!reading && (
+        <VelaAccount
+          experience="astrology"
+          onRestoreAstrology={restoreSavedAstrology}
+          onExperienceChange={onExperienceChange}
+        />
+      )}
 
       {!reading ? (
-        <>
-          <header className="astrologyHero">
-            <div className="astrologyGlyph" aria-hidden="true">✦</div>
-            <div>
-              <div className="eyebrow">ASKVELA · ASTROLOGY</div>
-              <h1>今天，想看看哪個星座的節奏？</h1>
-              <p>生日只用來協助選擇太陽星座。Vela 會先查閱 Alan Leo 與 Sepharial 的可追溯占星原則，再對照當天實際計算出的太陽與月亮位置做綜合，不會把本命月亮章節直接套成今日行運。</p>
-            </div>
-          </header>
+        loading ? (
+          <section className="astrologyLoadingStage" aria-live="polite">
+            <div className="astrologyLoadingGlyph" aria-hidden="true">{selectedSign?.glyph || "☾"}</div>
+            <p className="astrologyWaitingLine" key={waitingLine}>{ASTROLOGY_WAITING_LINES[waitingLine]}</p>
+            <div className="astrologyLoadingProgress" aria-hidden="true"><span /></div>
+          </section>
+        ) : (
+          <>
+            <header className="astrologyHero astrologyHeroMinimal">
+              <h1>今天，想看看哪個星座？</h1>
+            </header>
 
-          <aside className="astrologySourceGate" role="status">
-            <strong>來源解讀已啟用</strong>
-            <span>{ASTROLOGY_SOURCE_MESSAGE}</span>
-            <small>{ASTROLOGY_SOURCE_NEXT_STEP}</small>
-          </aside>
+            <form className="astrologyPanel astrologyChoicePanel" onSubmit={submitReading}>
+              <section className="astrologyInputGroup">
+                <label className="birthdayField">
+                  <span>不知道星座？輸入生日</span>
+                  <input type="date" value={birthday} onChange={(event) => updateBirthday(event.target.value)} />
+                </label>
 
-          <form className="astrologyPanel" onSubmit={submitReading}>
-            <section className="astrologyInputGroup">
-              <div className="panelHeading"><div><div className="eyebrow">STEP 01</div><h2>選擇你的太陽星座</h2></div></div>
-              <label className="birthdayField">
-                <span>不知道星座？輸入生日</span>
-                <input type="date" value={birthday} onChange={(event) => updateBirthday(event.target.value)} />
-                <small>只用生日幫你選太陽星座，不會保存生日。交界日期若你已知道自己的星座，可直接手動選擇。</small>
-              </label>
+                <div className="zodiacGrid" role="group" aria-label="十二星座">
+                  {ZODIAC_SIGNS.map((sign) => (
+                    <button
+                      key={sign.id}
+                      type="button"
+                      className={signId === sign.id ? "isSelected" : ""}
+                      onClick={() => setSignId(sign.id)}
+                      aria-pressed={signId === sign.id}
+                    >
+                      <span aria-hidden="true">{sign.glyph}</span>
+                      <strong>{sign.nameZhTw}</strong>
+                      <small>{sign.element}象 · {sign.modality}</small>
+                    </button>
+                  ))}
+                </div>
+              </section>
 
-              <div className="zodiacGrid" role="group" aria-label="十二星座">
-                {ZODIAC_SIGNS.map((sign) => (
-                  <button
-                    key={sign.id}
-                    type="button"
-                    className={signId === sign.id ? "isSelected" : ""}
-                    onClick={() => setSignId(sign.id)}
-                    aria-pressed={signId === sign.id}
-                  >
-                    <span aria-hidden="true">{sign.glyph}</span>
-                    <strong>{sign.nameZhTw}</strong>
-                    <small>{sign.element}象 · {sign.modality}</small>
-                  </button>
-                ))}
+              <section className="astrologyInputGroup astrologyPeriodGroup">
+                <h2>想看哪個時間範圍？</h2>
+                <div className="periodToggle" role="group" aria-label="運勢週期">
+                  <button type="button" className={period === "daily" ? "isSelected" : ""} onClick={() => setPeriod("daily")} aria-pressed={period === "daily"}>今日運勢</button>
+                  <button type="button" className={period === "weekly" ? "isSelected" : ""} onClick={() => setPeriod("weekly")} aria-pressed={period === "weekly"}>本週運勢</button>
+                </div>
+              </section>
+
+              <div className="astrologySubmitRow">
+                <div>{selectedSign ? <span>{selectedSign.glyph} {selectedSign.nameZhTw} · {period === "daily" ? "今日" : "本週"}</span> : <span>先選一個星座</span>}</div>
+                <button className="primaryButton" type="submit" disabled={!signId || loading || !ASTROLOGY_SOURCE_READY}>請 Vela 看看</button>
               </div>
-            </section>
-
-            <section className="astrologyInputGroup">
-              <div className="panelHeading"><div><div className="eyebrow">STEP 02</div><h2>想看哪個時間範圍？</h2></div></div>
-              <div className="periodToggle" role="group" aria-label="運勢週期">
-                <button type="button" className={period === "daily" ? "isSelected" : ""} onClick={() => setPeriod("daily")} aria-pressed={period === "daily"}>今日運勢</button>
-                <button type="button" className={period === "weekly" ? "isSelected" : ""} onClick={() => setPeriod("weekly")} aria-pressed={period === "weekly"}>本週運勢</button>
-              </div>
-            </section>
-
-            <div className="astrologySubmitRow">
-              <div>{selectedSign ? <span>{selectedSign.glyph} {selectedSign.nameZhTw} · {period === "daily" ? "今日" : "本週"}</span> : <span>先選一個星座</span>}</div>
-              <button className="primaryButton" type="submit" disabled={!signId || loading || !ASTROLOGY_SOURCE_READY}>
-                {ASTROLOGY_SOURCE_READY ? (loading ? "Vela 正在查閱來源…" : "請 Vela 解讀") : "等待星座來源資料庫"}
-              </button>
-            </div>
-          </form>
-        </>
+            </form>
+          </>
+        )
       ) : (
         <article className="astrologyResult">
           <header className="astrologyResultHeader">
@@ -228,6 +267,13 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
               <p className="velaSummary">{speechNarrative}</p>
             </div>
           </header>
+
+          {reading.result?.reflectionQuestion && (
+            <section className="velaCuriosityCard">
+              <div className="eyebrow">VELA 想問你</div>
+              <p>{reading.result.reflectionQuestion}</p>
+            </section>
+          )}
 
           <details className="astrologyBasis astrologyFullAnalysis">
             <summary>查看完整星座分析</summary>
@@ -242,11 +288,6 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
               <section className="astrologyGuidance">
                 <div className="eyebrow">可以怎麼做</div>
                 <ul>{(reading.result?.practicalGuidance || []).map((item) => <li key={item}>{item}</li>)}</ul>
-              </section>
-
-              <section className="astrologyReflection">
-                <div className="eyebrow">留給你的問題</div>
-                <p>{reading.result?.reflectionQuestion}</p>
               </section>
 
               <section className="astrologyMethodDetail">
@@ -269,7 +310,20 @@ export default function AstrologyReadingFlow({ onExperienceChange }) {
           </details>
 
           <p className="readingDisclaimer">{reading.disclaimer}</p>
-          <div className="flowActions centered"><button className="ghostButton" type="button" onClick={resetReading}>看另一個星座／週期</button></div>
+
+          <VelaAccount
+            activeAstrology={reading}
+            onRestoreAstrology={restoreSavedAstrology}
+            experience="astrology"
+            onExperienceChange={onExperienceChange}
+          />
+
+          <div className="resultExitActions">
+            <button className="primaryButton" type="button" onClick={shareReading}>分享這次結果</button>
+            <button className="ghostButton" type="button" onClick={resetReading}>看另一個星座／週期</button>
+            <button className="ghostButton" type="button" onClick={goHome}>回首頁</button>
+          </div>
+          {shareNotice && <p className="shareNotice" role="status">{shareNotice}</p>}
         </article>
       )}
 
