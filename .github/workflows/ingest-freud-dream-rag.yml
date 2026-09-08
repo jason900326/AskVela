@@ -1,0 +1,40 @@
+name: Ingest Freud Dream RAG
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify source text exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='data/raw/public-domain/dream/freud-interpretation-of-dreams-1913.txt'
+          if [ ! -s "$target" ]; then
+            echo 'Freud source text is missing. Run the Import public-domain Freud dream source workflow first.' >&2
+            exit 1
+          fi
+
+      - name: Ingest Freud full book into Supabase
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+        run: node scripts/ingest-dream-book.js data/metadata/freud-interpretation-of-dreams-1913.json data/raw/public-domain/dream/freud-interpretation-of-dreams-1913.txt
