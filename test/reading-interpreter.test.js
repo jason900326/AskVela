@@ -125,12 +125,51 @@ test("interpretation executes A then B then C then grounded Vela speech", async 
   assert.equal(result.synthesis.narrative, outputs[3].narrative);
   assert.equal(result.synthesis.crossCardPattern, "過去到未來的推進");
   assert.equal(result.velaSpeech.status, "rendered");
-  assert.equal(result.velaSpeech.version, "tarot-speech-v1");
+  assert.equal(result.velaSpeech.attempts, 1);
+  assert.equal(result.velaSpeech.version, "tarot-speech-v1.1");
   assert.deepEqual(result.velaSpeech.fallbackFields, []);
   assert.match(result.disclaimer, /不保證未來/u);
 });
 
-test("speech renderer failure falls back to grounded Layer C without failing the reading", async () => {
+test("speech renderer retries only Layer D and succeeds without rerunning grounded analysis", async () => {
+  const draw = createTarotDraw(
+    { question: REQUEST.question, spreadId: REQUEST.spreadId, idempotencyKey: REQUEST.requestId },
+    { secret: SECRET },
+  );
+  const outputs = validOutputs(draw);
+  const calls = [];
+  const openai = {
+    responses: {
+      create: async (request) => {
+        calls.push(request);
+        if (calls.length === 4) return { output_text: "not-json" };
+        if (calls.length === 5) return { output_text: JSON.stringify(outputs[3]) };
+        return { output_text: JSON.stringify(outputs[calls.length - 1]) };
+      },
+    },
+  };
+  const retriever = async (_query, options) => sourceFor(options.cardIds[0]);
+
+  const result = await interpretTarotReading(
+    REQUEST,
+    { drawSecret: SECRET, openai, evidenceOptions: { retriever } },
+  );
+
+  assert.equal(calls.length, 5);
+  assert.deepEqual(calls.map((call) => call.text.format.name), [
+    "askvela_source_meaning",
+    "askvela_context_interpretation",
+    "askvela_synthesis",
+    "askvela_speech",
+    "askvela_speech",
+  ]);
+  assert.match(calls[4].instructions, /Speech Layer 的修正重試/u);
+  assert.equal(result.velaSpeech.status, "rendered");
+  assert.equal(result.velaSpeech.attempts, 2);
+  assert.equal(result.synthesis.overview, outputs[3].overview);
+});
+
+test("speech renderer failure retries Layer D twice then falls back to grounded Layer C for normal questions", async () => {
   const draw = createTarotDraw(
     { question: REQUEST.question, spreadId: REQUEST.spreadId, idempotencyKey: REQUEST.requestId },
     { secret: SECRET },
@@ -142,7 +181,7 @@ test("speech renderer failure falls back to grounded Layer C without failing the
       create: async () => {
         const index = callIndex;
         callIndex += 1;
-        if (index === 3) return { output_text: "not-json" };
+        if (index >= 3) return { output_text: "not-json" };
         return { output_text: JSON.stringify(outputs[index]) };
       },
     },
@@ -155,18 +194,64 @@ test("speech renderer failure falls back to grounded Layer C without failing the
       REQUEST,
       { drawSecret: SECRET, openai, evidenceOptions: { retriever } },
     );
-    assert.equal(callIndex, 4);
+    assert.equal(callIndex, 5);
     assert.equal(result.velaSpeech.status, "fallback");
+    assert.equal(result.velaSpeech.attempts, 2);
     assert.deepEqual(result.velaSpeech.fallbackFields, ["overview", "narrative"]);
     assert.equal(result.synthesis.overview, "分析層摘要");
     assert.equal(result.synthesis.narrative, "分析層把牌面整理成一段連續的轉變。");
-    assert.deepEqual(result.analysisSynthesis, {
-      overview: "分析層摘要",
-      narrative: "分析層把牌面整理成一段連續的轉變。",
-      crossCardPattern: "過去到未來的推進",
-      practicalGuidance: ["先整理現況"],
-      reflectionQuestions: ["什麼最值得保留？"],
-    });
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test("high-stakes speech failure uses deterministic safe copy instead of exposing Layer C", async () => {
+  const request = {
+    question: "我手上這檔股票一直跌，我是不是應該現在全部賣掉？",
+    spreadId: "single-guidance",
+    requestId: "high-stakes-financial-speech-test",
+  };
+  const draw = createTarotDraw(
+    { question: request.question, spreadId: request.spreadId, idempotencyKey: request.requestId },
+    { secret: SECRET },
+  );
+  const outputs = validOutputs(draw).slice(0, 3);
+  outputs[2] = {
+    overview: "先不要只因為跌很快就全賣。",
+    narrative: "如果你原本沒有停損點，現在最急的也許不是賣或不賣，而是補上決策規則。",
+    crossCardPattern: "",
+    practicalGuidance: ["先檢查停損"],
+    reflectionQuestions: [],
+  };
+  let callIndex = 0;
+  const openai = {
+    responses: {
+      create: async () => {
+        const index = callIndex;
+        callIndex += 1;
+        if (index >= 3) return { output_text: "not-json" };
+        return { output_text: JSON.stringify(outputs[index]) };
+      },
+    },
+  };
+  const retriever = async (_query, options) => sourceFor(options.cardIds[0]);
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
+    const result = await interpretTarotReading(
+      request,
+      { drawSecret: SECRET, openai, evidenceOptions: { retriever } },
+    );
+    assert.equal(callIndex, 5);
+    assert.equal(result.safety.isHighStakes, true);
+    assert.ok(result.safety.categories.includes("financial"));
+    assert.equal(result.velaSpeech.status, "safe-fallback");
+    assert.equal(result.velaSpeech.safeFallback, true);
+    assert.equal(result.velaSpeech.attempts, 2);
+    assert.match(result.synthesis.overview, /不會用牌替你決定要不要賣/u);
+    assert.match(result.synthesis.narrative, /可靠資料/u);
+    assert.doesNotMatch(result.synthesis.narrative, /停損點/u);
+    assert.equal(result.analysisSynthesis.overview, "先不要只因為跌很快就全賣。");
   } finally {
     console.warn = originalWarn;
   }
