@@ -6,6 +6,7 @@ import AstrologyReadingFlow from "./AstrologyReadingFlow.js";
 import DreamReadingFlow from "./DreamReadingFlow.js";
 import TarotReadingFlow from "./TarotReadingFlow.js";
 import VelaAccount from "./VelaAccount.js";
+import VelaStage from "./VelaStage.js";
 
 const DREAM_SESSION_KEY = "askvela.current-dream.v1";
 
@@ -142,15 +143,8 @@ export default function VelaExperience() {
       <section className="velaExperienceHub velaGuideHome">
         <VelaAccount experience="home" onExperienceChange={changeExperience} />
 
-        <div className="fortuneTellerStage">
-          <div className="fortuneTellerPortrait" aria-hidden="true">
-            <div className="fortuneTellerHalo" />
-            <div className="fortuneTellerHead">☾</div>
-            <div className="fortuneTellerBody" />
-            <div className="fortuneTellerTable">
-              <div className="fortuneTellerCrystal"><span>✦</span></div>
-            </div>
-          </div>
+        <div className="velaHomeStageLayout">
+          <VelaStage onCrystalClick={() => setEntryMode("freeform")} />
 
           <div className="velaDialogueBubble">
             <div className="eyebrow">VELA</div>
