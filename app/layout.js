@@ -1,3 +1,4 @@
+import VelaBrandLink from "../components/VelaBrandLink.js";
 import "./globals.css";
 import "./reading.css";
 import "./follow-up.css";
@@ -18,10 +19,7 @@ export default function RootLayout({ children }) {
     <html lang="zh-Hant">
       <body>
         <div className="brandBar">
-          <a className="brandMark" href="/" aria-label="Vela 首頁">
-            <span className="brandMarkIcon" aria-hidden="true">☾</span>
-            <span>VELA</span>
-          </a>
+          <VelaBrandLink />
         </div>
         {children}
       </body>
