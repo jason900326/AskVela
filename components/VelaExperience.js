@@ -51,7 +51,7 @@ function buildGuidedQuestion({ area, feeling, goal }) {
 
 export default function VelaExperience() {
   const [experience, setExperience] = useState("home");
-  const [entryMode, setEntryMode] = useState("choice");
+  const [entryMode, setEntryMode] = useState("landing");
   const [guideInput, setGuideInput] = useState("");
   const [guideResult, setGuideResult] = useState(null);
   const [guidedStep, setGuidedStep] = useState("area");
@@ -69,7 +69,7 @@ export default function VelaExperience() {
 
     if (next === "home") {
       setExperience("home");
-      setEntryMode("choice");
+      setEntryMode("landing");
       setGuideInput("");
       setGuideResult(null);
       setGuidedStep("area");
@@ -90,6 +90,14 @@ export default function VelaExperience() {
     window.addEventListener("vela:experience", handleExperience);
     return () => window.removeEventListener("vela:experience", handleExperience);
   }, [changeExperience]);
+
+  function revealHomeEntry() {
+    setEntryMode("choice");
+    setGuideResult(null);
+    window.setTimeout(() => {
+      document.getElementById("vela-home-entry")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }
 
   function askVela(event) {
     event?.preventDefault?.();
@@ -144,118 +152,122 @@ export default function VelaExperience() {
         <VelaAccount experience="home" onExperienceChange={changeExperience} />
 
         <div className="velaHomeStageLayout">
-          <VelaStage onCrystalClick={() => setEntryMode("freeform")} />
-
-          <div className="velaDialogueBubble">
-            <div className="eyebrow">VELA</div>
-            <h1>今天想從哪件事開始？</h1>
-            <p>你可以直接告訴我一件事，也可以只跟我說「我不知道，只是覺得卡住」。問題不用先想得很完整，我會陪你把它整理出來。</p>
-          </div>
+          <VelaStage onCrystalClick={revealHomeEntry} />
         </div>
 
-        {entryMode === "choice" && (
-          <>
-            <section className="velaEntryChoices" aria-label="選擇開始方式">
-              <button className="velaEntryChoice isPrimary" type="button" onClick={() => setEntryMode("freeform")}>
-                <span aria-hidden="true">✦</span>
-                <strong>我有件事想問你</strong>
-                <small>直接把最近在意的事告訴 Vela，不用先選塔羅、星座或解夢。</small>
-              </button>
-              <button className="velaEntryChoice" type="button" onClick={startGuidedEntry}>
-                <span aria-hidden="true">☾</span>
-                <strong>我不知道，只是覺得有點卡住</strong>
-                <small>不用先想問題。Vela 會用幾個簡單選擇，陪你找出可以從哪裡開始。</small>
-              </button>
-            </section>
-
-            <div className="velaQuickPrompts" aria-label="也可以快速開始">
-              {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => applyQuickPrompt(text)}>{text}</button>)}
-            </div>
-          </>
-        )}
-
-        {entryMode === "freeform" && (
-          <>
-            <form className="velaGuideForm" onSubmit={askVela}>
-              <div className="guidedPanelHeading">
-                <div>
-                  <div className="eyebrow">直接告訴 Vela</div>
-                  <h2>最近哪件事最佔你的心思？</h2>
-                </div>
-                <button className="ghostButton" type="button" onClick={resetHomeEntry}>換一種開始方式</button>
-              </div>
-              <label htmlFor="vela-guide">想到多少就說多少</label>
-              <textarea
-                id="vela-guide"
-                rows={3}
-                maxLength={500}
-                value={guideInput}
-                onChange={(event) => { setGuideInput(event.target.value); setGuideResult(null); }}
-                placeholder="例如：我最近一直在想要不要換工作，但又怕自己只是因為累了才想離開。"
-              />
-              <div className="velaGuideActions">
-                <span>{guideInput.length}/500</span>
-                <button className="primaryButton" type="submit" disabled={!guideInput.trim()}>讓 Vela 幫我選</button>
-              </div>
-            </form>
-
-            <div className="velaQuickPrompts" aria-label="快速開始">
-              {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => applyQuickPrompt(text)}>{text}</button>)}
-            </div>
-          </>
-        )}
-
-        {entryMode === "guided" && (
-          <section className="guidedEntryPanel" aria-live="polite">
-            <div className="guidedPanelHeading">
-              <div>
-                <div className="eyebrow">VELA · 幫我找問題</div>
-                <h2>{guidedStep === "result" ? "好，我大概知道可以從哪裡開始了。" : "先不用想一個完整的問題。"}</h2>
-              </div>
-              <button className="ghostButton" type="button" onClick={resetHomeEntry}>自己問一件事</button>
+        {entryMode !== "landing" && (
+          <div className="velaHomeEntry" id="vela-home-entry">
+            <div className="velaDialogueBubble">
+              <div className="eyebrow">VELA</div>
+              <h1>今天想從哪件事開始？</h1>
+              <p>你可以直接告訴我一件事，也可以只跟我說「我不知道，只是覺得卡住」。問題不用先想得很完整，我會陪你把它整理出來。</p>
             </div>
 
-            {guidedStep === "area" && (
-              <div className="guidedStep">
-                <p>最近哪一部分最讓你有感覺？不用選得很準。</p>
-                <div className="guidedChoiceGrid">
-                  {GUIDED_AREAS.map((item) => <button type="button" key={item} onClick={() => chooseGuidedAnswer("area", item)}>{item}</button>)}
+            {entryMode === "choice" && (
+              <>
+                <section className="velaEntryChoices" aria-label="選擇開始方式">
+                  <button className="velaEntryChoice isPrimary" type="button" onClick={() => setEntryMode("freeform")}>
+                    <span aria-hidden="true">✦</span>
+                    <strong>我有件事想問你</strong>
+                    <small>直接把最近在意的事告訴 Vela，不用先選塔羅、星座或解夢。</small>
+                  </button>
+                  <button className="velaEntryChoice" type="button" onClick={startGuidedEntry}>
+                    <span aria-hidden="true">☾</span>
+                    <strong>我不知道，只是覺得有點卡住</strong>
+                    <small>不用先想問題。Vela 會用幾個簡單選擇，陪你找出可以從哪裡開始。</small>
+                  </button>
+                </section>
+
+                <div className="velaQuickPrompts" aria-label="也可以快速開始">
+                  {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => applyQuickPrompt(text)}>{text}</button>)}
                 </div>
-              </div>
+              </>
             )}
 
-            {guidedStep === "feeling" && (
-              <div className="guidedStep">
-                <p>比較接近下面哪一種感覺？</p>
-                <div className="guidedChoiceGrid">
-                  {GUIDED_FEELINGS.map((item) => <button type="button" key={item} onClick={() => chooseGuidedAnswer("feeling", item)}>{item}</button>)}
+            {entryMode === "freeform" && (
+              <>
+                <form className="velaGuideForm" onSubmit={askVela}>
+                  <div className="guidedPanelHeading">
+                    <div>
+                      <div className="eyebrow">直接告訴 Vela</div>
+                      <h2>最近哪件事最佔你的心思？</h2>
+                    </div>
+                    <button className="ghostButton" type="button" onClick={resetHomeEntry}>換一種開始方式</button>
+                  </div>
+                  <label htmlFor="vela-guide">想到多少就說多少</label>
+                  <textarea
+                    id="vela-guide"
+                    rows={3}
+                    maxLength={500}
+                    value={guideInput}
+                    onChange={(event) => { setGuideInput(event.target.value); setGuideResult(null); }}
+                    placeholder="例如：我最近一直在想要不要換工作，但又怕自己只是因為累了才想離開。"
+                  />
+                  <div className="velaGuideActions">
+                    <span>{guideInput.length}/500</span>
+                    <button className="primaryButton" type="submit" disabled={!guideInput.trim()}>讓 Vela 幫我選</button>
+                  </div>
+                </form>
+
+                <div className="velaQuickPrompts" aria-label="快速開始">
+                  {QUICK_PROMPTS.map((text) => <button type="button" key={text} onClick={() => applyQuickPrompt(text)}>{text}</button>)}
                 </div>
-                <button className="guidedBackButton" type="button" onClick={() => setGuidedStep("area")}>← 上一步</button>
-              </div>
+              </>
             )}
 
-            {guidedStep === "goal" && (
-              <div className="guidedStep">
-                <p>今天你比較希望我先幫你做什麼？</p>
-                <div className="guidedChoiceGrid">
-                  {GUIDED_GOALS.map((item) => <button type="button" key={item} onClick={() => chooseGuidedAnswer("goal", item)}>{item}</button>)}
+            {entryMode === "guided" && (
+              <section className="guidedEntryPanel" aria-live="polite">
+                <div className="guidedPanelHeading">
+                  <div>
+                    <div className="eyebrow">VELA · 幫我找問題</div>
+                    <h2>{guidedStep === "result" ? "好，我大概知道可以從哪裡開始了。" : "先不用想一個完整的問題。"}</h2>
+                  </div>
+                  <button className="ghostButton" type="button" onClick={resetHomeEntry}>自己問一件事</button>
                 </div>
-                <button className="guidedBackButton" type="button" onClick={() => setGuidedStep("feeling")}>← 上一步</button>
-              </div>
-            )}
 
-            {guidedStep === "result" && guidedQuestion && (
-              <div className="guidedResult">
-                <p>你現在不一定需要一個「預測結果」的問題。我會先把剛才的感覺整理成這一句：</p>
-                <blockquote>{guidedQuestion}</blockquote>
-                <p>這種模糊、卡住、還不知道真正問題在哪裡的狀態，我會先用塔羅拆成「現在的狀態／可能的阻礙／可以先留意的方向」，而不是逼你先給自己一個答案。</p>
-                <div className="guideRecommendationActions">
-                  <button className="primaryButton" type="button" onClick={() => beginTarot(guidedQuestion)}>好，從這裡開始塔羅</button>
-                  <button className="ghostButton" type="button" onClick={() => setGuidedStep("goal")}>我想改一下</button>
-                </div>
-              </div>
+                {guidedStep === "area" && (
+                  <div className="guidedStep">
+                    <p>最近哪一部分最讓你有感覺？不用選得很準。</p>
+                    <div className="guidedChoiceGrid">
+                      {GUIDED_AREAS.map((item) => <button type="button" key={item} onClick={() => chooseGuidedAnswer("area", item)}>{item}</button>)}
+                    </div>
+                  </div>
+                )}
+
+                {guidedStep === "feeling" && (
+                  <div className="guidedStep">
+                    <p>比較接近下面哪一種感覺？</p>
+                    <div className="guidedChoiceGrid">
+                      {GUIDED_FEELINGS.map((item) => <button type="button" key={item} onClick={() => chooseGuidedAnswer("feeling", item)}>{item}</button>)}
+                    </div>
+                    <button className="guidedBackButton" type="button" onClick={() => setGuidedStep("area")}>← 上一步</button>
+                  </div>
+                )}
+
+                {guidedStep === "goal" && (
+                  <div className="guidedStep">
+                    <p>今天你比較希望我先幫你做什麼？</p>
+                    <div className="guidedChoiceGrid">
+                      {GUIDED_GOALS.map((item) => <button type="button" key={item} onClick={() => chooseGuidedAnswer("goal", item)}>{item}</button>)}
+                    </div>
+                    <button className="guidedBackButton" type="button" onClick={() => setGuidedStep("feeling")}>← 上一步</button>
+                  </div>
+                )}
+
+                {guidedStep === "result" && guidedQuestion && (
+                  <div className="guidedResult">
+                    <p>你現在不一定需要一個「預測結果」的問題。我會先把剛才的感覺整理成這一句：</p>
+                    <blockquote>{guidedQuestion}</blockquote>
+                    <p>這種模糊、卡住、還不知道真正問題在哪裡的狀態，我會先用塔羅拆成「現在的狀態／可能的阻礙／可以先留意的方向」，而不是逼你先給自己一個答案。</p>
+                    <div className="guideRecommendationActions">
+                      <button className="primaryButton" type="button" onClick={() => beginTarot(guidedQuestion)}>好，從這裡開始塔羅</button>
+                      <button className="ghostButton" type="button" onClick={() => setGuidedStep("goal")}>我想改一下</button>
+                    </div>
+                  </div>
+                )}
+              </section>
             )}
-          </section>
+          </div>
         )}
 
         {entryMode !== "guided" && recommendation && (
