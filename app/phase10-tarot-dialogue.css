@@ -1,0 +1,180 @@
+/* Phase 10: reveal fidelity, slower interpretation copy, and a more reciprocal Vela result. */
+
+/* 1) Never crop the Rider-Waite artwork after a card is revealed. */
+.stage-reveal .tarotCardFront {
+  background: #100b15 !important;
+}
+
+.stage-reveal .tarotCardFront > img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* 2) Interpretation can take a while, so make the wait feel like Vela is actually looking.
+   Three lines rotate every few seconds instead of leaving one static engine-status sentence. */
+.stage-interpreting .loadingPanel h2 {
+  position: relative;
+  width: min(620px, 86vw);
+  min-height: 3.2rem;
+  margin: 20px auto 6px !important;
+  font-size: 0 !important;
+}
+
+.stage-interpreting .loadingPanel h2::before,
+.stage-interpreting .loadingPanel h2::after,
+.stage-interpreting .progressLine::before {
+  color: #f3edf6;
+  font-size: clamp(1.18rem, 3.8vw, 1.8rem);
+  font-weight: 750;
+  line-height: 1.35;
+  letter-spacing: .01em;
+  text-align: center;
+}
+
+.stage-interpreting .loadingPanel h2::before,
+.stage-interpreting .loadingPanel h2::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+}
+
+.stage-interpreting .loadingPanel h2::before {
+  content: "我先看看，哪張牌最先開口。";
+  animation: velaInterpretLineOne 9.6s ease-in-out infinite;
+}
+
+.stage-interpreting .loadingPanel h2::after {
+  content: "有些地方，正在和你剛剛說的事對上。";
+  animation: velaInterpretLineTwo 9.6s ease-in-out infinite;
+}
+
+.stage-interpreting .progressLine {
+  position: relative;
+  margin-top: 34px !important;
+}
+
+.stage-interpreting .progressLine::before {
+  content: "再一下，我想把這幾張牌之間的關係看清楚。";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 31px);
+  width: min(620px, 86vw);
+  transform: translateX(-50%);
+  opacity: 0;
+  animation: velaInterpretLineThree 9.6s ease-in-out infinite;
+}
+
+@keyframes velaInterpretLineOne {
+  0%, 27% { opacity: 1; transform: translateY(0); }
+  32%, 100% { opacity: 0; transform: translateY(-5px); }
+}
+
+@keyframes velaInterpretLineTwo {
+  0%, 29% { opacity: 0; transform: translateY(5px); }
+  34%, 60% { opacity: 1; transform: translateY(0); }
+  65%, 100% { opacity: 0; transform: translateY(-5px); }
+}
+
+@keyframes velaInterpretLineThree {
+  0%, 62% { opacity: 0; transform: translateX(-50%) translateY(5px); }
+  67%, 94% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+}
+
+/* 3) Make the result feel reciprocal. The analysis engine already produces one
+   reflection question; surface it before the save/follow-up area so Vela gets a turn too. */
+.stage-result .readingResult {
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-result .resultIntro { order: 1; }
+.stage-result .deepReading { order: 2; }
+.stage-result .saveReadingPrompt { order: 3; }
+.stage-result .followUpPanel { order: 4; }
+.stage-result .readingDisclaimer { order: 5; }
+.stage-result .readingResult > .flowActions { order: 6; }
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) {
+  display: block !important;
+  margin: 14px 0 2px;
+  padding: 18px 20px;
+  border: 1px solid rgba(211, 169, 255, .2);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(190, 130, 246, .1), transparent 42%),
+    rgba(255,255,255,.018);
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) .eyebrow {
+  font-size: 0;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) .eyebrow::after {
+  content: "VELA 想問你";
+  color: #cba9ef;
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) ul {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) li {
+  margin: 0;
+  color: #f1eaf4;
+  font-size: clamp(1.03rem, 2vw, 1.24rem);
+  line-height: 1.65;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) li::before {
+  content: "☾";
+  margin-right: 9px;
+  color: #cba9ef;
+}
+
+.stage-result .saveReadingPrompt {
+  margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  .stage-interpreting .loadingPanel h2 {
+    width: min(88vw, 520px);
+    min-height: 4.2rem;
+  }
+
+  .stage-interpreting .loadingPanel h2::before,
+  .stage-interpreting .loadingPanel h2::after,
+  .stage-interpreting .progressLine::before {
+    font-size: 1.08rem;
+  }
+
+  .stage-interpreting .progressLine::before {
+    width: min(88vw, 520px);
+  }
+
+  .stage-result .deepReading:not([open]) > .deepReadingBody > .synthesisBlock:has(> ul) {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-interpreting .loadingPanel h2::before {
+    opacity: 1;
+    animation: none;
+  }
+
+  .stage-interpreting .loadingPanel h2::after,
+  .stage-interpreting .progressLine::before {
+    display: none;
+    animation: none;
+  }
+}
