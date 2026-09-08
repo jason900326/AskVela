@@ -1,0 +1,327 @@
+/* Home journey v2 — four clear paths after the crystal is touched. */
+
+/* Keep Vela visible after awakening instead of fading the crystal/character into a form backdrop. */
+.velaGuideHome .velaStage.isAwake::after {
+  background: linear-gradient(180deg, rgba(9,5,13,.02), rgba(9,5,13,.04) 46%, rgba(9,5,13,.26) 100%) !important;
+}
+
+.velaGuideHome .velaStage.isAwake .velaCrystalButton,
+.velaGuideHome .velaStage.isAwake .velaCrystalButton:disabled {
+  opacity: .96 !important;
+  pointer-events: none !important;
+  filter: none !important;
+}
+
+.velaGuideHome.entry-choice .velaCharacterArtwork {
+  top: 8svh !important;
+  height: 72svh !important;
+  object-position: center top !important;
+}
+
+.velaGuideHome.entry-choice .velaCrystalButton {
+  top: 61svh !important;
+  width: clamp(112px, 28vw, 168px) !important;
+  height: clamp(112px, 28vw, 168px) !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Speech bubble: a small line above Vela's head, not a hero card covering her face. */
+.velaGuideHome .velaDialogueBubble {
+  top: max(68px, calc(env(safe-area-inset-top) + 48px)) !important;
+  width: min(420px, calc(100% - 72px)) !important;
+  padding: 10px 18px 11px !important;
+  border-radius: 999px !important;
+  background: rgba(25,15,32,.76) !important;
+  box-shadow: 0 14px 42px rgba(0,0,0,.24), inset 0 0 0 1px rgba(230,202,255,.05) !important;
+}
+
+.velaGuideHome .velaDialogueBubble::before {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.velaGuideHome .velaDialogueBubble h1 {
+  font-size: clamp(1rem, 4.3vw, 1.35rem) !important;
+  font-weight: 650 !important;
+  letter-spacing: .01em !important;
+}
+
+.velaGuideHome .velaDialogueBubble p {
+  margin: 4px auto 0 !important;
+  color: rgba(235,204,176,.82) !important;
+  font-size: .68rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: .12em !important;
+}
+
+.velaGuideHome .mode-freeform .velaDialogueBubble p,
+.velaGuideHome .mode-guided .velaDialogueBubble p {
+  display: none !important;
+}
+
+/* One large information panel containing four routes. */
+.velaJourneyPanel {
+  position: absolute;
+  left: 50%;
+  bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px));
+  z-index: 60;
+  width: min(760px, calc(100% - 20px));
+  padding: 13px 13px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(225,195,252,.28);
+  border-radius: 25px;
+  background: linear-gradient(180deg, rgba(48,28,58,.9), rgba(22,13,28,.94));
+  box-shadow: 0 24px 72px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.035);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+  animation: velaChoicesIn 480ms 80ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.velaJourneyHeading {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: rgba(237,207,177,.88);
+}
+
+.velaJourneyHeading strong {
+  font: 600 .76rem/1.2 Georgia, "Times New Roman", serif;
+  letter-spacing: .12em;
+}
+
+.velaJourneyHeading span {
+  color: #dfbbff;
+  font-size: .55rem;
+}
+
+.velaJourneyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.velaJourneyChoice {
+  min-width: 0;
+  min-height: 84px;
+  padding: 12px 12px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  border: 1px solid rgba(229,207,250,.2);
+  border-radius: 20px;
+  color: #f8f0fa;
+  box-shadow: inset 0 1px rgba(255,255,255,.045), 0 8px 26px rgba(0,0,0,.18);
+  transition: transform 160ms ease, border-color 160ms ease, filter 160ms ease;
+}
+
+.velaJourneyChoice:hover,
+.velaJourneyChoice:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(235,213,255,.5);
+  filter: brightness(1.06);
+}
+
+.velaJourneyChoice.journeyTarot {
+  background: linear-gradient(135deg, rgba(111,70,80,.9), rgba(72,48,76,.94));
+}
+.velaJourneyChoice.journeyAstrology {
+  background: linear-gradient(135deg, rgba(59,67,111,.92), rgba(64,49,91,.94));
+}
+.velaJourneyChoice.journeyDream {
+  background: linear-gradient(135deg, rgba(92,55,116,.92), rgba(66,43,87,.94));
+}
+.velaJourneyChoice.journeyGuided {
+  background: linear-gradient(135deg, rgba(102,59,91,.92), rgba(75,43,75,.94));
+}
+
+.journeyIcon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(242,218,255,.28);
+  border-radius: 50%;
+  color: #efd5ff;
+  background: rgba(17,10,23,.22);
+  font: 500 1.2rem/1 Georgia, serif;
+  box-shadow: inset 0 0 20px rgba(213,169,255,.08);
+}
+
+.journeyCopy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.journeyCopy strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(.84rem, 2.7vw, 1.02rem);
+  line-height: 1.2;
+  font-weight: 760;
+}
+
+.journeyCopy small {
+  overflow-wrap: anywhere;
+  color: rgba(235,222,240,.68);
+  font-size: clamp(.57rem, 1.9vw, .7rem);
+  line-height: 1.25;
+}
+
+.journeyArrow {
+  color: rgba(248,237,252,.78);
+  font: 400 1.65rem/1 Georgia, serif;
+}
+
+/* Old two-choice/direct-mode structures must not leak into the new composition. */
+.velaGuideHome .mode-choice .velaEntryChoices,
+.velaGuideHome .mode-choice .velaDirectModes {
+  display: none !important;
+}
+
+/* Tarot question after choosing '有件事想問': compact bottom sheet, Vela still visible. */
+.velaGuideHome .mode-freeform .velaGuideForm {
+  width: min(590px, calc(100% - 20px)) !important;
+  bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px)) !important;
+  padding: 15px !important;
+  border-radius: 24px !important;
+}
+
+.velaGuideHome .mode-freeform .velaGuideForm h2 {
+  margin: 0 0 10px;
+  font-size: 1.08rem;
+}
+
+.velaGuideHome .mode-freeform .velaGuideForm textarea {
+  min-height: 104px !important;
+  max-height: 22svh !important;
+}
+
+/* Guided branch is just Vela asking a question + the answers. No extra nested header/back controls. */
+.velaGuideHome .mode-guided .guidedEntryPanel {
+  width: min(590px, calc(100% - 20px)) !important;
+  max-height: 44svh !important;
+  bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px)) !important;
+  padding: 15px !important;
+  border-radius: 24px !important;
+}
+
+.velaGuideHome .mode-guided .guidedPanelHeading,
+.velaGuideHome .mode-guided .guidedBackButton {
+  display: none !important;
+}
+
+.velaGuideHome .mode-guided .guidedStep > p,
+.velaGuideHome .mode-guided .guidedResult > p:first-child {
+  margin: 0 0 12px;
+  color: rgba(239,226,243,.82);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.velaGuideHome .mode-guided .guidedChoiceGrid {
+  gap: 8px !important;
+}
+
+.velaGuideHome .mode-guided .guidedChoiceGrid button {
+  min-height: 46px !important;
+  padding: 9px 10px !important;
+  border-radius: 15px !important;
+  font-size: .82rem !important;
+}
+
+.velaGuideHome .mode-guided blockquote {
+  margin: 0 0 12px;
+  padding: 13px 14px;
+  border: 1px solid rgba(218,187,248,.22);
+  border-radius: 17px;
+  color: #f4ecf6;
+  background: rgba(255,255,255,.025);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  .velaGuideHome.entry-choice .velaCharacterArtwork {
+    top: 10svh !important;
+    height: 67svh !important;
+  }
+
+  .velaGuideHome.entry-choice .velaCrystalButton {
+    top: 58svh !important;
+    width: clamp(104px, 30vw, 132px) !important;
+    height: clamp(104px, 30vw, 132px) !important;
+  }
+
+  .velaGuideHome .velaDialogueBubble {
+    top: max(62px, calc(env(safe-area-inset-top) + 42px)) !important;
+    width: min(330px, calc(100% - 54px)) !important;
+    padding: 9px 14px 10px !important;
+  }
+
+  .velaJourneyPanel {
+    width: calc(100% - 14px);
+    padding: 10px 10px 11px;
+    border-radius: 22px;
+  }
+
+  .velaJourneyHeading {
+    min-height: 20px;
+    margin-bottom: 7px;
+  }
+
+  .velaJourneyGrid {
+    gap: 7px;
+  }
+
+  .velaJourneyChoice {
+    min-height: 76px;
+    grid-template-columns: 34px minmax(0, 1fr) 10px;
+    gap: 7px;
+    padding: 9px 9px;
+    border-radius: 17px;
+  }
+
+  .journeyIcon {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+  }
+
+  .journeyCopy strong {
+    font-size: clamp(.76rem, 3.6vw, .9rem);
+  }
+
+  .journeyCopy small {
+    font-size: clamp(.54rem, 2.6vw, .64rem);
+  }
+
+  .journeyArrow {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-height: 700px) {
+  .velaGuideHome.entry-choice .velaCharacterArtwork {
+    top: 9svh !important;
+    height: 62svh !important;
+  }
+
+  .velaGuideHome.entry-choice .velaCrystalButton {
+    top: 54svh !important;
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .velaJourneyChoice {
+    min-height: 68px;
+  }
+
+  .velaJourneyHeading {
+    display: none;
+  }
+}
