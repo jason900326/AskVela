@@ -15,7 +15,7 @@ const fakeOutput = {
   energy: "留一點空白給自己調整，不必把每個變化都立刻變成任務。",
   practicalGuidance: ["先列三件最重要的事。", "有疑問時直接確認。", "晚上留一段不安排的時間。"],
   reflectionQuestion: "今天什麼事情其實可以不用一次做到完美？",
-  basisNote: "主要參考近似太陽、月亮與月相訊號；這不是完整出生星盤。",
+  basisNote: "以處女座的來源基準與當天實際太陽／月亮訊號做綜合；這不是完整出生星盤。",
 };
 
 test("astrology request validates sign, period, date, timezone and request ID", () => {
@@ -29,13 +29,22 @@ test("astrology reading ID is deterministic for an identical request", () => {
   assert.equal(astrologyReadingId(normalized), astrologyReadingId(normalized));
 });
 
-test("structured astrology call forbids invented natal chart data", async () => {
+test("structured astrology call receives scoped book evidence and forbids invented chart data", async () => {
   let call;
   const openai = { responses: { create: async (input) => { call = input; return { output_text: JSON.stringify(fakeOutput) }; } } };
   const reading = await createAstrologyReading({ signId: "virgo", period: "daily", localDate: "2026-09-07", timezone: "Asia/Taipei", requestId: "request-123" }, { openai, model: "test-model" });
+  const payload = JSON.parse(call.input);
+
   assert.equal(reading.kind, "astrology");
   assert.equal(reading.sign.id, "virgo");
-  assert.match(call.instructions, /不得捏造其他行星位置、出生星盤、宮位或相位/u);
+  assert.equal(reading.sourceGrounded, true);
+  assert.ok(reading.sources.references.length >= 2);
+  assert.ok(payload.sourceEvidence.some((item) => item.id === "sign-virgo" && item.scope === "natal_sun_sign"));
+  assert.ok(payload.sourceEvidence.some((item) => item.id === "transit-method" && item.scope === "transit_method"));
+  assert.ok(payload.sourceEvidence.some((item) => item.id === "natal-boundary" && item.scope === "application_boundary"));
+  assert.match(call.instructions, /書中原則 → 當天天象 → 情境化延伸/u);
+  assert.match(call.instructions, /不得捏造水星、金星、火星/u);
+  assert.match(call.instructions, /不得把本命月亮/u);
   assert.equal(call.text.format.type, "json_schema");
   assert.equal(reading.result.practicalGuidance.length, 3);
 });
