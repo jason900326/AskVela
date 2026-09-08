@@ -27,6 +27,11 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   }
 
   useEffect(() => {
+    if (String(initialDream || "").trim()) {
+      window.sessionStorage.removeItem(SESSION_KEY);
+      return undefined;
+    }
+
     let restoreTimer = null;
     try {
       const raw = window.sessionStorage.getItem(SESSION_KEY);
@@ -48,7 +53,7 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
     return () => {
       if (restoreTimer !== null) window.clearTimeout(restoreTimer);
     };
-  }, []);
+  }, [initialDream]);
 
   useEffect(() => {
     if (!reading) return;
@@ -145,6 +150,8 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
     );
   }
 
+  const dreamTooShort = dreamText.trim().length > 0 && dreamText.trim().length < 8;
+
   return (
     <section className="dreamReadingFlow">
       <VelaAccount experience="dream" onExperienceChange={onExperienceChange} onRestoreDream={restoreDream} />
@@ -159,6 +166,7 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
           <textarea rows={8} maxLength={4000} value={dreamText} onChange={(event) => setDreamText(event.target.value)} placeholder="例如：我夢到自己一直趕火車，但每次快到月台時，車門就關上了。後來場景突然變成高中教室，我很急，可是所有人都像沒看到我一樣……" />
           <small>{dreamText.length}/4000</small>
         </label>
+        {dreamTooShort && <div className="dreamFormNote">我有收到這個夢。再多寫一點發生了什麼、你當時的感覺或醒來後最在意的地方，我才能開始解讀。</div>}
         <label>最近的現實背景（可不填）
           <textarea rows={3} maxLength={1200} value={wakingLifeContext} onChange={(event) => setWakingLifeContext(event.target.value)} placeholder="例如：最近正在等工作面試結果，也一直擔心自己是不是錯過了什麼機會。" />
           <small>{wakingLifeContext.length}/1200</small>
