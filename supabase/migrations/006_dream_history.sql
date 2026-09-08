@@ -2,7 +2,7 @@ create table if not exists public.dream_readings (
   id text primary key check (id ~ '^dream_[0-9a-f]{32}$'),
   user_id uuid not null references auth.users(id) on delete cascade,
   request_id text not null,
-  dream_text text not null check (char_length(dream_text) between 8 and 4000),
+  dream_text text not null check (char_length(dream_text) between 2 and 4000),
   waking_life_context text not null default '' check (char_length(waking_life_context) <= 1200),
   extraction jsonb not null,
   reading_result jsonb not null,
