@@ -2,62 +2,35 @@
 
 import { useState } from "react";
 
-const DEFAULT_VELA_ART = "/images/vela/vela-home.webp";
+export default function VelaStage({ onCrystalClick, awakened = false }) {
+  const [loaded, setLoaded] = useState({ hooded: false, revealed: false, crystal: false });
 
-export default function VelaStage({ onCrystalClick, artSrc = DEFAULT_VELA_ART }) {
-  const [artLoaded, setArtLoaded] = useState(false);
+  function markLoaded(key) {
+    setLoaded((current) => ({ ...current, [key]: true }));
+  }
 
   return (
-    <div className="velaStage" aria-label="Vela 占卜舞台">
+    <div className={`velaStage ${awakened ? "isAwake" : ""}`} aria-label="Vela 占卜舞台">
       <div className="velaStageGlow velaStageGlowLeft" aria-hidden="true" />
       <div className="velaStageGlow velaStageGlowRight" aria-hidden="true" />
-      <div className="velaStageStars" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
+      <div className="velaStageStars" aria-hidden="true"><i /><i /><i /><i /><i /></div>
 
       <div className="velaArtFrame">
-        <div className={`velaCharacterSlot ${artLoaded ? "hasArtwork" : ""}`} aria-hidden="true">
+        <div className={`velaCharacterSlot ${loaded.hooded || loaded.revealed ? "hasArtwork" : ""}`} aria-hidden="true">
           <div className="velaCharacterHalo" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            className="velaCharacterArtwork"
-            src={artSrc}
-            alt=""
-            draggable="false"
-            onLoad={() => setArtLoaded(true)}
-            onError={() => setArtLoaded(false)}
-          />
-          <div className="velaCharacterFallback">
-            <div className="velaFallbackHat" />
-            <div className="velaFallbackHead" />
-            <div className="velaFallbackHair velaFallbackHairLeft" />
-            <div className="velaFallbackHair velaFallbackHairRight" />
-            <div className="velaFallbackBody" />
-          </div>
+          <img className={`velaCharacterArtwork velaHoodedArtwork ${awakened ? "isHidden" : ""}`} src="/images/vela/vela-home-hooded.webp" alt="" draggable="false" onLoad={() => markLoaded("hooded")} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className={`velaCharacterArtwork velaRevealedArtwork ${awakened ? "isVisible" : ""}`} src="/images/vela/vela-home-revealed.webp" alt="" draggable="false" onLoad={() => markLoaded("revealed")} />
+          <div className="velaCharacterFallback"><div className="velaFallbackHat" /><div className="velaFallbackHead" /><div className="velaFallbackHair velaFallbackHairLeft" /><div className="velaFallbackHair velaFallbackHairRight" /><div className="velaFallbackBody" /></div>
         </div>
 
-        <button
-          className="velaCrystalButton"
-          type="button"
-          onClick={onCrystalClick}
-          aria-label="點水晶球，開始告訴 Vela 你最近在意的事"
-        >
+        <button className="velaCrystalButton" type="button" onClick={onCrystalClick} aria-label="觸碰水晶球開始">
           <span className="velaCrystalAura" aria-hidden="true" />
-          <span className="velaCrystalBall" aria-hidden="true">
-            <span className="velaCrystalMist" />
-            <span className="velaCrystalStar">✦</span>
-          </span>
-          <span className="velaCrystalBase" aria-hidden="true" />
-          <span className="velaCrystalHint">點水晶球開始</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className={`velaCrystalArtwork ${loaded.crystal ? "isLoaded" : ""}`} src="/images/vela/crystal-ball.webp" alt="" draggable="false" onLoad={() => markLoaded("crystal")} />
+          <span className="velaCrystalHint">{awakened ? "Vela 正在聽" : "觸碰水晶球開始"}</span>
         </button>
-      </div>
-
-      <div className="velaTable" aria-hidden="true">
-        <span className="velaTableEdge" />
       </div>
     </div>
   );
