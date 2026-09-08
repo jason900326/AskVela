@@ -18,12 +18,18 @@ test("Dream starts from one remembered image instead of demanding a full intake"
   assert.match(flow, /最近的生活背景（可選）/u);
 });
 
-test("Dream result prioritizes meaning and mindset while secondary material is collapsed", async () => {
+test("Dream result is speech-first while structured meaning, mindset, and reflection stay collapsed", async () => {
   const flow = await readFile(dreamFlowPath, "utf8");
+  assert.match(flow, /reading\?\.velaSpeech\?\.overview/u);
+  assert.match(flow, /reading\?\.velaSpeech\?\.narrative/u);
+  assert.match(flow, /dreamSpeechHero/u);
+  assert.match(flow, /<details className="dreamDetails dreamFullAnalysis">/u);
+  assert.match(flow, /查看完整夢境分析/u);
   assert.match(flow, /這個夢可能在反映/u);
   assert.match(flow, /最近的心態線索/u);
-  assert.match(flow, /<details className="dreamDetails">/u);
   assert.match(flow, /如果你想再往下想一點（可選）/u);
+  assert.ok(flow.indexOf("dreamSpeechHero") < flow.indexOf("dreamFullAnalysis"));
+  assert.match(flow, /<details className="dreamDetails dreamSourcesCompact">/u);
   assert.match(flow, /解讀依據 · Freud 為主/u);
   assert.match(flow, /解讀依據 · Freud 原文檢索/u);
   assert.doesNotMatch(flow, /這次解讀用了哪些依據/u);
