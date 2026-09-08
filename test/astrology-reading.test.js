@@ -18,6 +18,11 @@ const fakeOutput = {
   basisNote: "以處女座的來源基準與當天實際太陽／月亮訊號做綜合；這不是完整出生星盤。",
 };
 
+const fakeSpeech = {
+  overview: "今天先把步調放回自己手上。",
+  narrative: "事情沒有少，只是不用一次全部處理。先挑一件最能降低混亂的事情做完，其他的晚一點再接也可以。關係上也差不多，先確認，不用急著猜。",
+};
+
 test("astrology request validates sign, period, date, timezone and request ID", () => {
   assert.throws(() => normalizeAstrologyRequest({ signId: "virgo", period: "monthly", localDate: "2026-09-07", timezone: "Asia/Taipei", requestId: "request-123" }), AstrologyValidationError);
   assert.throws(() => normalizeAstrologyRequest({ signId: "virgo", period: "daily", localDate: "2026-02-31", timezone: "Asia/Taipei", requestId: "request-123" }), AstrologyValidationError);
@@ -29,22 +34,43 @@ test("astrology reading ID is deterministic for an identical request", () => {
   assert.equal(astrologyReadingId(normalized), astrologyReadingId(normalized));
 });
 
-test("structured astrology call receives scoped book evidence and forbids invented chart data", async () => {
-  let call;
-  const openai = { responses: { create: async (input) => { call = input; return { output_text: JSON.stringify(fakeOutput) }; } } };
-  const reading = await createAstrologyReading({ signId: "virgo", period: "daily", localDate: "2026-09-07", timezone: "Asia/Taipei", requestId: "request-123" }, { openai, model: "test-model" });
-  const payload = JSON.parse(call.input);
+test("Astrology keeps grounded analysis separate from shared Vela speech", async () => {
+  const calls = [];
+  const openai = {
+    responses: {
+      create: async (input) => {
+        calls.push(input);
+        return { output_text: JSON.stringify(calls.length === 1 ? fakeOutput : fakeSpeech) };
+      },
+    },
+  };
+  const reading = await createAstrologyReading(
+    { signId: "virgo", period: "daily", localDate: "2026-09-07", timezone: "Asia/Taipei", requestId: "request-123" },
+    { openai, model: "test-model" },
+  );
+  const analysisPayload = JSON.parse(calls[0].input);
+  const speechPayload = JSON.parse(calls[1].input);
 
+  assert.equal(calls.length, 2);
   assert.equal(reading.kind, "astrology");
   assert.equal(reading.sign.id, "virgo");
   assert.equal(reading.sourceGrounded, true);
   assert.ok(reading.sources.references.length >= 2);
-  assert.ok(payload.sourceEvidence.some((item) => item.id === "sign-virgo" && item.scope === "natal_sun_sign"));
-  assert.ok(payload.sourceEvidence.some((item) => item.id === "transit-method" && item.scope === "transit_method"));
-  assert.ok(payload.sourceEvidence.some((item) => item.id === "natal-boundary" && item.scope === "application_boundary"));
-  assert.match(call.instructions, /書中原則 → 當天天象 → 情境化延伸/u);
-  assert.match(call.instructions, /不得捏造水星、金星、火星/u);
-  assert.match(call.instructions, /不得把本命月亮/u);
-  assert.equal(call.text.format.type, "json_schema");
+  assert.ok(analysisPayload.sourceEvidence.some((item) => item.id === "sign-virgo" && item.scope === "natal_sun_sign"));
+  assert.ok(analysisPayload.sourceEvidence.some((item) => item.id === "transit-method" && item.scope === "transit_method"));
+  assert.ok(analysisPayload.sourceEvidence.some((item) => item.id === "natal-boundary" && item.scope === "application_boundary"));
+  assert.match(calls[0].instructions, /書中原則 → 當天天象 → 情境化延伸/u);
+  assert.match(calls[0].instructions, /不得捏造水星、金星、火星/u);
+  assert.match(calls[0].instructions, /不得把本命月亮/u);
+  assert.equal(calls[0].text.format.type, "json_schema");
+  assert.equal(calls[0].text.format.name, "askvela_astrology_reading");
+  assert.equal(calls[1].text.format.name, "askvela_astrology_speech");
+  assert.equal(calls[1].max_output_tokens, 460);
+  assert.equal(speechPayload.groundedAnalysis.overview, fakeOutput.overview);
+  assert.equal(speechPayload.sourceEvidence, undefined);
+  assert.equal(reading.result.overview, fakeOutput.overview);
   assert.equal(reading.result.practicalGuidance.length, 3);
+  assert.equal(reading.velaSpeech.status, "rendered");
+  assert.equal(reading.velaSpeech.attempts, 1);
+  assert.equal(reading.velaSpeech.overview, fakeSpeech.overview);
 });
