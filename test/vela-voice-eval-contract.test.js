@@ -44,11 +44,17 @@ test("voice runner exercises all three real engines and keeps automatic review d
   assert.match(runner, /createDreamReading/u);
   assert.match(runner, /selected\.slice/u);
   assert.match(runner, /reportFiller/u);
+  assert.match(runner, /polishedContrast/u);
+  assert.match(runner, /不是\[\^。！？\\n\]/u);
+  assert.match(runner, /真正\(\?:的\)\?/u);
   assert.match(runner, /deterministic/u);
   assert.match(runner, /deterministicMatches/u);
   assert.match(runner, /不代表\|不等於/u);
   assert.match(runner, /theatricalMysticism/u);
-  assert.match(runner, /mode === "astrology" && overviewLength > 50/u);
+  assert.match(runner, /SPOKEN_TEXTURE_PATTERN/u);
+  assert.match(runner, /spokenTextureCount/u);
+  assert.match(runner, /shortSpokenSentenceCount/u);
+  assert.match(runner, /zero is not automatically bad/u);
   assert.match(runner, /Human review/u);
   assert.match(runner, /Do not treat automatic flags as the final verdict/u);
   assert.doesNotMatch(runner, /overallScore|finalScore|weightedScore/u);
