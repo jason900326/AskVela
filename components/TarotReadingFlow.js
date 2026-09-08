@@ -23,6 +23,17 @@ function Step({ active, complete, label, number }) {
   );
 }
 
+const RANK_NUMBER = { ace: "01", two: "02", three: "03", four: "04", five: "05", six: "06", seven: "07", eight: "08", nine: "09", ten: "10", page: "11", knight: "12", queen: "13", king: "14" };
+
+function tarotImagePath(card) {
+  if (card.arcana === "major") {
+    const filename = card.cardId.replace(/^major-/, "").replace(/-fool$/, "-the-fool").replace(/-magician$/, "-the-magician").replace(/-high-priestess$/, "-the-high-priestess").replace(/-empress$/, "-the-empress").replace(/-emperor$/, "-the-emperor").replace(/-hierophant$/, "-the-hierophant").replace(/-lovers$/, "-the-lovers").replace(/-chariot$/, "-the-chariot").replace(/-hermit$/, "-the-hermit").replace(/-hanged-man$/, "-the-hanged-man").replace(/-devil$/, "-the-devil").replace(/-tower$/, "-the-tower").replace(/-star$/, "-the-star").replace(/-moon$/, "-the-moon").replace(/-sun$/, "-the-sun").replace(/-world$/, "-the-world");
+    return `/images/tarot/major/${filename}.webp`;
+  }
+  const rank = card.numberOrRank;
+  return `/images/tarot/${card.suit}/${RANK_NUMBER[rank]}-${rank === "ace" ? "ace" : rank}-of-${card.suit}.webp`;
+}
+
 function CardFace({ card, revealed, onReveal, disabled }) {
   return (
     <button
@@ -38,12 +49,10 @@ function CardFace({ card, revealed, onReveal, disabled }) {
           <b>ASK VELA</b>
           <small>{card.positionLabelZhTw}</small>
         </span>
-        <span className="tarotCardFront">
-          <small>{card.positionLabelZhTw}</small>
-          <i aria-hidden="true">☾</i>
-          <strong>{card.nameZhTw}</strong>
-          <span>{card.nameEn}</span>
-          <em>{ORIENTATION_LABELS[card.orientation]}</em>
+        <span className={`tarotCardFront ${card.orientation === "reversed" ? "isReversed" : ""}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${ORIENTATION_LABELS[card.orientation]}）`} draggable="false" />
+          <span className="tarotCardCaption"><small>{card.positionLabelZhTw}</small><strong>{card.nameZhTw}</strong><em>{ORIENTATION_LABELS[card.orientation]}</em></span>
         </span>
       </span>
     </button>
@@ -400,6 +409,12 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
   return (
     <section className={`readingExperience stage-${stage}`} aria-live="polite">
       <VelaAccount activeReading={activeReading} onRestoreReading={restoreSavedReading} />
+      {["select", "drawing", "reveal", "interpreting"].includes(stage) && (
+        <div className="tarotVelaGuide" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/vela/vela-tarot.webp" alt="" draggable="false" />
+        </div>
+      )}
       {stage === "welcome" && (
         <>
           <header className="velaHeader">
@@ -508,7 +523,7 @@ export default function TarotReadingFlow({ initialQuestion = "" }) {
                   aria-pressed={order >= 0}
                   aria-label={order >= 0 ? `已選為第 ${order + 1} 張，點擊取消` : `選擇第 ${index + 1} 個位置`}
                 >
-                  <span className="selectionCardBack" aria-hidden="true"><i>✦</i></span>
+                  <span className="selectionCardBack" aria-hidden="true" />
                   {order >= 0 && <span className="selectionOrder">{order + 1}<small>{selectedSpread.positions[order]?.labelZhTw}</small></span>}
                 </button>
               );
