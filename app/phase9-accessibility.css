@@ -1,5 +1,33 @@
 /* Phase 9 cross-mode polish: shared focus, status, motion and atmospheric treatment. */
 
+.velaCharacterArtwork {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 220ms ease, transform 220ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.velaCharacterSlot.hasArtwork .velaCharacterArtwork {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.velaCharacterSlot.hasArtwork .velaCharacterFallback {
+  opacity: 0;
+}
+
+.velaCharacterFallback {
+  transition: opacity 180ms ease;
+}
+
 .readingExperience,
 .astrologyExperience,
 .dreamReadingFlow {
