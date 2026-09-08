@@ -70,10 +70,23 @@ function matches(text, pattern) {
   return [...text.matchAll(pattern)].map((match) => match[0]);
 }
 
+function deterministicMatches(text) {
+  return [...text.matchAll(STYLE_PATTERNS.deterministic)]
+    .filter((match) => {
+      const start = match.index ?? 0;
+      const prefix = text.slice(Math.max(0, start - 16), start);
+      return !/(?:不代表|不等於|不是|未必|並非|不會|不表示)[^。！？\n]{0,10}$/u.test(prefix);
+    })
+    .map((match) => match[0]);
+}
+
 function evaluateStyle(mode, presentation) {
   const text = collectStrings(presentation).join("\n");
   const flags = Object.fromEntries(
-    Object.entries(STYLE_PATTERNS).map(([key, pattern]) => [key, matches(text, pattern)]),
+    Object.entries(STYLE_PATTERNS).map(([key, pattern]) => [
+      key,
+      key === "deterministic" ? deterministicMatches(text) : matches(text, pattern),
+    ]),
   );
   const hedgeCount = (text.match(/可能|比較像|可以留意|也許|如果/gu) || []).length;
   const warnings = [];
@@ -84,9 +97,12 @@ function evaluateStyle(mode, presentation) {
   if (hedgeCount > 14) warnings.push(`hedging may be repetitive (${hedgeCount} conditional phrases)`);
 
   const overviewLength = String(presentation.overview || "").length;
-  if (mode === "tarot" && overviewLength > 50) warnings.push(`Tarot overview is long (${overviewLength} chars)`);
-  if (mode === "astrology" && overviewLength > 70) warnings.push(`Astrology overview is long (${overviewLength} chars)`);
-  if (mode === "dream" && overviewLength > 180) warnings.push(`Dream overview is long (${overviewLength} chars)`);
+  if (mode === "tarot" && overviewLength > 45) warnings.push(`Tarot overview is long (${overviewLength} chars)`);
+  if (mode === "astrology" && overviewLength > 50) warnings.push(`Astrology overview is long (${overviewLength} chars)`);
+  if (mode === "dream" && overviewLength > 140) warnings.push(`Dream overview is long (${overviewLength} chars)`);
+
+  if (mode === "astrology" && text.length > 650) warnings.push(`Astrology response is long (${text.length} chars)`);
+  if (mode === "dream" && text.length > 720) warnings.push(`Dream response is long (${text.length} chars)`);
 
   return {
     totalCharacters: text.length,
@@ -218,36 +234,38 @@ if (!selected.length) {
 }
 
 console.log(`=== Vela voice baseline: ${selected.length} case(s) ===`);
-console.log("Runs sequentially to keep model usage and logs easy to inspect.\n");
+console.log(`Do not treat automatic flags as the final verdict; they only surface patterns for human review.`);
 
 const results = [];
-for (const [index, testCase] of selected.entries()) {
-  process.stdout.write(`[${index + 1}/${selected.length}] ${testCase.id} ... `);
+for (let index = 0; index < selected.length; index += 1) {
+  const testCase = selected[index];
+  process.stdout.write(`[${index + 1}/${selected.length}] ${testCase.id} (${testCase.mode}) ... `);
   try {
     const result = await runCase(testCase);
-    results.push({ ok: true, ...result });
-    console.log(`PASS (${result.durationMs} ms, ${result.automaticReview.warnings.length} style warning(s))`);
+    results.push({ ...result, ok: true });
+    console.log(`ok ${(result.durationMs / 1000).toFixed(1)}s`);
   } catch (error) {
     results.push({
-      ok: false,
       ...testCase,
-      error: error?.stack || error?.message || String(error),
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
     });
-    console.log(`FAILED: ${error?.message || error}`);
+    console.log("FAILED");
   }
 }
 
+const generatedAt = new Date().toISOString();
+const stamp = generatedAt.replaceAll(":", "-").replace(".", "-");
 await mkdir(RESULTS_DIR, { recursive: true });
-const stamp = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
 const prefix = `vela-voice-${filter}-${stamp}`;
 const jsonPath = resolve(RESULTS_DIR, `${prefix}.json`);
 const markdownPath = resolve(RESULTS_DIR, `${prefix}.md`);
-const generatedAt = new Date().toISOString();
 
-await writeFile(jsonPath, JSON.stringify({ generatedAt, filter, results }, null, 2));
-await writeFile(markdownPath, buildMarkdown(results, { generatedAt }));
+await writeFile(jsonPath, `${JSON.stringify({ generatedAt, filter, results }, null, 2)}\n`, "utf8");
+await writeFile(markdownPath, buildMarkdown(results, { generatedAt, filter }), "utf8");
 
-console.log("\nBaseline written to:");
-console.log(`- ${jsonPath}`);
-console.log(`- ${markdownPath}`);
-console.log("\nReview the Markdown case-by-case before changing prompts. Do not treat automatic flags as the final verdict.");
+const succeeded = results.filter((item) => item.ok).length;
+console.log(`\nCompleted: ${succeeded}/${results.length} succeeded.`);
+console.log(`JSON: ${jsonPath}`);
+console.log(`Review worksheet: ${markdownPath}`);
+if (succeeded !== results.length) process.exitCode = 1;
