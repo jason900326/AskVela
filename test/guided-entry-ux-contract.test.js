@@ -34,8 +34,8 @@ test("guided entry hands the generated question into tarot instead of asking for
 test("guided entry choices remain responsive and readable on mobile", async () => {
   const css = await readFile(astrologyCssPath, "utf8");
 
-  assert.match(css, /\.velaEntryChoices\s*\{[^}]*grid-template-columns:\s*repeat\(2/minsu);
-  assert.match(css, /\.guidedChoiceGrid\s*\{[^}]*grid-template-columns:\s*repeat\(3/minsu);
+  assert.match(css, /\.velaEntryChoices\s*\{[^}]*grid-template-columns:\s*repeat\(2/su);
+  assert.match(css, /\.guidedChoiceGrid\s*\{[^}]*grid-template-columns:\s*repeat\(3/su);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.velaEntryChoices\s*\{\s*grid-template-columns:\s*1fr;/u);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.guidedChoiceGrid\s*\{\s*grid-template-columns:\s*1fr;/u);
 });
