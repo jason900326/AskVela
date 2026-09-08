@@ -94,9 +94,6 @@ export default function VelaExperience() {
   function revealHomeEntry() {
     setEntryMode("choice");
     setGuideResult(null);
-    window.setTimeout(() => {
-      document.getElementById("vela-home-entry")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
   }
 
   function askVela(event) {
@@ -146,9 +143,21 @@ export default function VelaExperience() {
     changeExperience("dream");
   }
 
+  const dialogueTitle = entryMode === "choice"
+    ? "今天想要怎麼開始？"
+    : entryMode === "freeform"
+      ? "跟我說吧，我在聽。"
+      : "不知道怎麼說也沒關係。";
+
+  const dialogueText = entryMode === "choice"
+    ? "你可以直接告訴我一件事，也可以讓我陪你慢慢把現在卡住的地方整理出來。"
+    : entryMode === "freeform"
+      ? "想到多少就說多少，不用先把問題整理得很完整。"
+      : "先選最接近的感覺就好，我們一步一步來。";
+
   if (experience === "home") {
     return (
-      <section className="velaExperienceHub velaGuideHome">
+      <section className={`velaExperienceHub velaGuideHome entry-${entryMode}`}>
         <VelaAccount experience="home" onExperienceChange={changeExperience} />
 
         <div className="velaHomeStageLayout">
@@ -156,11 +165,11 @@ export default function VelaExperience() {
         </div>
 
         {entryMode !== "landing" && (
-          <div className="velaHomeEntry" id="vela-home-entry">
+          <div className={`velaHomeEntry mode-${entryMode}`} id="vela-home-entry">
             <div className="velaDialogueBubble">
               <div className="eyebrow">VELA</div>
-              <h1>今天想從哪件事開始？</h1>
-              <p>你可以直接告訴我一件事，也可以只跟我說「我不知道，只是覺得卡住」。問題不用先想得很完整，我會陪你把它整理出來。</p>
+              <h1>{dialogueTitle}</h1>
+              <p>{dialogueText}</p>
             </div>
 
             {entryMode === "choice" && (
@@ -169,12 +178,12 @@ export default function VelaExperience() {
                   <button className="velaEntryChoice isPrimary" type="button" onClick={() => setEntryMode("freeform")}>
                     <span aria-hidden="true">✦</span>
                     <strong>我有件事想問你</strong>
-                    <small>直接把最近在意的事告訴 Vela，不用先選塔羅、星座或解夢。</small>
+                    <small>直接把最近在意的事告訴 Vela。</small>
                   </button>
                   <button className="velaEntryChoice" type="button" onClick={startGuidedEntry}>
                     <span aria-hidden="true">☾</span>
-                    <strong>我不知道，只是覺得有點卡住</strong>
-                    <small>不用先想問題。Vela 會用幾個簡單選擇，陪你找出可以從哪裡開始。</small>
+                    <strong>我不知道該怎麼說</strong>
+                    <small>讓 Vela 用幾個簡單選擇陪你整理。</small>
                   </button>
                 </section>
 
