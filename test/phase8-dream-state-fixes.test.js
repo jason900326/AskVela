@@ -1,5 +1,5 @@
-import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import assert from "node:assert/strict";
 import test from "node:test";
 import { recommendExperience } from "../lib/vela-experience-router.js";
 
@@ -32,7 +32,7 @@ test("returning to Vela clears the previous home question and recommendation mod
   const experience = await readFile(experiencePath, "utf8");
   const changeExperience = experience.slice(experience.indexOf("const changeExperience"), experience.indexOf("useEffect(() => {"));
   assert.match(changeExperience, /if \(next === "home"\)/u);
-  assert.match(changeExperience, /setEntryMode\("choice"\)/u);
+  assert.match(changeExperience, /setEntryMode\("landing"\)/u);
   assert.match(changeExperience, /setGuideInput\(""\)/u);
   assert.match(changeExperience, /setGuideResult\(null\)/u);
   assert.match(changeExperience, /setDreamHandoffText\(""\)/u);
