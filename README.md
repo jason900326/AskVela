@@ -5,11 +5,11 @@ Vela is a JavaScript / Next.js reflective-divination web product. The first publ
 ## Current status
 
 - Phases 0–6: Tarot core, fixed-draw interpretation, follow-up, optional Supabase Auth, Google OAuth, password recovery, and private cross-device Tarot history are complete.
-- **Current: Phase 7 — Astrology source grounding + UX correction.** The daily/weekly calculation/UI prototype exists, but formal astrology generation is intentionally paused until traceable source books are uploaded, ingested, retrieved, and cited.
+- **Current: Phase 7 — Astrology deployment acceptance.** The daily/weekly experience now has a source-grounded runtime using Sepharial + Alan Leo, visible references, and corrected natal/transit boundaries. Remaining work is CI, the Astrology history migration, and deployed smoke testing.
 - The home experience is Vela-first: the user talks to the centered fortune-teller first, then Vela recommends Tarot, Astrology, or Dream instead of presenting three primary tabs.
 - Next after Phase 7: Phase 8 — Dream interpretation.
 
-See [ROADMAP.md](ROADMAP.md), [docs/V1_SPEC.md](docs/V1_SPEC.md), and [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md).
+See [ROADMAP.md](ROADMAP.md), [docs/V1_SPEC.md](docs/V1_SPEC.md), [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md), and [docs/ASTROLOGY_SOURCES.md](docs/ASTROLOGY_SOURCES.md).
 
 ## What makes Vela different
 
@@ -30,15 +30,23 @@ V1 Tarot uses Arthur Edward Waite's *The Pictorial Key to the Tarot* and S. L. M
 
 ### Astrology
 
-Astrology does not ask the model to invent “today's planets.” Phase 7 already computes a small deterministic sky context:
+Astrology does not ask the model to invent “today's planets,” nor does it hand a whole old book to the model and ask for a horoscope. Phase 7 separates source doctrine, current sky calculation, and contextual synthesis:
 
 ```text
-sun sign + date + daily/weekly
-→ approximate Sun/Moon longitudes
-→ Moon sign + Moon phase + selected major aspects
+selected Sun sign + date + daily/weekly
+→ approximate current Sun/Moon longitudes
+→ Moon sign + Moon phase + actual current Sun–Moon aspect (when present)
+→ deterministic, scope-labelled evidence from Sepharial + Alan Leo
+→ Vela: book principle → actual sky → contextual synthesis
+→ visible source references
 ```
 
-That calculation alone is **not considered a trustworthy AskVela reading**. Before generation is re-enabled, the astrology flow must also retrieve legally usable, attributable book evidence and expose human-readable source references. Until then, both the UI and `/api/astrology/reading` are source-gated.
+Important boundary: Alan Leo's Moon-in-sign and Sun–Moon combination material is primarily natal doctrine. It is not directly substituted for the current transiting Moon. Likewise, AskVela no longer fabricates a personal aspect to the midpoint of a selected Sun sign; an exact natal aspect requires an actual natal degree.
+
+The Astrology source set currently uses:
+
+- Sepharial, *Astrology: How to Make and Read Your Own Horoscope*, revised/enlarged edition (1920), Project Gutenberg #46963.
+- Alan Leo, *Astrology for All*, 4th enlarged edition (1910), sourced from a Public Domain Mark 1.0 institutional scan. A user-provided 1931 sixth edition was cross-checked for content but is not the public-repository rights source.
 
 This is deliberately **not** a full natal-chart engine. Birth time, birthplace, houses, ascendant, full ephemerides, and synastry are outside the first Astrology version.
 
@@ -66,14 +74,17 @@ lib/
   tarot-*.js                    # Tarot registry/draw/safety/prompts
   reading-*.js                  # Tarot evidence/interpreter/history/follow-up
   zodiac.js
-  astrology-sky.js
+  astrology-sky.js              # approximate current Sun/Moon geometry
+  astrology-source-corpus.js    # attributable structured historical source principles
+  astrology-evidence.js         # deterministic scope-aware evidence selection
   astrology-prompts.js
   astrology-reading.js
   astrology-history.js
-  astrology-source-status.js    # hard trust gate until astrology sources exist
+  astrology-source-status.js
 data/
+  metadata/                     # source edition/provenance records
   tarot/cards.json
-  raw/public-domain/            # public-domain PDFs may be committed
+  raw/public-domain/            # public-domain source PDFs may be committed
 supabase/migrations/
   001_knowledge_base.sql
   002_structured_tarot.sql
@@ -113,7 +124,7 @@ Apply migrations in order to the same Supabase project referenced by your Vercel
 005_astrology_history.sql
 ```
 
-`005_astrology_history.sql` creates the private Astrology history table, RLS policies, and 365-day retention boundary. It should be applied before source-grounded Astrology history is enabled.
+`005_astrology_history.sql` creates the private Astrology history table, RLS policies, and 365-day retention boundary. It should be applied before relying on source-grounded Astrology history across devices.
 
 ## Local commands
 
@@ -141,4 +152,5 @@ npm run smoke:reading
 - Public-domain source PDFs may live under `data/raw/public-domain/`.
 - Copyrighted/private ebooks must not be committed to the public repository.
 - Generated extraction/processed data should stay out of Git unless explicitly intended.
-- Astrology generation remains disabled until its source corpus, retrieval path, source attribution, and fidelity tests are complete.
+- Astrology runtime source selection is deterministic and source-attributed; the model cannot invent its own citations.
+- Historical astrology claims are curated before use: medical/death predictions, physiognomy, essentialist gender/racial/class claims, and deterministic moral judgments are excluded from Vela output.
