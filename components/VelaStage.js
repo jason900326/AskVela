@@ -1,4 +1,12 @@
-export default function VelaStage({ onCrystalClick }) {
+"use client";
+
+import { useState } from "react";
+
+const DEFAULT_VELA_ART = "/vela/vela-home.webp";
+
+export default function VelaStage({ onCrystalClick, artSrc = DEFAULT_VELA_ART }) {
+  const [artLoaded, setArtLoaded] = useState(false);
+
   return (
     <div className="velaStage" aria-label="Vela 占卜舞台">
       <div className="velaStageGlow velaStageGlowLeft" aria-hidden="true" />
@@ -11,8 +19,17 @@ export default function VelaStage({ onCrystalClick }) {
         <i />
       </div>
 
-      <div className="velaCharacterSlot" aria-hidden="true">
+      <div className={`velaCharacterSlot ${artLoaded ? "hasArtwork" : ""}`} aria-hidden="true">
         <div className="velaCharacterHalo" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="velaCharacterArtwork"
+          src={artSrc}
+          alt=""
+          draggable="false"
+          onLoad={() => setArtLoaded(true)}
+          onError={() => setArtLoaded(false)}
+        />
         <div className="velaCharacterFallback">
           <div className="velaFallbackHat" />
           <div className="velaFallbackHead" />
