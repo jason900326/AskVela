@@ -49,6 +49,8 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   const hasFullBookRetrieval = reading?.sourceMode === "freud-full-book-rag" && retrievedSources.length > 0;
   const bareLead = isBareDreamLead(dreamText);
   const canInterpret = dreamText.trim().length >= 2 && !bareLead;
+  const speechOverview = reading?.velaSpeech?.overview || reading?.result?.overview || "";
+  const speechNarrative = reading?.velaSpeech?.narrative || reading?.result?.hypotheses?.[0]?.interpretation || "";
 
   function restoreDream(restored) {
     setReading(restored);
@@ -147,54 +149,57 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
           onExperienceChange={onExperienceChange}
         />
 
-        <header className="dreamHero compact">
+        <header className="dreamHero compact dreamSpeechHero">
           <div className="eyebrow">VELA · 解夢</div>
-          <h1>這個夢，我會先這樣看。</h1>
-          <p>{reading.result.overview}</p>
+          <h1>{speechOverview}</h1>
+          <p>{speechNarrative}</p>
         </header>
 
-        {primaryHypothesis && (
-          <section className="dreamMeaningCard">
-            <div className="eyebrow">這個夢可能在反映</div>
-            <h2>{primaryHypothesis.title}</h2>
-            <p>{primaryHypothesis.interpretation}</p>
-          </section>
-        )}
+        <details className="dreamDetails dreamFullAnalysis">
+          <summary>查看完整夢境分析</summary>
+          <div className="dreamFullAnalysisBody">
+            {primaryHypothesis && (
+              <section className="dreamMeaningCard">
+                <div className="eyebrow">這個夢可能在反映</div>
+                <h2>{primaryHypothesis.title}</h2>
+                <p>{primaryHypothesis.interpretation}</p>
+              </section>
+            )}
 
-        <section className="dreamMindsetCard">
-          <div className="eyebrow">最近的心態線索</div>
-          <p>{reading.result.wakingLifeConnection}</p>
-        </section>
+            <section className="dreamMindsetCard">
+              <div className="eyebrow">最近的心態線索</div>
+              <p>{reading.result.wakingLifeConnection}</p>
+            </section>
 
-        {otherHypotheses.length > 0 && (
-          <details className="dreamDetails">
-            <summary>另外 {otherHypotheses.length} 種可能的看法</summary>
-            <div className="dreamHypotheses isCollapsedSet">
-              {otherHypotheses.map((item, index) => (
-                <article key={`${item.title}-${index}`}>
-                  <span>{String(index + 2).padStart(2, "0")}</span>
-                  <div><h2>{item.title}</h2><p>{item.interpretation}</p></div>
-                </article>
-              ))}
-            </div>
-          </details>
-        )}
+            {otherHypotheses.length > 0 && (
+              <section className="dreamHypotheses isCollapsedSet">
+                <div className="eyebrow">另外的可能看法</div>
+                {otherHypotheses.map((item, index) => (
+                  <article key={`${item.title}-${index}`}>
+                    <span>{String(index + 2).padStart(2, "0")}</span>
+                    <div><h2>{item.title}</h2><p>{item.interpretation}</p></div>
+                  </article>
+                ))}
+              </section>
+            )}
 
-        <details className="dreamDetails">
-          <summary>我是從哪些夢裡線索這樣看的</summary>
-          <ul className="dreamCompactList">
-            {reading.result.whatStandsOut.map((item) => <li key={item}>{item}</li>)}
-          </ul>
+            <section className="dreamCluesSection">
+              <div className="eyebrow">我是從哪些夢裡線索這樣看的</div>
+              <ul className="dreamCompactList">
+                {reading.result.whatStandsOut.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </section>
+
+            {reading.result.reflectionQuestions?.length > 0 && (
+              <section className="dreamReflectionSection">
+                <div className="eyebrow">如果你想再往下想一點（可選）</div>
+                <ul className="dreamCompactList">
+                  {reading.result.reflectionQuestions.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </section>
+            )}
+          </div>
         </details>
-
-        {reading.result.reflectionQuestions?.length > 0 && (
-          <details className="dreamDetails">
-            <summary>如果你想再往下想一點（可選）</summary>
-            <ul className="dreamCompactList">
-              {reading.result.reflectionQuestions.map((item) => <li key={item}>{item}</li>)}
-            </ul>
-          </details>
-        )}
 
         <details className="dreamDetails dreamSourcesCompact">
           <summary>{hasFullBookRetrieval ? "解讀依據 · Freud 原文檢索" : "解讀依據 · Freud 為主"}</summary>
