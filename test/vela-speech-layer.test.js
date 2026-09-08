@@ -61,5 +61,22 @@ test("invalid speech shape falls back field-by-field to grounded synthesis", () 
 
   assert.equal(result.overview, fallback.overview);
   assert.equal(result.narrative, fallback.narrative);
+  assert.deepEqual(result.fallbackFields, ["overview", "narrative"]);
+  assert.equal(result.usedFallback, true);
+});
+
+test("one invalid speech field is reported as a partial fallback candidate", () => {
+  const fallback = {
+    overview: "原本 grounded overview",
+    narrative: "原本 grounded narrative，這段內容足夠長，可以安全作為 fallback。",
+  };
+  const result = normalizeVelaSpeech({
+    overview: "太短",
+    narrative: "這段口語版有足夠長度，而且沒有使用標題或清單格式，所以應該保留下來。",
+  }, fallback);
+
+  assert.equal(result.overview, fallback.overview);
+  assert.match(result.narrative, /這段口語版/u);
+  assert.deepEqual(result.fallbackFields, ["overview"]);
   assert.equal(result.usedFallback, true);
 });
