@@ -15,6 +15,7 @@ import "./phase9-accessibility.css";
 import "./vela-home-art.css";
 import "./phase10-art-ui.css";
 import "./phase10-conversation-ui.css";
+import "./phase10-tarot-immersion.css";
 
 export const metadata = {
   title: "Vela",
