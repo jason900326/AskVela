@@ -127,7 +127,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Test conversation-first landing and fixed account controls
 - [x] Add source-fidelity contract tests for natal/transit boundaries, historical-content curation, and source attribution
 - [x] Add unit coverage proving all 12 signs have Alan Leo + Sepharial evidence and no sign-center aspect is fabricated
-- [ ] Confirm source-grounding PR CI lint / test / build green
+- [x] Confirm source-grounding PR CI lint / test / build green
 - [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop
 
 **Exit condition:** source-grounded daily/weekly readings work on production with visible references, private astrology history survives a new session, Tarot history still works, and CI is green.
