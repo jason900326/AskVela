@@ -4,7 +4,7 @@ import test from "node:test";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
 const accountPath = new URL("../components/VelaAccount.js", import.meta.url);
-const layoutPath = new URL("../app/layout.js", import.meta.url);
+const brandPath = new URL("../components/VelaBrandLink.js", import.meta.url);
 const polishPath = new URL("../app/phase8-polish.css", import.meta.url);
 
 test("Vela recommendation opens as a modal instead of extending the home page", async () => {
@@ -15,12 +15,13 @@ test("Vela recommendation opens as a modal instead of extending the home page", 
 });
 
 test("the global Vela mark is the only top-level home navigation in mode flows", async () => {
-  const [experience, layout] = await Promise.all([
+  const [experience, brand] = await Promise.all([
     readFile(experiencePath, "utf8"),
-    readFile(layoutPath, "utf8"),
+    readFile(brandPath, "utf8"),
   ]);
   assert.doesNotMatch(experience, /← 回到 Vela/u);
-  assert.match(layout, /<a className="brandMark" href="\/"/u);
+  assert.match(brand, /<Link className="brandMark" href="\/"/u);
+  assert.match(brand, /CustomEvent\("vela:experience", \{ detail: "home" \}\)/u);
 });
 
 test("Dream input and result surfaces stay dark and the result headline is compact", async () => {
