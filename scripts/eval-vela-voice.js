@@ -29,16 +29,8 @@ function collectStrings(value) {
 function presentationFor(mode, reading) {
   if (mode === "tarot") {
     return {
-      overview: reading.synthesis?.overview || "",
-      narrative: reading.synthesis?.narrative || "",
-      crossCardPattern: reading.synthesis?.crossCardPattern || "",
-      practicalGuidance: reading.synthesis?.practicalGuidance || [],
-      reflectionQuestions: reading.synthesis?.reflectionQuestions || [],
-      cardInterpretations: (reading.cards || []).map((card) => ({
-        card: `${card.nameZhTw} · ${card.positionLabelZhTw}`,
-        contextInterpretation: card.contextInterpretation,
-        practicalFocus: card.practicalFocus,
-      })),
+      overview: reading.velaSpeech?.overview || reading.synthesis?.overview || "",
+      narrative: reading.velaSpeech?.narrative || reading.synthesis?.narrative || "",
     };
   }
 
@@ -110,10 +102,11 @@ function evaluateStyle(mode, presentation) {
   if (hedgeCount > 14) warnings.push(`hedging may be repetitive (${hedgeCount} conditional phrases)`);
 
   const overviewLength = String(presentation.overview || "").length;
-  if (mode === "tarot" && overviewLength > 45) warnings.push(`Tarot overview is long (${overviewLength} chars)`);
+  if (mode === "tarot" && overviewLength > 90) warnings.push(`Tarot spoken opening is long (${overviewLength} chars)`);
   if (mode === "astrology" && overviewLength > 55) warnings.push(`Astrology overview is long (${overviewLength} chars)`);
   if (mode === "dream" && overviewLength > 170) warnings.push(`Dream overview is long (${overviewLength} chars)`);
 
+  if (mode === "tarot" && text.length > 450) warnings.push(`Tarot primary speech is long (${text.length} chars)`);
   if (mode === "astrology" && text.length > 720) warnings.push(`Astrology response is long (${text.length} chars)`);
   if (mode === "dream" && text.length > 800) warnings.push(`Dream response is long (${text.length} chars)`);
 
@@ -147,6 +140,7 @@ async function runCase(testCase) {
     ...testCase,
     durationMs: Date.now() - startedAt,
     presentation,
+    speechRendererStatus: testCase.mode === "tarot" ? (reading.velaSpeech?.status || "legacy") : null,
     automaticReview: evaluateStyle(testCase.mode, presentation),
     rawReading: reading,
   };
@@ -179,7 +173,7 @@ function buildMarkdown(results, meta) {
     "",
     "## How to review",
     "",
-    "For each case, judge the actual wording rather than whether you agree with tarot/astrology/dream symbolism. Use 1–5 for the five dimensions, then mark the verdict as `good`, `mixed`, or `bad`.",
+    "For Tarot, this worksheet now judges only the primary Vela Speech layer; the full grounded analysis remains in rawReading for verification. Astrology and Dream still show their current full user-facing structures.",
     "",
     "- Naturalness: sounds like a real person using Taiwan Traditional Chinese, including occasional imperfect rhythm when it helps.",
     "- Directness: reaches the useful point early without report-style preamble or polished AI antithesis.",
@@ -193,6 +187,10 @@ function buildMarkdown(results, meta) {
     lines.push(`## ${item.id} · ${item.mode}`);
     lines.push("");
     lines.push(`**Review focus:** ${(item.reviewFocus || []).join(" / ")}`);
+    if (item.mode === "tarot") {
+      lines.push("");
+      lines.push(`**Speech renderer:** ${item.speechRendererStatus || "unknown"}`);
+    }
     lines.push("");
     lines.push("**Input**");
     lines.push("");
