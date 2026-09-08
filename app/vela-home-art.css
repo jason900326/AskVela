@@ -1,0 +1,154 @@
+/* Home hero artwork integration: real Vela art + uploaded background + interactive crystal. */
+
+.velaGuideHome .velaStage {
+  min-height: 620px;
+  display: block;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(34, 19, 44, .08), rgba(18, 10, 25, .18)),
+    url("/images/vela/vela-home-background.webp") center / cover no-repeat;
+}
+
+.velaGuideHome .velaStage::after {
+  inset: auto 8% 2% 8%;
+  height: 28%;
+  opacity: .72;
+}
+
+/* The uploaded background already carries the celestial atmosphere. */
+.velaGuideHome .velaStageGlow,
+.velaGuideHome .velaStageStars,
+.velaGuideHome .velaCharacterHalo,
+.velaGuideHome .velaTable {
+  display: none;
+}
+
+.velaArtFrame {
+  position: absolute;
+  left: 50%;
+  bottom: -1.5%;
+  z-index: 2;
+  width: min(90%, 430px);
+  aspect-ratio: 2 / 3;
+  transform: translateX(-50%);
+}
+
+.velaGuideHome .velaCharacterSlot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  pointer-events: none;
+}
+
+.velaGuideHome .velaCharacterArtwork {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 22px 34px rgba(37, 18, 44, .18));
+}
+
+.velaGuideHome .velaCharacterFallback {
+  display: none;
+}
+
+/* Anchor the crystal to Vela's own 2:3 artwork coordinates, not the viewport. */
+.velaGuideHome .velaCrystalButton {
+  left: 50%;
+  top: 84.2%;
+  bottom: auto;
+  z-index: 7;
+  width: clamp(118px, 30%, 148px);
+  height: clamp(132px, 32%, 160px);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.velaGuideHome .velaCrystalAura {
+  top: 42%;
+  width: 104px;
+  height: 104px;
+  background: radial-gradient(circle, rgba(235, 170, 255, .38), rgba(247, 164, 216, .17) 48%, transparent 73%);
+}
+
+.velaGuideHome .velaCrystalBall {
+  top: 9px;
+  width: 92px;
+  height: 92px;
+  box-shadow:
+    inset -14px -18px 28px rgba(54, 28, 83, .31),
+    inset 10px 8px 19px rgba(255,255,255,.14),
+    0 0 34px rgba(211, 143, 255, .42),
+    0 12px 28px rgba(68, 31, 72, .25);
+}
+
+.velaGuideHome .velaCrystalBase {
+  display: none;
+}
+
+.velaGuideHome .velaCrystalHint {
+  bottom: 3px;
+  color: rgba(91, 55, 97, .9);
+  text-shadow: 0 1px 8px rgba(255, 233, 250, .92);
+}
+
+.velaGuideHome .velaCrystalButton:hover .velaCrystalBall,
+.velaGuideHome .velaCrystalButton:focus-visible .velaCrystalBall {
+  transform: translateX(-50%) translateY(-3px) scale(1.055);
+  box-shadow:
+    inset -14px -18px 28px rgba(54, 28, 83, .28),
+    inset 10px 8px 19px rgba(255,255,255,.18),
+    0 0 52px rgba(220, 151, 255, .58),
+    0 14px 32px rgba(68, 31, 72, .28);
+}
+
+@media (max-width: 900px) {
+  .velaGuideHome .velaStage {
+    min-height: min(76svh, 650px);
+    width: min(100%, 620px);
+  }
+
+  .velaArtFrame {
+    width: min(92%, 430px);
+    bottom: -1%;
+  }
+
+  .velaGuideHome .velaCrystalButton {
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 620px) {
+  .velaGuideHome .velaStage {
+    min-height: clamp(500px, 76svh, 600px);
+    border-radius: 28px;
+  }
+
+  .velaArtFrame {
+    width: min(96%, 400px);
+    bottom: -1.5%;
+  }
+
+  .velaGuideHome .velaCrystalButton {
+    top: 84.2%;
+    width: 118px;
+    height: 138px;
+  }
+
+  .velaGuideHome .velaCrystalBall {
+    width: 84px;
+    height: 84px;
+  }
+
+  .velaGuideHome .velaCrystalAura {
+    width: 96px;
+    height: 96px;
+  }
+
+  .velaGuideHome .velaCrystalHint {
+    bottom: 4px;
+    font-size: .68rem;
+  }
+}
