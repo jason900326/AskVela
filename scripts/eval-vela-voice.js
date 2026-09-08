@@ -141,6 +141,8 @@ async function runCase(testCase) {
     durationMs: Date.now() - startedAt,
     presentation,
     speechRendererStatus: testCase.mode === "tarot" ? (reading.velaSpeech?.status || "legacy") : null,
+    speechRendererAttempts: testCase.mode === "tarot" ? (reading.velaSpeech?.attempts || 0) : null,
+    speechRendererViolations: testCase.mode === "tarot" ? (reading.velaSpeech?.violations || []) : null,
     automaticReview: evaluateStyle(testCase.mode, presentation),
     rawReading: reading,
   };
@@ -190,6 +192,10 @@ function buildMarkdown(results, meta) {
     if (item.mode === "tarot") {
       lines.push("");
       lines.push(`**Speech renderer:** ${item.speechRendererStatus || "unknown"}`);
+      lines.push(`**Speech attempts:** ${item.speechRendererAttempts || 0}`);
+      if (item.speechRendererViolations?.length) {
+        lines.push(`**Speech violations before fallback/retry:** ${item.speechRendererViolations.join(", ")}`);
+      }
     }
     lines.push("");
     lines.push("**Input**");
