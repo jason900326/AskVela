@@ -13,6 +13,7 @@ const fakeOutput = {
   relationships: "關係上可以先確認彼此理解是否一致，不急著替對方下結論。",
   workStudy: "工作與學習適合切小步驟，先完成最能降低不確定性的部分。",
   energy: "留一點空白給自己調整，不必把每個變化都立刻變成任務。",
+  focusAreas: [{ title: "步調與負荷", body: "今天可以刻意留一點緩衝，不要把每段空白都塞滿。" }],
   practicalGuidance: ["先列三件最重要的事。", "有疑問時直接確認。", "晚上留一段不安排的時間。"],
   reflectionQuestion: "今天什麼事情其實可以不用一次做到完美？",
   basisNote: "以處女座的來源基準與當天實際太陽／月亮訊號做綜合；這不是完整出生星盤。",
@@ -20,7 +21,7 @@ const fakeOutput = {
 
 const fakeSpeech = {
   overview: "今天先把步調放回自己手上。",
-  narrative: "事情沒有少，只是不用一次全部處理。先挑一件最能降低混亂的事情做完，其他的晚一點再接也可以。關係上也差不多，先確認，不用急著猜。",
+  narrative: "事情沒有少，但不用一次全部處理。先挑一件最能降低混亂的事情做完，其他的晚一點再接也可以。關係上也差不多，先確認，不用急著猜。",
 };
 
 test("astrology request validates sign, period, date, timezone and request ID", () => {
@@ -69,6 +70,7 @@ test("Astrology keeps grounded analysis separate from shared Vela speech", async
   assert.equal(speechPayload.groundedAnalysis.overview, fakeOutput.overview);
   assert.equal(speechPayload.sourceEvidence, undefined);
   assert.equal(reading.result.overview, fakeOutput.overview);
+  assert.equal(reading.result.focusAreas.length, 1);
   assert.equal(reading.result.practicalGuidance.length, 3);
   assert.equal(reading.velaSpeech.status, "rendered");
   assert.equal(reading.velaSpeech.attempts, 1);

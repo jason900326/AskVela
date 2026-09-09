@@ -4,7 +4,7 @@ import test from "node:test";
 import { recommendExperience } from "../lib/vela-experience-router.js";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
-const dreamFlowPath = new URL("../components/DreamReadingFlow.js", import.meta.url);
+const dreamFlowPath = new URL("../components/DreamReadingFlowV2.js", import.meta.url);
 
 test("natural dream phrasing routes to Dream instead of Tarot", () => {
   assert.equal(recommendExperience("我做了怪夢").mode, "dream");
@@ -15,26 +15,31 @@ test("natural dream phrasing routes to Dream instead of Tarot", () => {
 
 test("a new Dream handoff discards the previous Dream session before entering the flow", async () => {
   const experience = await readFile(experiencePath, "utf8");
-  const beginDream = experience.slice(experience.indexOf("function beginDream"), experience.indexOf("if (experience === \"home\")"));
+  const beginDream = experience.slice(experience.indexOf("function beginDream"), experience.indexOf("const dialogueTitle"));
   assert.match(beginDream, /sessionStorage\.removeItem\(DREAM_SESSION_KEY\)/u);
   assert.match(beginDream, /setDreamHandoffText\(nextDream\)/u);
 });
 
-test("Dream flow never restores an older reading over a fresh handoff", async () => {
+test("Dream V2 never restores an older reading over a fresh handoff", async () => {
   const flow = await readFile(dreamFlowPath, "utf8");
-  const restoreEffect = flow.slice(flow.indexOf("useEffect(() => {"), flow.indexOf("useEffect(() => {", flow.indexOf("useEffect(() => {") + 1));
+  const restoreEffectStart = flow.indexOf("useEffect(() => {");
+  const restoreEffectEnd = flow.indexOf("useEffect(() => {", restoreEffectStart + 1);
+  const restoreEffect = flow.slice(restoreEffectStart, restoreEffectEnd);
   assert.match(restoreEffect, /String\(initialDream \|\| ""\)\.trim\(\)/u);
   assert.match(restoreEffect, /sessionStorage\.removeItem\(SESSION_KEY\)/u);
+  assert.match(restoreEffect, /return undefined/u);
   assert.ok(restoreEffect.indexOf("initialDream") < restoreEffect.indexOf("sessionStorage.getItem(SESSION_KEY)"));
 });
 
-test("returning to Vela clears the previous home question and recommendation modal", async () => {
+test("returning to Vela clears the previous home and handoff state", async () => {
   const experience = await readFile(experiencePath, "utf8");
   const changeExperience = experience.slice(experience.indexOf("const changeExperience"), experience.indexOf("useEffect(() => {"));
   assert.match(changeExperience, /if \(next === "home"\)/u);
   assert.match(changeExperience, /setEntryMode\("landing"\)/u);
   assert.match(changeExperience, /setGuideInput\(""\)/u);
-  assert.match(changeExperience, /setGuideResult\(null\)/u);
+  assert.match(changeExperience, /setGuidedStep\("area"\)/u);
+  assert.match(changeExperience, /setGuidedAnswers\(\{ area: "", feeling: "", goal: "" \}\)/u);
+  assert.match(changeExperience, /setTarotHandoffQuestion\(""\)/u);
   assert.match(changeExperience, /setDreamHandoffText\(""\)/u);
   assert.match(changeExperience, /scrollTo/u);
 });

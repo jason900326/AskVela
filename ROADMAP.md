@@ -4,10 +4,14 @@ This file is the single development checklist for AskVela. Work follows the phas
 
 ## Current status
 
-- Current phase: **Phase 8 — Dream interpretation (database/deployment acceptance)**
-- Phase 8 production acceptance: [docs/PHASE8_PRODUCTION_ACCEPTANCE.md](docs/PHASE8_PRODUCTION_ACCEPTANCE.md)
-- Phase 9 note: **the code-side Vela UI foundation has landed ahead of final artwork; Phase 9 remains open until approved character art and deployed visual acceptance are complete**
-- Launch scope: Tarot + Astrology + Dream interpretation, followed by final visual integration and production hardening
+- Current phase: **Phase 12A — Paid product design**
+- Core launch experiences are implemented: Tarot + Astrology + Dream interpretation.
+- Production history migrations `005_astrology_history.sql`, `006_dream_history.sql`, and `007_retention_conversations.sql` have been applied.
+- Signed-in reading results are confirmed to persist into **我的紀錄** on production.
+- Reading Quality v3, shared Vela Speech, share cards, cross-mode follow-ups, anonymous-reading handoff, and Retention v1 are implemented in code.
+- Remaining visual/regression work in Phases 9–11 may continue in parallel, but no longer blocks entitlement design.
+- Payments must not be wired directly into reading APIs; Phase 12 first defines product limits, entitlements, and server-side usage accounting.
+- Launch scope: Tarot + Astrology + Dream interpretation, followed by monetization, production hardening, and closed beta.
 - Product scope: [docs/V1_SPEC.md](docs/V1_SPEC.md)
 - Astrology contract: [docs/ASTROLOGY_SPEC.md](docs/ASTROLOGY_SPEC.md)
 - Astrology source provenance: [docs/ASTROLOGY_SOURCES.md](docs/ASTROLOGY_SOURCES.md)
@@ -119,7 +123,8 @@ Login remains optional; anonymous use is never blocked.
 - [x] Recompute canonical source evidence on save/restore instead of trusting client-provided citations
 - [x] Merge Tarot + Astrology into the account's **我的紀錄** UI
 - [x] Support reopening a saved record even when it belongs to the other experience
-- [ ] Apply migration `005_astrology_history.sql` to the active Supabase project
+- [x] Apply migration `005_astrology_history.sql` to the active Supabase project
+- [x] Confirm signed-in Astrology results persist in production history
 
 ### 7.6 Tests and finish
 - [x] Test 12-sign registry and birthday boundaries
@@ -131,7 +136,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Add source-fidelity contract tests for natal/transit boundaries, historical-content curation, and source attribution
 - [x] Add unit coverage proving all 12 signs have Alan Leo + Sepharial evidence and no sign-center aspect is fabricated
 - [x] Confirm source-grounding PR CI lint / test / build green
-- [ ] Run deployed daily + weekly + history smoke tests on mobile and desktop
+- [ ] Run final deployed daily + weekly regression smoke tests on both mobile and desktop
 
 **Exit condition:** source-grounded daily/weekly readings work on production with visible references, private astrology history survives a new session, Tarot history still works, and CI is green.
 
@@ -171,7 +176,8 @@ Login remains optional; anonymous use is never blocked.
 - [x] Recompute reading ID and canonical source evidence before accepting a saved snapshot
 - [x] Merge Tarot + Astrology + Dream into **我的紀錄**
 - [x] Support reopening a saved Dream record and cross-mode restore
-- [ ] Apply migration `006_dream_history.sql` to the active Supabase project
+- [x] Apply migration `006_dream_history.sql` to the active Supabase project
+- [x] Confirm signed-in Dream results persist in production history
 
 ### 8.6 Tests and finish
 - [x] Test Dream request validation and stable IDs
@@ -179,7 +185,7 @@ Login remains optional; anonymous use is never blocked.
 - [x] Test private Dream history snapshot validation
 - [x] Test safety framing against diagnosis/prediction/fixed-symbol certainty
 - [x] Confirm Phase 8 PR CI lint / test / build green
-- [ ] Run deployed Dream reading + history smoke tests on mobile and desktop
+- [ ] Run final deployed Dream regression smoke tests on both mobile and desktop
 
 **Exit condition:** source-grounded Dream readings work on production with visible references, private Dream history survives a new session, Tarot/Astrology history still works, sensitive-content framing remains non-diagnostic, and CI is green.
 
@@ -190,34 +196,75 @@ Login remains optional; anonymous use is never blocked.
 - [x] Add shared focus, disabled, loading/error, and cross-mode atmosphere states
 - [x] Respect `prefers-reduced-motion` and keep interaction understandable without animation
 - [x] Add an automatic final-art slot at `public/vela/vela-home.webp` with graceful fallback
-- [ ] Replace the fallback character with the approved final illustrated Vela artwork
-- [ ] Run deployed visual acceptance on mobile and desktop after final artwork is installed
+- [x] Integrate artwork-led home routing and crystal-ball interaction
+- [x] Add immersive waiting/auth handoff states without losing anonymous readings
+- [ ] Run final deployed visual acceptance on both mobile and desktop after the remaining art pass
 
-**Status:** code-side foundation merged in PR #25. Phase 9 remains open until final artwork and deployed visual acceptance are complete.
+**Status:** the production UX is usable and monetization design may proceed; final visual acceptance remains a pre-launch task.
 
 ## Phase 10 — Art assets
-- [ ] Vela main character and mode-specific variants
-- [ ] Landing/background assets
-- [ ] Crystal ball / Tarot back / Tarot faces
-- [ ] Zodiac and Dream visual assets
-- [ ] Logo, favicon, social preview, empty/loading/error art
-- [ ] Lock asset dimensions before replacing placeholders
+- [x] Add Vela home artwork used by the current landing experience
+- [x] Add crystal-ball artwork used as the home CTA
+- [x] Add Tarot back and Tarot face artwork used during the draw/reveal flow
+- [ ] Complete any remaining mode-specific Vela variants
+- [ ] Complete remaining Zodiac and Dream visual assets
+- [ ] Finalize logo, favicon, social preview, empty/loading/error art
+- [ ] Run final asset-dimension and responsive acceptance pass
 
-## Phase 11 — Three-mode integration
-- [ ] Unified home and navigation
-- [ ] Unified Vela voice and status patterns
-- [ ] Unified private history filters and restore behavior
-- [ ] Cross-mode mobile/desktop regression pass
+## Phase 11 — Three-mode integration and retention
+- [x] Unified home and navigation across Tarot / Astrology / Dream
+- [x] Unified Vela Speech / voice and shared status patterns
+- [x] Unified private history and cross-mode restore behavior
+- [x] Add Reading Quality v3 fixed-case evaluation and deterministic style/safety gates
+- [x] Add result sharing while keeping Dream share cards privacy-safe
+- [x] Preserve anonymous readings through waiting-stage login / OAuth return
+- [x] Add Retention v1 saved-reading continuation with a six-turn bound
+- [x] Apply migration `007_retention_conversations.sql` to the active Supabase project
+- [x] Confirm signed-in reading results persist in production history
+- [ ] Confirm saved-reading continuation survives refresh and sign-out/sign-in on production
+- [ ] Run final cross-mode mobile/desktop regression pass
 
-## Phase 12 — Paid product decisions
-- [ ] Decide free limits and premium value
-- [ ] Decide entitlement model only after all three core experiences are usable
-- [ ] Add payments after pricing/limits are frozen
+## Phase 12 — Monetization
+
+### 12A — Paid product design ← CURRENT
+- [ ] Decide what remains meaningfully useful for free users
+- [ ] Decide premium value without intentionally degrading answer quality for free users
+- [ ] Define which actions consume quota: new readings, clarifiers, same-reading follow-ups, saved-reading continuations, Astrology refreshes, and Dream follow-ups
+- [ ] Decide subscription vs credits vs a deliberately simple hybrid
+- [ ] Freeze the first-launch price/limit matrix before adding Checkout
+- [ ] Document entitlement rules independently of any payment provider
+
+### 12B — Entitlement and usage engine
+- [ ] Add server-side plan / entitlement model tied to authenticated Supabase users
+- [ ] Add append-only usage events or equivalent auditable usage accounting
+- [ ] Add atomic quota checks so concurrent requests cannot overspend an allowance
+- [ ] Make all paid/limited API paths enforce entitlements server-side rather than trusting disabled UI controls
+- [ ] Define idempotency behavior so retries do not double-charge usage
+- [ ] Add tests for anonymous, free, premium, expired, cancelled, and quota-exhausted states
+- [ ] Add cost observability per product action before opening paid access
+
+### 12C — Payment integration
+- [ ] Select the payment provider only after the entitlement contract is frozen
+- [ ] Add Checkout / purchase flow
+- [ ] Add signed webhook verification and idempotent event processing
+- [ ] Map successful payment state into provider-agnostic entitlements
+- [ ] Handle renewal, cancellation, expiration, payment failure, and refund/reversal states
+- [ ] Add subscription-management entry point
+- [ ] Test payment lifecycle in sandbox/test mode before production credentials are enabled
+
+### 12D — Paywall and subscription UX
+- [ ] Add pricing / plan presentation
+- [ ] Show current plan and remaining allowance clearly
+- [ ] Add contextual upgrade surfaces only when the user reaches a meaningful limit
+- [ ] Preserve the current reading/session when an upgrade is required
+- [ ] Add graceful quota-exhausted and payment-recovery states in Vela voice
+
+**Phase 12 rule:** answer quality remains grounded and safe for every tier. Monetization may change allowance, persistence depth, continuation depth, or premium capabilities, but must not intentionally make free interpretations misleading or low quality.
 
 ## Phase 13 — Production readiness
 - [ ] Production Vercel/Supabase environment audit
 - [ ] Rate limiting and abuse protection
-- [ ] Request/token/cost limits
+- [ ] Global request/token/cost ceilings independent of paid quota
 - [ ] Privacy-conscious error logging and analytics
 - [ ] Database backup/recovery plan
 - [ ] Copyright/source handling review

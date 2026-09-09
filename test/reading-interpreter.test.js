@@ -77,8 +77,8 @@ function validOutputs(draw) {
       reflectionQuestions: ["什麼最值得保留？"],
     },
     {
-      overview: "我會先看你現在最卡的那一小塊。",
-      narrative: "有些東西其實已經在動了，只是你可能還沒很想承認。先別急著把整件事一次想完。看一個地方就好——最近哪個選擇，會讓你一想到就停一下？",
+      overview: "先把現在最卡的地方拆小一點。",
+      narrative: "有些事情已經開始移動，你現在可以先把選擇拆小。先看最近哪個選擇最容易讓你停住，再回到牌面支持的具體線索。這樣比較容易分開疲累和真正想調整的方向。",
     },
   ];
 }
@@ -121,12 +121,14 @@ test("interpretation executes A then B then C then grounded Vela speech", async 
   assert.equal(new Set(result.cards[0].sources.map((source) => source.book)).size, 2);
   assert.equal(result.analysisSynthesis.overview, "分析層摘要");
   assert.equal(result.analysisSynthesis.crossCardPattern, "過去到未來的推進");
-  assert.equal(result.synthesis.overview, outputs[3].overview);
-  assert.equal(result.synthesis.narrative, outputs[3].narrative);
+  assert.equal(result.synthesis.overview, "分析層摘要");
+  assert.equal(result.synthesis.narrative, "分析層把牌面整理成一段連續的轉變。");
   assert.equal(result.synthesis.crossCardPattern, "過去到未來的推進");
   assert.equal(result.velaSpeech.status, "rendered");
   assert.equal(result.velaSpeech.attempts, 1);
-  assert.equal(result.velaSpeech.version, "shared-speech-v2");
+  assert.equal(result.velaSpeech.version, "shared-speech-v3");
+  assert.equal(result.velaSpeech.overview, outputs[3].overview);
+  assert.equal(result.velaSpeech.narrative, outputs[3].narrative);
   assert.deepEqual(result.velaSpeech.fallbackFields, []);
   assert.match(result.disclaimer, /不保證未來/u);
 });
@@ -166,7 +168,8 @@ test("speech renderer retries only Layer D and succeeds without rerunning ground
   assert.match(calls[4].instructions, /Speech Layer 的修正重試/u);
   assert.equal(result.velaSpeech.status, "rendered");
   assert.equal(result.velaSpeech.attempts, 2);
-  assert.equal(result.synthesis.overview, outputs[3].overview);
+  assert.equal(result.velaSpeech.overview, outputs[3].overview);
+  assert.equal(result.synthesis.overview, "分析層摘要");
 });
 
 test("speech renderer failure retries Layer D twice then falls back to grounded Layer C for normal questions", async () => {

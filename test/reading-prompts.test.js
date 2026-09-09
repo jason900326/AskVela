@@ -10,7 +10,8 @@ test("the three prompt layers keep source, context, and synthesis responsibiliti
   const safety = { isHighStakes: false, categories: [] };
   assert.match(buildLayerAInstructions(), /Do not apply the card to the user's question/u);
   assert.match(buildLayerBInstructions(safety), /spread position/u);
-  assert.match(buildLayerCInstructions(safety), /Synthesize the cards/u);
+  assert.match(buildLayerCInstructions(safety), /connect them into one overall movement/u);
+  assert.match(buildLayerCInstructions(safety), /card-by-card walk-through/u);
 });
 
 test("high-stakes context is explicitly passed into context and synthesis layers", () => {
@@ -28,20 +29,20 @@ test("all interpretation layers prohibit converting difficult source themes into
   assert.match(buildLayerCInstructions(safety), /declare another person bad/u);
 });
 
-test("Vela voice instructions prefer spoken Tarot prose over report-like or slogan-like output", () => {
+test("Vela interpretation instructions prefer grounded, card-visible prose over report-like or slogan-like output", () => {
   const safety = { isHighStakes: false, categories: [] };
   const layerB = buildLayerBInstructions(safety);
   const layerC = buildLayerCInstructions(safety);
 
-  assert.match(layerB, /1-2 sentences/u);
-  assert.match(layerB, /not like a formal report or textbook/u);
-  assert.match(layerB, /same sentence rhythm/u);
+  assert.match(layerB, /2-3 substantive sentences/u);
+  assert.match(layerB, /Do not add fillers, fake hesitation/u);
+  assert.match(layerB, /Do not make every card paragraph end with a polished conclusion/u);
   assert.match(layerC, /voice users experience as Vela/u);
-  assert.match(layerC, /14-36 Traditional Chinese characters/u);
-  assert.match(layerC, /not a polished headline, slogan, or clever antithesis/u);
-  assert.match(layerC, /120-260 Traditional Chinese characters/u);
-  assert.match(layerC, /one sentence can be very short/u);
-  assert.match(layerC, /at most 2 focused items/u);
-  assert.match(layerC, /at most 1 focused question/u);
+  assert.match(layerC, /14-42 Traditional Chinese characters/u);
+  assert.match(layerC, /polished slogan/u);
+  assert.match(layerC, /220-420 Traditional Chinese characters/u);
+  assert.match(layerC, /Shorter is better/u);
+  assert.match(layerC, /up to 3 focused items/u);
+  assert.match(layerC, /exactly 1 focused question/u);
   assert.match(layerC, /這組牌顯示/u);
 });
