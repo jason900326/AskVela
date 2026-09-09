@@ -6,6 +6,7 @@ const experiencePath = new URL("../components/VelaExperience.js", import.meta.ur
 const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
+const flipCssPath = new URL("../app/phase12a-flip-pages.css", import.meta.url);
 
 test("home lowers first-use friction with quick Tarot suggestions", async () => {
   const experience = await readFile(experiencePath, "utf8");
@@ -14,7 +15,20 @@ test("home lowers first-use friction with quick Tarot suggestions", async () => 
   assert.match(experience, /今天的我最需要注意什麼？/u);
   assert.match(experience, /最近的感情有什麼提醒？/u);
   assert.match(experience, /工作／學業現在最值得留意什麼？/u);
-  assert.match(experience, /抽一張牌/u);
+  assert.match(experience, /翻到選牌/u);
+});
+
+test("home quick-Tarot CTA is a direct button transition and remains a mobile hit target", async () => {
+  const [experience, flipCss] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(flipCssPath, "utf8"),
+  ]);
+
+  assert.match(experience, /type="button" onClick=\{\(\) => startQuick\(question\)\}>翻到選牌/u);
+  assert.doesNotMatch(experience, /<form className="phase12QuickForm"/u);
+  assert.match(flipCss, /\.velaGuideHome \.phase12HomeFlipPage\s*\{[^}]*pointer-events:\s*auto;/su);
+  assert.match(flipCss, /\.velaGuideHome \.phase12QuickForm \.primaryButton\s*\{[^}]*pointer-events:\s*auto;/su);
+  assert.match(flipCss, /touch-action:\s*manipulation/u);
 });
 
 test("free quick Tarot is a one-card product with no free-form follow-up loop", async () => {
