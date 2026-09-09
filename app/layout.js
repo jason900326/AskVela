@@ -30,6 +30,7 @@ import "./phase10-history-exit.css";
 import "./phase12a-monetization-ui.css";
 import "./phase12a-flip-pages.css";
 import "./phase12a-immersive-tarot.css";
+import "./phase12a-free-flow-fixes.css";
 
 export const metadata = {
   title: "Vela",
