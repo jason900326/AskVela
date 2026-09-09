@@ -23,6 +23,7 @@ import "./phase10-cross-mode-polish.css";
 import "./phase10-tarot-result-v3.css";
 import "./phase10-final-ux.css";
 import "./phase10-final-fixes.css";
+import "./phase10-auth-waiting.css";
 
 export const metadata = {
   title: "Vela",
