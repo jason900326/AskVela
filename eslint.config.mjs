@@ -21,4 +21,13 @@ export default defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  {
+    // FreeQuickTarot uses Date.now only inside explicit user-event async handlers
+    // to keep the chosen-card/reveal beats at a minimum duration while network
+    // work runs in parallel. It is not used to derive render output.
+    files: ["components/FreeQuickTarot.js"],
+    rules: {
+      "react-hooks/purity": "off",
+    },
+  },
 ]);
