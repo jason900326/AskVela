@@ -3,41 +3,49 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
-const tarotPath = new URL("../components/TarotReadingFlowV4.js", import.meta.url);
-const astrologyCssPath = new URL("../app/astrology.css", import.meta.url);
+const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
+const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
+const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 
-test("home supports users who cannot formulate a question yet", async () => {
+test("home lowers first-use friction with quick Tarot suggestions", async () => {
   const experience = await readFile(experiencePath, "utf8");
 
-  assert.match(experience, /我也說不上來/u);
-  assert.match(experience, /不知道怎麼說也沒關係/u);
-  assert.match(experience, /GUIDED_AREAS/u);
-  assert.match(experience, /GUIDED_FEELINGS/u);
-  assert.match(experience, /GUIDED_GOALS/u);
-  assert.match(experience, /我連這個也不知道/u);
-  assert.match(experience, /buildGuidedQuestion/u);
-  assert.match(experience, /看看目前卡住我的可能是什麼，以及現在可以先留意什麼/u);
+  assert.match(experience, /QUICK_SUGGESTIONS/u);
+  assert.match(experience, /今天的我最需要注意什麼？/u);
+  assert.match(experience, /最近的感情有什麼提醒？/u);
+  assert.match(experience, /工作／學業現在最值得留意什麼？/u);
+  assert.match(experience, /抽一張牌/u);
 });
 
-test("guided entry hands the generated question into the active Tarot flow instead of asking for it again from scratch", async () => {
-  const [experience, tarot] = await Promise.all([
-    readFile(experiencePath, "utf8"),
-    readFile(tarotPath, "utf8"),
-  ]);
+test("free quick Tarot is a one-card product with no free-form follow-up loop", async () => {
+  const quick = await readFile(quickPath, "utf8");
 
-  assert.match(experience, /tarotHandoffQuestion/u);
-  assert.match(experience, /<TarotReadingFlowV4 initialQuestion=\{tarotHandoffQuestion\}/u);
-  assert.match(tarot, /TarotReadingFlowV4\(\{ initialQuestion = "", onExperienceChange = null \}\)/u);
-  assert.match(tarot, /const routedQuestion = String\(initialQuestion \|\| ""\)\.trim\(\)\.slice\(0, 500\)/u);
-  assert.match(tarot, /useState\(routedQuestion\)/u);
-  assert.match(tarot, /routedQuestion \? "routing" : "question"/u);
+  assert.match(quick, /const SPREAD_ID = "single-guidance"/u);
+  assert.match(quick, /const DAILY_LIMIT = 3/u);
+  assert.match(quick, /const ANONYMOUS_LIMIT = 1/u);
+  assert.match(quick, /selectedCardIndexes: \[index\]/u);
+  assert.match(quick, /Free 不開放同一題自由追問/u);
+  assert.doesNotMatch(quick, /followUpMessage/u);
+  assert.doesNotMatch(quick, /MAX_FOLLOW_UPS/u);
 });
 
-test("guided entry choices remain responsive and readable on mobile", async () => {
-  const css = await readFile(astrologyCssPath, "utf8");
+test("Deep Reading starts with clarification rather than a card-count picker", async () => {
+  const deep = await readFile(deepPath, "utf8");
 
-  assert.match(css, /\.velaEntryChoices\s*\{[^}]*grid-template-columns:\s*repeat\(2/su);
-  assert.match(css, /\.guidedChoiceGrid\s*\{[^}]*grid-template-columns:\s*repeat\(3/su);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.velaEntryChoices\s*\{\s*grid-template-columns:\s*1fr;/u);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.guidedChoiceGrid\s*\{\s*grid-template-columns:\s*1fr;/u);
+  assert.match(deep, /這次不用急著決定要抽幾張牌/u);
+  assert.match(deep, /先告訴我，最近哪件事最讓你放不下？/u);
+  assert.match(deep, /FRICTIONS/u);
+  assert.match(deep, /我先不抽牌/u);
+  assert.match(deep, /先整理矛盾 → 決定閱讀結構/u);
+  assert.doesNotMatch(deep, /三張牌｜/u);
+  assert.doesNotMatch(deep, /五張牌｜/u);
+});
+
+test("Phase 12A entry surfaces are mobile-first", async () => {
+  const css = await readFile(cssPath, "utf8");
+
+  assert.match(css, /\.quickCardPool\s*\{[^}]*grid-template-columns:\s*repeat\(4/su);
+  assert.match(css, /\.velaPlanGrid\s*\{[^}]*grid-template-columns:\s*1fr;/su);
+  assert.match(css, /@media \(min-width: 720px\)[\s\S]*\.velaPlanGrid\s*\{\s*grid-template-columns:\s*1fr 1fr;/u);
+  assert.match(css, /@media \(max-width: 420px\)/u);
 });
