@@ -42,24 +42,14 @@
   padding: clamp(22px, 5vw, 40px);
 }
 
-.velaWaitingCard:has(.waitingAuthInvite) .velaWaitingGlyph {
-  display: none;
-}
-
-.velaWaitingCard:has(.waitingAuthInvite) .velaWaitingLine {
-  order: -1;
-  margin-top: 4px;
-  color: #cfc4d4;
-  font-weight: 700;
-}
-
-.velaWaitingCard:has(.waitingAuthInvite) .velaWaitingProgress {
-  order: 0;
-  width: min(420px, 78vw);
+/* The auth invitation REPLACES the normal waiting contents. Do not stack both UIs. */
+.velaWaitingCard:has(.waitingAuthInvite) > .velaWaitingGlyph,
+.velaWaitingCard:has(.waitingAuthInvite) > .velaWaitingLine,
+.velaWaitingCard:has(.waitingAuthInvite) > .velaWaitingProgress {
+  display: none !important;
 }
 
 .waitingAuthInvite {
-  order: -3;
   width: min(430px, 100%);
   display: grid;
   justify-items: center;
@@ -130,6 +120,31 @@
 .waitingAuthSkip:hover,
 .waitingAuthSkip:focus-visible {
   color: #d7c8df;
+}
+
+/* Once the crystal has been tapped it is gone; the revealed Vela stage owns the screen. */
+.velaGuideHome .velaStage.isAwake .velaCrystalButton {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Keep the revealed-card labels directly under the cards instead of drifting left. */
+.finalRevealStage .finalRevealedLabels {
+  margin-top: -10px;
+}
+
+.finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels {
+  width: min(240px, 100%);
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-self: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels > div {
+  width: 100%;
 }
 
 @media (max-width: 520px) {
