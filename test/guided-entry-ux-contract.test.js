@@ -5,70 +5,86 @@ import test from "node:test";
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
 const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
+const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const flipCssPath = new URL("../app/phase12a-flip-pages.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
+const freeFixCssPath = new URL("../app/phase12a-free-flow-fixes.css", import.meta.url);
 const layoutPath = new URL("../app/layout.js", import.meta.url);
 
-test("home lowers first-use friction with quick Tarot suggestions", async () => {
-  const experience = await readFile(experiencePath, "utf8");
-
-  assert.match(experience, /QUICK_SUGGESTIONS/u);
-  assert.match(experience, /今天的我最需要注意什麼？/u);
-  assert.match(experience, /最近的感情有什麼提醒？/u);
-  assert.match(experience, /工作／學業現在最值得留意什麼？/u);
-  assert.match(experience, /翻到選牌/u);
-});
-
-test("home quick-Tarot CTA is a direct button transition and remains a mobile hit target", async () => {
-  const [experience, flipCss] = await Promise.all([
+test("Free entry uses preset questions instead of asking first-time users to type", async () => {
+  const [experience, quick, plan] = await Promise.all([
     readFile(experiencePath, "utf8"),
-    readFile(flipCssPath, "utf8"),
+    readFile(quickPath, "utf8"),
+    readFile(planPath, "utf8"),
   ]);
 
-  assert.match(experience, /type="button" onClick=\{\(\) => startQuick\(question\)\}>翻到選牌/u);
-  assert.doesNotMatch(experience, /<form className="phase12QuickForm"/u);
-  assert.match(flipCss, /\.velaGuideHome \.phase12HomeFlipPage\s*\{[^}]*pointer-events:\s*auto;/su);
-  assert.match(flipCss, /\.velaGuideHome \.phase12QuickForm \.primaryButton\s*\{[^}]*pointer-events:\s*auto;/su);
-  assert.match(flipCss, /touch-action:\s*manipulation/u);
+  assert.match(experience, /FREE_QUESTION_PRESETS/u);
+  assert.match(quick, /今天的我最需要注意什麼？/u);
+  assert.match(quick, /最近的感情有什麼提醒？/u);
+  assert.match(quick, /工作／學業現在最值得留意什麼？/u);
+  assert.doesNotMatch(experience, /<textarea/u);
+  assert.doesNotMatch(quick, /<textarea/u);
+  assert.match(experience, /Free 體驗不用打字/u);
+  assert.match(experience, /升級後可以自由描述/u);
+  assert.match(plan, /自由輸入自己的問題，不受預設題目限制/u);
 });
 
-test("free quick Tarot is a one-card product with no free-form follow-up loop", async () => {
+test("home preset questions advance directly into the one-card flow", async () => {
+  const [experience, freeFixCss] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(freeFixCssPath, "utf8"),
+  ]);
+
+  assert.match(experience, /onClick=\{\(\) => startQuick\(item\)\}/u);
+  assert.match(experience, /step=\{1\} total=\{5\}/u);
+  assert.doesNotMatch(experience, /<form className="phase12QuickForm"/u);
+  assert.match(freeFixCss, /\.phase12PresetGrid button[\s\S]*touch-action:\s*manipulation/u);
+});
+
+test("free quick Tarot is a preset one-card product with no free-form follow-up loop", async () => {
   const quick = await readFile(quickPath, "utf8");
 
   assert.match(quick, /const SPREAD_ID = "single-guidance"/u);
   assert.match(quick, /const DAILY_LIMIT = 3/u);
   assert.match(quick, /const ANONYMOUS_LIMIT = 1/u);
+  assert.match(quick, /FREE_QUESTION_PRESETS\.includes\(text\)/u);
   assert.match(quick, /selectedCardIndexes: \[index\]/u);
-  assert.match(quick, /Free 不開放同一題自由追問/u);
   assert.doesNotMatch(quick, /followUpMessage/u);
   assert.doesNotMatch(quick, /MAX_FOLLOW_UPS/u);
 });
 
-test("quick Tarot uses the real card back and visibly reveals the chosen face before interpretation", async () => {
-  const [quick, immersiveCss, layout] = await Promise.all([
+test("quick Tarot uses the real card back and starts interpretation during the chosen-card interlude", async () => {
+  const [quick, immersiveCss, freeFixCss, layout] = await Promise.all([
     readFile(quickPath, "utf8"),
     readFile(immersiveCssPath, "utf8"),
+    readFile(freeFixCssPath, "utf8"),
     readFile(layoutPath, "utf8"),
   ]);
 
   assert.match(quick, /CARD_BACK = "\/images\/vela\/tarot-card-back\.webp"/u);
-  assert.match(quick, /immersiveRevealCard/u);
-  assert.match(quick, /tarotImagePath\(card\)/u);
-  assert.match(quick, /setRevealed\(true\)[\s\S]*await sleep\(1050\)[\s\S]*fetch\("\/api\/readings\/interpret"/u);
-  assert.doesNotMatch(quick, /VelaWaitingStage/u);
-  assert.doesNotMatch(quick, /quickBackButton/u);
+  assert.match(quick, /VELA_TAROT_ART = "\/images\/vela\/vela-tarot\.webp"/u);
+  assert.match(quick, /createInterpretationPromise\(data, nextRequestId, index\)[\s\S]*await sleep\(Math\.max\(0, 1800 - elapsed\)\)[\s\S]*setStage\("reveal"\)/u);
+  assert.match(quick, /interpretationPromiseRef\.current \|\| createInterpretationPromise/u);
+  assert.match(quick, /immersiveLoginVela/u);
+  assert.match(quick, /結果出來後，從右上角登入就能保存/u);
   assert.match(immersiveCss, /\.immersiveRevealCard\.isFlipped \.immersiveCardInner\s*\{[^}]*rotateY\(180deg\)/su);
-  assert.match(layout, /phase12a-immersive-tarot\.css/u);
+  assert.match(freeFixCss, /\.immersiveLoginVela/u);
+  assert.match(layout, /phase12a-free-flow-fixes\.css/u);
 });
 
-test("quick Tarot stays on one mobile stage and limits scrolling to the result reading body", async () => {
-  const immersiveCss = await readFile(immersiveCssPath, "utf8");
+test("quick Tarot stays viewport-bound except for a Safari-safe whole-result scroll surface", async () => {
+  const [immersiveCss, freeFixCss] = await Promise.all([
+    readFile(immersiveCssPath, "utf8"),
+    readFile(freeFixCssPath, "utf8"),
+  ]);
 
   assert.match(immersiveCss, /body:has\(\.immersiveQuickTarot\)\s*\{[^}]*overflow:\s*hidden;/su);
   assert.match(immersiveCss, /\.quickTarotExperience\.immersiveQuickTarot\s*\{[^}]*height:\s*100svh;[^}]*overflow:\s*hidden;/su);
-  assert.match(immersiveCss, /\.immersiveResultScroll\s*\{[^}]*overflow-y:\s*auto;/su);
-  assert.match(immersiveCss, /\.immersiveResultActions\s*\{[^}]*display:\s*grid;/su);
+  assert.match(freeFixCss, /\.immersiveQuickTarot\.stage-result \.velaFlipPage\s*\{[^}]*transform:\s*none\s*!important;/su);
+  assert.match(freeFixCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultCard\s*\{[^}]*overflow-y:\s*auto\s*!important;[^}]*touch-action:\s*pan-y;/su);
+  assert.match(freeFixCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultHeader\s*\{[^}]*position:\s*sticky;/su);
+  assert.match(freeFixCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultActions\s*\{[^}]*position:\s*sticky;/su);
 });
 
 test("Deep Reading starts with clarification rather than a card-count picker", async () => {
