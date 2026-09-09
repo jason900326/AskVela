@@ -74,18 +74,18 @@ test("historical astrology claims are curated instead of copied as modern fact",
   assert.match(prompt, /不得沿用書中的醫療診斷/u);
 });
 
-test("Vela home stays conversation-first while all three grounded modes remain directly reachable", async () => {
+test("Vela home is Tarot-first while Astrology and Dream remain directly reachable as secondary modes", async () => {
   const hub = await readFile(paths.hub, "utf8");
   assert.match(hub, /VelaStage/u);
   assert.match(hub, /velaHomeStageLayout/u);
-  assert.match(hub, /今天，你帶了什麼來？/u);
-  assert.match(hub, /有件事想問/u);
-  assert.match(hub, /想看看最近的運勢/u);
-  assert.match(hub, /我做了一個夢/u);
-  assert.match(hub, /我也說不上來/u);
+  assert.match(hub, /今天想問 Vela 什麼？/u);
+  assert.match(hub, /抽一張牌/u);
+  assert.match(hub, /phase12SecondaryJourneys/u);
+  assert.match(hub, /changeExperience\("astrology"\)/u);
+  assert.match(hub, /changeExperience\("dream"\)/u);
   assert.match(hub, /AstrologyReadingFlowV2/u);
   assert.match(hub, /DreamReadingFlowV2/u);
-  assert.match(hub, /TarotReadingFlowV4/u);
+  assert.match(hub, /FreeQuickTarot/u);
   assert.doesNotMatch(hub, /解夢資料庫準備中/u);
   assert.doesNotMatch(hub, /experienceTabs/u);
 });
