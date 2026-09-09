@@ -56,6 +56,18 @@ test("mobile quick-start advances explicitly instead of depending on form submit
   assert.doesNotMatch(experience, /onSubmit=\{submitQuick\}/u);
 });
 
+test("an active quick Tarot selection cannot be invalidated by a late quota sync", async () => {
+  const quick = await readFile(quickPath, "utf8");
+  const chooseCard = quick.slice(
+    quick.indexOf("async function chooseCard"),
+    quick.indexOf("async function revealAndInterpret"),
+  );
+
+  assert.match(chooseCard, /if \(loading\) return;/u);
+  assert.doesNotMatch(chooseCard, /remaining\s*<=\s*0/u);
+  assert.match(chooseCard, /setStage\("drawing"\)[\s\S]*fetch\("\/api\/readings\/draw"/u);
+});
+
 test("Free and Deep Reading share bounded flip-page language with their own stage counts", async () => {
   const [experience, quick, deep, flip, css] = await Promise.all([
     readFile(experiencePath, "utf8"),
