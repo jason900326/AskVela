@@ -2,50 +2,49 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const dreamFlowPath = new URL("../components/DreamReadingFlow.js", import.meta.url);
+const dreamFlowPath = new URL("../components/DreamReadingFlowV2.js", import.meta.url);
 const resumePath = new URL("../components/PendingAuthResume.js", import.meta.url);
 const layoutPath = new URL("../app/layout.js", import.meta.url);
 const polishPath = new URL("../app/phase8-polish.css", import.meta.url);
 const sourcePath = new URL("../lib/dream-source-corpus.js", import.meta.url);
 
-test("Dream starts from one remembered image instead of demanding a full intake", async () => {
+test("Dream V2 starts from one remembered image instead of demanding a full intake", async () => {
   const flow = await readFile(dreamFlowPath, "utf8");
-  assert.match(flow, /一句也可以/u);
-  assert.match(flow, /我夢到蛇/u);
-  assert.match(flow, /先說你最記得的畫面就好/u);
+  assert.match(flow, /昨晚夢到什麼？/u);
+  assert.match(flow, /不用整理得很完整/u);
+  assert.match(flow, /最記得的畫面、人物、聲音或感覺/u);
+  assert.match(flow, /dreamText\.trim\(\)\.length < 2/u);
   assert.doesNotMatch(flow, /dreamText\.trim\(\)\.length < 8/u);
-  assert.match(flow, /dreamOptionalDetails/u);
-  assert.match(flow, /最近的生活背景（可選）/u);
 });
 
-test("Dream result is speech-first while structured meaning, mindset, and reflection stay collapsed", async () => {
+test("Dream V2 keeps the grounded result visible and moves secondary hypotheses and provenance into details", async () => {
   const flow = await readFile(dreamFlowPath, "utf8");
   assert.match(flow, /reading\?\.velaSpeech\?\.overview/u);
-  assert.match(flow, /reading\?\.velaSpeech\?\.narrative/u);
-  assert.match(flow, /dreamSpeechHero/u);
-  assert.match(flow, /<details className="dreamDetails dreamFullAnalysis">/u);
-  assert.match(flow, /查看完整夢境分析/u);
+  assert.match(flow, /finalReadingArticle dreamFinalResult/u);
   assert.match(flow, /這個夢可能在反映/u);
-  assert.match(flow, /最近的心態線索/u);
-  assert.match(flow, /如果你想再往下想一點（可選）/u);
-  assert.ok(flow.indexOf("dreamSpeechHero") < flow.indexOf("dreamFullAnalysis"));
-  assert.match(flow, /<details className="dreamDetails dreamSourcesCompact">/u);
-  assert.match(flow, /解讀依據 · Freud 為主/u);
-  assert.match(flow, /解讀依據 · Freud 原文檢索/u);
-  assert.doesNotMatch(flow, /這次解讀用了哪些依據/u);
+  assert.match(flow, /最近的心境線索/u);
+  assert.match(flow, /夢裡最值得留意的象徵/u);
+  assert.match(flow, /VELA 想問你/u);
+  assert.match(flow, /查看完整夢境解析與依據/u);
+  assert.match(flow, /otherHypotheses\.map/u);
+  assert.match(flow, /result\?\.basisNote/u);
+  assert.ok(flow.indexOf("這個夢可能在反映") < flow.indexOf("查看完整夢境解析與依據"));
 });
 
-test("a completed anonymous Dream survives Google OAuth and resumes for account saving", async () => {
+test("a completed anonymous Dream is persisted for the shared OAuth resume and account-saving layer", async () => {
   const [flow, resume, layout] = await Promise.all([
     readFile(dreamFlowPath, "utf8"),
     readFile(resumePath, "utf8"),
     readFile(layoutPath, "utf8"),
   ]);
-  assert.match(flow, /PENDING_AUTH_KEY/u);
-  assert.match(flow, /\.googleAuthButton/u);
   assert.match(flow, /sessionStorage\.setItem\(SESSION_KEY/u);
-  assert.match(flow, /sessionStorage\.setItem\(PENDING_AUTH_KEY, "dream"\)/u);
-  assert.match(resume, /CustomEvent\("vela:experience", \{ detail: pending \}\)/u);
+  assert.match(flow, /<VelaAccount experience="dream" activeDream=\{reading\}/u);
+  assert.match(resume, /DREAM_SESSION_KEY = "askvela\.current-dream\.v1"/u);
+  assert.match(resume, /pendingModeForPath/u);
+  assert.match(resume, /pathname === "\/api\/dreams\/reading"/u);
+  assert.match(resume, /persistCompletedAnalysis/u);
+  assert.match(resume, /window\.sessionStorage\.setItem\(PENDING_AUTH_KEY, mode\)/u);
+  assert.match(resume, /CustomEvent\("vela:experience", \{ detail: mode \}\)/u);
   assert.match(layout, /<PendingAuthResume \/>/u);
 });
 
