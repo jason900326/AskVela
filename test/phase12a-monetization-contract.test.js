@@ -21,7 +21,7 @@ test("Phase 12A exposes Free and Vela+ without a wallet or recharge model", asyn
   assert.doesNotMatch(plan, /top_up/u);
 });
 
-test("Free remains full-quality while product depth is reserved for Vela+", async () => {
+test("Free remains full-quality while product depth and free-form questions are reserved for Vela+", async () => {
   const [plan, quick, deep] = await Promise.all([
     readFile(planPath, "utf8"),
     readFile(quickPath, "utf8"),
@@ -29,9 +29,12 @@ test("Free remains full-quality while product depth is reserved for Vela+", asyn
   ]);
 
   assert.match(plan, /完整回答，不把免費版做成比較笨的 Vela/u);
+  assert.match(plan, /自由輸入自己的問題，不受預設題目限制/u);
   assert.match(quick, /result\.synthesis\?\.overview/u);
   assert.match(quick, /card\.contextInterpretation/u);
   assert.match(quick, /card\.practicalFocus/u);
+  assert.match(quick, /FREE_QUESTION_PRESETS/u);
+  assert.doesNotMatch(quick, /<textarea/u);
   assert.match(deep, /決定閱讀結構/u);
 });
 
@@ -47,12 +50,13 @@ test("the product has both a persistent plan entry and contextual upgrade entry"
   assert.match(quick, /有一件事情，不是一張牌能說完的嗎？/u);
 });
 
-test("mobile quick-start advances explicitly instead of depending on form submit", async () => {
+test("mobile quick-start advances directly from a preset instead of depending on typed form submit", async () => {
   const experience = await readFile(experiencePath, "utf8");
 
-  assert.match(experience, /type="button" onClick=\{\(\) => startQuick\(question\)\}/u);
+  assert.match(experience, /onClick=\{\(\) => startQuick\(item\)\}/u);
   assert.match(experience, /setExperience\("quick-tarot"\)/u);
-  assert.match(experience, /mobile IME composition/u);
+  assert.match(experience, /FREE_QUESTION_PRESETS\.includes\(text\)/u);
+  assert.doesNotMatch(experience, /<textarea/u);
   assert.doesNotMatch(experience, /onSubmit=\{submitQuick\}/u);
 });
 
@@ -78,6 +82,7 @@ test("Free and Deep Reading share bounded flip-page language with their own stag
   ]);
 
   assert.match(experience, /VelaFlipPage/u);
+  assert.match(experience, /step=\{1\} total=\{5\}/u);
   assert.match(quick, /step=\{1\} total=\{5\}/u);
   assert.match(quick, /step=\{5\} total=\{5\}/u);
   assert.match(deep, /step=\{1\} total=\{3\}/u);
