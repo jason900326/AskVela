@@ -1,5 +1,6 @@
 import PendingAuthResume from "../components/PendingAuthResume.js";
 import VelaBrandLink from "../components/VelaBrandLink.js";
+import VelaHistoryNavigationGuard from "../components/VelaHistoryNavigationGuard.js";
 import "./globals.css";
 import "./reading.css";
 import "./follow-up.css";
@@ -25,6 +26,7 @@ import "./phase10-final-ux.css";
 import "./phase10-final-fixes.css";
 import "./phase10-auth-waiting.css";
 import "./phase10-retention-v1.css";
+import "./phase10-history-exit.css";
 
 export const metadata = {
   title: "Vela",
@@ -40,6 +42,7 @@ export default function RootLayout({ children }) {
         </div>
         {children}
         <PendingAuthResume />
+        <VelaHistoryNavigationGuard />
       </body>
     </html>
   );
