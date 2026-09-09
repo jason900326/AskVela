@@ -96,6 +96,26 @@
   min-height: 0 !important;
 }
 
+/* Match the label row to the exact reveal-card geometry. In particular, a one-card
+   reading must not keep the legacy three-column label grid and drift to the left. */
+.finalRevealCards.cards-1 + .finalRevealedLabels {
+  width: min(220px, 100%) !important;
+  max-width: 220px !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-self: center !important;
+  margin: -4px auto 0 !important;
+}
+.finalRevealCards.cards-1 + .finalRevealedLabels > div {
+  width: 100% !important;
+  justify-self: stretch !important;
+  text-align: left !important;
+}
+.finalRevealCards.cards-3 + .finalRevealedLabels {
+  width: 100% !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  margin: -4px 0 0 !important;
+}
+
 /* Whatever the component's DOM order, save must sit between the reading/interactions and share CTA. */
 .finalReadingArticle > .saveReadingPrompt {
   order: 80 !important;
@@ -154,4 +174,9 @@
   .finalRevealedLabels small { font-size: .7rem !important; }
   .finalRevealedLabels strong { font-size: .86rem !important; line-height: 1.25 !important; }
   .finalRevealedLabels span { font-size: .68rem !important; }
+
+  .finalRevealCards.cards-1 + .finalRevealedLabels {
+    width: min(220px, 72vw) !important;
+    margin-top: -2px !important;
+  }
 }
