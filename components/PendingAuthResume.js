@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getSupabaseBrowser } from "../lib/supabase-browser.js";
+import VelaWaitingStage from "./VelaWaitingStage.js";
 
 const PENDING_AUTH_KEY = "askvela.pending-auth-experience.v1";
 const PENDING_ANALYSIS_KEY = "askvela.pending-analysis.v1";
@@ -98,6 +99,34 @@ function promptCopy(mode) {
   };
 }
 
+function resumeLines(mode) {
+  if (mode === "astrology") {
+    return [
+      "你回來了，我還在看今天幾個位置的關係。",
+      "我把太陽和月亮的節奏再對一次。",
+      "有一個生活面向今天特別值得先說。",
+      "我再把幾個訊號收斂成比較有用的提醒。",
+      "差不多了，我把今天最重要的部分整理給你。",
+    ];
+  }
+  if (mode === "dream") {
+    return [
+      "你回來了，我還在整理剛剛那個夢。",
+      "我先把最反覆出現的畫面放在一起看。",
+      "有一個細節和整個夢的情緒接得很近。",
+      "我再分一下哪些是象徵，哪些比較像最近的心境。",
+      "差不多了，我從最值得留意的地方開始說。",
+    ];
+  }
+  return [
+    "你回來了，我還在把剛剛那幾張牌放在一起看。",
+    "牌的位置沒有變，我沿著原本的問題繼續看。",
+    "有一張牌和你問的事對得比預期更直接。",
+    "我再看看它和旁邊那張是在支持還是拉扯。",
+    "差不多了，我把這組牌最重要的地方整理給你。",
+  ];
+}
+
 function persistCompletedAnalysis(mode, body, data) {
   if (mode === "tarot") {
     const lastDraw = readJson(LAST_TAROT_DRAW_KEY);
@@ -145,6 +174,16 @@ export default function PendingAuthResume() {
   });
   const [waitingTarget, setWaitingTarget] = useState(null);
   const [dismissedSignature, setDismissedSignature] = useState("");
+  const [resumeMode, setResumeMode] = useState("");
+  const [resumeActive, setResumeActive] = useState(false);
+
+  useEffect(() => {
+    const storedMode = window.sessionStorage.getItem(PENDING_AUTH_KEY);
+    if (["dream", "tarot", "astrology"].includes(storedMode)) {
+      setResumeMode(storedMode);
+      setResumeActive(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!client) return undefined;
@@ -252,6 +291,9 @@ export default function PendingAuthResume() {
       const mode = window.sessionStorage.getItem(PENDING_AUTH_KEY);
       if (!mode || !["dream", "tarot", "astrology"].includes(mode)) return;
 
+      setResumeMode(mode);
+      setResumeActive(true);
+
       const pending = readJson(PENDING_ANALYSIS_KEY);
       if (pending?.mode === mode && !completedSessionExists(mode)) {
         const originalFetch = nativeFetchRef.current || window.fetch.bind(window);
@@ -293,6 +335,12 @@ export default function PendingAuthResume() {
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent("vela:experience", { detail: mode }));
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        window.setTimeout(() => {
+          if (!cancelled) {
+            setResumeActive(false);
+            setResumeMode("");
+          }
+        }, 700);
       }, 120);
     }
 
@@ -323,12 +371,25 @@ export default function PendingAuthResume() {
     && dismissedSignature !== signature
   );
 
-  if (!showInvite || !waitingTarget) return null;
+  const resumePortal = resumeActive && resumeMode && typeof document !== "undefined"
+    ? createPortal(
+      <div className={`authResumeOverlay mode-${resumeMode}`} aria-label="Vela 正在繼續剛剛的解讀">
+        <VelaWaitingStage
+          lines={resumeLines(resumeMode)}
+          glyph="☾"
+          intervalMs={5600}
+          className="authResumeWaiting"
+        />
+      </div>,
+      document.body,
+    )
+    : null;
+
+  if (!showInvite || !waitingTarget) return resumePortal;
 
   const copy = promptCopy(pendingAnalysis.mode);
   const isTarot = pendingAnalysis.mode === "tarot";
-
-  return createPortal(
+  const invitePortal = createPortal(
     <aside className={`waitingAuthInvite mode-${pendingAnalysis.mode}`} aria-label="登入並保存這次解讀">
       <div className="waitingAuthPortraitWrap" aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -345,4 +406,6 @@ export default function PendingAuthResume() {
     </aside>,
     waitingTarget,
   );
+
+  return <>{resumePortal}{invitePortal}</>;
 }
