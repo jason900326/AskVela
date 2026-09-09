@@ -6,6 +6,7 @@ import DreamReadingFlowV2 from "./DreamReadingFlowV2.js";
 import FreeQuickTarot from "./FreeQuickTarot.js";
 import VelaAccount from "./VelaAccount.js";
 import VelaDeepReadingIntro from "./VelaDeepReadingIntro.js";
+import VelaFlipPage from "./VelaFlipPage.js";
 import VelaPlanSheet from "./VelaPlanSheet.js";
 import VelaStage from "./VelaStage.js";
 
@@ -21,6 +22,7 @@ export default function VelaExperience() {
   const [entryMode, setEntryMode] = useState("landing");
   const [question, setQuestion] = useState("");
   const [quickQuestion, setQuickQuestion] = useState("");
+  const [entryError, setEntryError] = useState("");
   const [dreamHandoffText, setDreamHandoffText] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
 
@@ -32,6 +34,7 @@ export default function VelaExperience() {
       setEntryMode("landing");
       setQuestion("");
       setQuickQuestion("");
+      setEntryError("");
       setDreamHandoffText("");
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       return;
@@ -63,20 +66,24 @@ export default function VelaExperience() {
 
   function revealQuickEntry() {
     setEntryMode("quick");
+    setEntryError("");
     const current = window.history.state || {};
     window.history.pushState({ ...current, askVelaEntry: { mode: "quick" } }, "");
   }
 
   function startQuick(nextQuestion = question) {
     const text = String(nextQuestion || "").trim();
-    if (!text) return;
-    setQuickQuestion(text.slice(0, 500));
-    changeExperience("quick-tarot");
-  }
+    if (!text) {
+      setEntryError("先留下一個想問的小問題。");
+      return;
+    }
 
-  function submitQuick(event) {
-    event.preventDefault();
-    startQuick(question);
+    setEntryError("");
+    setQuickQuestion(text.slice(0, 500));
+    // Go directly to the next product state instead of relying on a form-submit transition.
+    // This is more reliable with mobile IME composition (notably iOS Traditional Chinese keyboards).
+    setExperience("quick-tarot");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
   function beginDream(text = "") {
@@ -105,35 +112,41 @@ export default function VelaExperience() {
 
         {entryMode !== "landing" && (
           <div className="velaHomeEntry mode-quick" id="vela-home-entry">
-            <div className="velaDialogueBubble phase12HomeBubble">
-              <h1>今天想問 Vela 什麼？</h1>
-              <p>先從一個小問題開始。抽一張牌就好。</p>
-            </div>
+            <VelaFlipPage pageKey="home-question" step={1} total={4} label="問一件小事" className="phase12HomeFlipPage">
+              <div className="velaDialogueBubble phase12HomeBubble">
+                <h1>今天想問 Vela 什麼？</h1>
+                <p>先從一個小問題開始。抽一張牌就好。</p>
+              </div>
 
-            <form className="phase12QuickForm" onSubmit={submitQuick}>
-              <textarea
-                rows={3}
-                maxLength={500}
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="例如：我今天工作上最需要注意什麼？"
-                autoFocus
-              />
-              <button className="primaryButton" type="submit" disabled={!question.trim()}>抽一張牌 ✦</button>
-            </form>
+              <div className="phase12QuickForm">
+                <textarea
+                  rows={3}
+                  maxLength={500}
+                  value={question}
+                  onChange={(event) => {
+                    setQuestion(event.target.value);
+                    if (entryError) setEntryError("");
+                  }}
+                  placeholder="例如：我今天工作上最需要注意什麼？"
+                  autoFocus
+                />
+                <button className="primaryButton" type="button" onClick={() => startQuick(question)}>翻到選牌 ✦</button>
+                {entryError && <div className="phase12EntryError" role="alert">{entryError}</div>}
+              </div>
 
-            <div className="phase12SuggestionList" aria-label="不知道問什麼時可以直接選">
-              <span>不知道問什麼？</span>
-              {QUICK_SUGGESTIONS.map((item) => (
-                <button type="button" key={item} onClick={() => startQuick(item)}>{item}</button>
-              ))}
-            </div>
+              <div className="phase12SuggestionList" aria-label="不知道問什麼時可以直接選">
+                <span>不知道問什麼？</span>
+                {QUICK_SUGGESTIONS.map((item) => (
+                  <button type="button" key={item} onClick={() => startQuick(item)}>{item}</button>
+                ))}
+              </div>
 
-            <section className="velaJourneyPanel phase12SecondaryJourneys" aria-label="其他 Vela 功能">
-              <button type="button" onClick={() => changeExperience("astrology")}><span>◎</span><strong>星象</strong><small>看看最近的運勢</small></button>
-              <button type="button" onClick={() => beginDream("")}><span>☾</span><strong>解夢</strong><small>解析昨晚的夢</small></button>
-              <button type="button" className="isDeep" onClick={() => setPlanOpen(true)}><span>✦</span><strong>Deep Reading</strong><small>有一件事真的想看深</small></button>
-            </section>
+              <section className="velaJourneyPanel phase12SecondaryJourneys" aria-label="其他 Vela 功能">
+                <button type="button" onClick={() => changeExperience("astrology")}><span>◎</span><strong>星象</strong><small>看看最近的運勢</small></button>
+                <button type="button" onClick={() => beginDream("")}><span>☾</span><strong>解夢</strong><small>解析昨晚的夢</small></button>
+                <button type="button" className="isDeep" onClick={() => setPlanOpen(true)}><span>✦</span><strong>Deep Reading</strong><small>有一件事真的想看深</small></button>
+              </section>
+            </VelaFlipPage>
           </div>
         )}
       </section>
