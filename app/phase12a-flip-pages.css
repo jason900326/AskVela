@@ -84,6 +84,28 @@
   position: relative;
 }
 
+/* phase10-conversation-ui intentionally makes the whole post-crystal overlay
+   pointer-events:none, then opts interactive islands back in. The new Phase 12A
+   flip card is one of those islands. Without this reset, Safari can focus the
+   textarea while the primary CTA itself is not a reliable hit target. */
+.velaGuideHome .phase12HomeFlipPage {
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.velaGuideHome .phase12HomeFlipPage button,
+.velaGuideHome .phase12HomeFlipPage textarea {
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.velaGuideHome .phase12QuickForm .primaryButton {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
 .quickTarotShell > .velaFlipDeck,
 .deepReadingShell > .velaFlipDeck {
   width: min(100%, 620px);
@@ -173,6 +195,7 @@
     max-height: calc(100svh - max(92px, env(safe-area-inset-top)) - 12px);
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .quickTarotExperience,
