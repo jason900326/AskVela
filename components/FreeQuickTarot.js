@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowser } from "../lib/supabase-browser.js";
 import VelaAccount from "./VelaAccount.js";
+import VelaFlipPage from "./VelaFlipPage.js";
 import VelaWaitingStage from "./VelaWaitingStage.js";
 
 const SPREAD_ID = "single-guidance";
@@ -163,9 +164,12 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
     return safeUsage;
   }
 
-  function beginQuestion(event) {
-    event.preventDefault();
-    if (!question.trim() || remaining <= 0) return;
+  function beginQuestion() {
+    if (remaining <= 0) return;
+    if (!question.trim()) {
+      setError("先留下一個想問的小問題。");
+      return;
+    }
     setError("");
     setSelectedIndex(null);
     setRequestId("");
@@ -284,95 +288,114 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
         <div className="quickTarotEyebrow">FREE · ONE CARD</div>
 
         {stage === "question" && (
-          <form className="quickQuestionCard" onSubmit={beginQuestion}>
-            <h1>{remaining > 0 ? "今天想問 Vela 什麼？" : "今天先看到這裡。"}</h1>
-            <p>{quotaLine}</p>
-            <textarea
-              rows={4}
-              maxLength={500}
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder="例如：我今天工作上最需要注意什麼？"
-              disabled={remaining <= 0}
-              autoFocus
-            />
-            <button className="primaryButton quickDrawButton" type="submit" disabled={!question.trim() || remaining <= 0}>抽一張牌 ✦</button>
-            {remaining <= 0 && (
-              <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Free 與 Vela+ 的差別</button>
-            )}
-          </form>
+          <VelaFlipPage pageKey="quick-question" step={1} total={4} label="問一件小事">
+            <div className="quickQuestionCard velaFlipContentCard">
+              <h1>{remaining > 0 ? "今天想問 Vela 什麼？" : "今天先看到這裡。"}</h1>
+              <p>{quotaLine}</p>
+              <textarea
+                rows={4}
+                maxLength={500}
+                value={question}
+                onChange={(event) => {
+                  setQuestion(event.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="例如：我今天工作上最需要注意什麼？"
+                disabled={remaining <= 0}
+                autoFocus
+              />
+              {remaining > 0 && <button className="primaryButton quickDrawButton" type="button" onClick={beginQuestion}>翻到選牌 ✦</button>}
+              {remaining <= 0 && (
+                <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Free 與 Vela+ 的差別</button>
+              )}
+            </div>
+          </VelaFlipPage>
         )}
 
         {stage === "select" && (
-          <div className="quickSelectionStage">
-            <h1>從牌桌上選一張。</h1>
-            <p>不用想哪張比較好。停在哪一張，就選哪一張。</p>
-            <div className="quickCardPool" aria-label="選擇一張塔羅牌">
-              {Array.from({ length: SELECTION_POOL_SIZE }, (_, index) => (
-                <button key={index} type="button" className="quickCardBack" onClick={() => chooseCard(index)} aria-label={`選擇第 ${index + 1} 張牌`}>
-                  <span>☾</span>
-                </button>
-              ))}
+          <VelaFlipPage pageKey="quick-select" step={2} total={4} label="選一張牌">
+            <div className="quickSelectionStage velaFlipContentCard">
+              <h1>從牌桌上選一張。</h1>
+              <p>不用想哪張比較好。停在哪一張，就選哪一張。</p>
+              <div className="quickCardPool" aria-label="選擇一張塔羅牌">
+                {Array.from({ length: SELECTION_POOL_SIZE }, (_, index) => (
+                  <button key={index} type="button" className="quickCardBack" onClick={() => chooseCard(index)} aria-label={`選擇第 ${index + 1} 張牌`}>
+                    <span>☾</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </VelaFlipPage>
         )}
 
         {stage === "drawing" && (
-          <VelaWaitingStage lines={["我把你選的那張牌收回來洗一下。", "好，這張牌的位置固定了。"]} glyph="✦" />
+          <VelaFlipPage pageKey="quick-drawing" step={2} total={4} label="洗牌中">
+            <div className="velaFlipContentCard velaFlipWaitingCard">
+              <VelaWaitingStage lines={["我把你選的那張牌收回來洗一下。", "好，這張牌的位置固定了。"]} glyph="✦" />
+            </div>
+          </VelaFlipPage>
         )}
 
         {stage === "reveal" && card && (
-          <div className="quickRevealStage">
-            <p>這張就是你剛剛選的牌。</p>
-            <button className="quickRevealCard" type="button" onClick={revealAndInterpret} disabled={loading}>
-              <span className="quickRevealBack">☾</span>
-            </button>
-            <button className="primaryButton" type="button" onClick={revealAndInterpret} disabled={loading}>翻牌</button>
-          </div>
+          <VelaFlipPage pageKey="quick-reveal" step={3} total={4} label="翻開這張牌">
+            <div className="quickRevealStage velaFlipContentCard">
+              <p>這張就是你剛剛選的牌。</p>
+              <button className="quickRevealCard" type="button" onClick={revealAndInterpret} disabled={loading}>
+                <span className="quickRevealBack">☾</span>
+              </button>
+              <button className="primaryButton" type="button" onClick={revealAndInterpret} disabled={loading}>翻牌</button>
+            </div>
+          </VelaFlipPage>
         )}
 
         {stage === "interpreting" && (
-          <VelaWaitingStage lines={WAITING_LINES} glyph="☾" />
+          <VelaFlipPage pageKey="quick-interpreting" step={3} total={4} label="Vela 正在看牌">
+            <div className="velaFlipContentCard velaFlipWaitingCard">
+              <VelaWaitingStage lines={WAITING_LINES} glyph="☾" />
+            </div>
+          </VelaFlipPage>
         )}
 
         {stage === "result" && result && card && (
-          <article className="quickResultCard">
-            <div className="quickResultQuestion">你問：{question.trim()}</div>
-            <div className="quickResultHero">
-              <div className={`quickResultCardImage ${card.orientation === "reversed" ? "isReversed" : ""}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${ORIENTATION_LABELS[card.orientation]}）`} />
+          <VelaFlipPage pageKey="quick-result" step={4} total={4} label="這次的訊息">
+            <article className="quickResultCard velaFlipContentCard">
+              <div className="quickResultQuestion">你問：{question.trim()}</div>
+              <div className="quickResultHero">
+                <div className={`quickResultCardImage ${card.orientation === "reversed" ? "isReversed" : ""}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${ORIENTATION_LABELS[card.orientation]}）`} />
+                </div>
+                <div>
+                  <span>你抽到</span>
+                  <h1>{card.nameZhTw}</h1>
+                  <p>{ORIENTATION_LABELS[card.orientation]}</p>
+                </div>
               </div>
-              <div>
-                <span>你抽到</span>
-                <h1>{card.nameZhTw}</h1>
-                <p>{ORIENTATION_LABELS[card.orientation]}</p>
+
+              <section className="quickResultReading">
+                <h2>{result.synthesis?.overview || "這張牌先提醒你一件事。"}</h2>
+                {result.synthesis?.narrative && <p>{result.synthesis.narrative}</p>}
+                {card.contextInterpretation && <p>{card.contextInterpretation}</p>}
+                {card.practicalFocus && <div className="quickPracticalFocus"><strong>今天可以先留意</strong><span>{card.practicalFocus}</span></div>}
+                {result.synthesis?.reflectionQuestions?.[0] && <blockquote>{result.synthesis.reflectionQuestions[0]}</blockquote>}
+              </section>
+
+              <div className="quickResultActions">
+                <button className="ghostButton" type="button" onClick={shareResult}>分享這次結果</button>
+                {remaining > 0 && <button className="primaryButton" type="button" onClick={askAnother}>再問一個小問題</button>}
               </div>
-            </div>
+              {shareNotice && <p className="quickShareNotice" role="status">{shareNotice}</p>}
 
-            <section className="quickResultReading">
-              <h2>{result.synthesis?.overview || "這張牌先提醒你一件事。"}</h2>
-              {result.synthesis?.narrative && <p>{result.synthesis.narrative}</p>}
-              {card.contextInterpretation && <p>{card.contextInterpretation}</p>}
-              {card.practicalFocus && <div className="quickPracticalFocus"><strong>今天可以先留意</strong><span>{card.practicalFocus}</span></div>}
-              {result.synthesis?.reflectionQuestions?.[0] && <blockquote>{result.synthesis.reflectionQuestions[0]}</blockquote>}
-            </section>
+              <aside className="quickUpgradeCard">
+                <span>✦ VELA+ DEEP READING</span>
+                <h3>有一件事情，不是一張牌能說完的嗎？</h3>
+                <p>Deep Reading 會先讓 Vela 理解你的情況，再決定要怎麼看；Free 不開放同一題自由追問。</p>
+                <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Deep Reading</button>
+              </aside>
 
-            <div className="quickResultActions">
-              <button className="ghostButton" type="button" onClick={shareResult}>分享這次結果</button>
-              {remaining > 0 && <button className="primaryButton" type="button" onClick={askAnother}>再問一個小問題</button>}
-            </div>
-            {shareNotice && <p className="quickShareNotice" role="status">{shareNotice}</p>}
-
-            <aside className="quickUpgradeCard">
-              <span>✦ VELA+ DEEP READING</span>
-              <h3>有一件事情，不是一張牌能說完的嗎？</h3>
-              <p>Deep Reading 會先讓 Vela 理解你的情況，再決定要怎麼看；Free 不開放同一題自由追問。</p>
-              <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Deep Reading</button>
-            </aside>
-
-            <p className="quickQuotaAfter">{quotaLine}</p>
-          </article>
+              <p className="quickQuotaAfter">{quotaLine}</p>
+            </article>
+          </VelaFlipPage>
         )}
 
         {error && <div className="quickTarotError" role="alert">{error}</div>}
