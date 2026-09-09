@@ -122,6 +122,29 @@
   color: #d7c8df;
 }
 
+/* OAuth returns to /, but visually it should return to the same waiting scene, never flash home. */
+body:has(.authResumeOverlay) {
+  overflow: hidden !important;
+}
+
+.authResumeOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  overflow: hidden;
+  background: #0d0912;
+}
+
+.authResumeOverlay .velaWaitingStage {
+  z-index: 1 !important;
+  inset: var(--vela-fixed-nav) 0 0 0 !important;
+  background: linear-gradient(180deg, rgba(20,11,29,.98), rgba(8,7,12,.995)) !important;
+}
+
+.authResumeOverlay .velaWaitingCard {
+  width: min(600px, calc(100vw - 52px)) !important;
+}
+
 /* Once the crystal has been tapped it is gone; the revealed Vela stage owns the screen. */
 .velaGuideHome .velaStage.isAwake .velaCrystalButton {
   display: none !important;
@@ -171,5 +194,9 @@
   .waitingAuthPortraitWrap {
     width: min(186px, 50vw);
     height: 166px;
+  }
+
+  .authResumeOverlay .velaWaitingCard {
+    width: calc(100vw - 52px) !important;
   }
 }
