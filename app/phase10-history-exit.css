@@ -14,6 +14,12 @@
    the avatar cannot be mistaken for an exit control while the panel is open. */
 body:has(.historyOverlay) .brandBar {
   z-index: 102 !important;
+  /* The normal nav intentionally fades to transparent over the home artwork.
+     History is an opaque surface, so keep the whole nav opaque to prevent the
+     warm hero artwork from bleeding through as a yellow strip. */
+  background: #0c0811 !important;
+  border-bottom: 1px solid rgba(199,167,255,.10);
+  backdrop-filter: blur(12px);
 }
 
 body:has(.historyOverlay) .accountDock {
