@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const flowPath = new URL("../components/TarotReadingFlow.js", import.meta.url);
+const flowPath = new URL("../components/TarotReadingFlowV4.js", import.meta.url);
 const routePath = new URL("../app/api/readings/follow-up/route.js", import.meta.url);
 const enginePath = new URL("../lib/reading-follow-up.js", import.meta.url);
 const drawPath = new URL("../lib/tarot-draw.js", import.meta.url);
@@ -20,18 +20,20 @@ test("Phase 5 preserves the active reading and the user's card choices in browse
   assert.match(source, /setStage\("result"\)/u);
 });
 
-test("immersive flow hides landing explainers after start and adds a real face-down selection stage", async () => {
+test("immersive Tarot V4 uses a real face-down selection and ordered reveal stage", async () => {
   const [source, page, draw] = await Promise.all([
     readFile(flowPath, "utf8"),
     readFile(pagePath, "utf8"),
     readFile(drawPath, "utf8"),
   ]);
 
-  assert.match(source, /stage === "welcome"/u);
+  assert.match(source, /stage === "question"/u);
   assert.match(source, /stage === "select"/u);
-  assert.match(source, /Vela 把牌展開了/u);
+  assert.match(source, /finalTarotSelectionStage/u);
   assert.match(source, /selectedCardIndexes/u);
-  assert.match(source, /讓 Vela 展牌/u);
+  assert.match(source, /開始選牌/u);
+  assert.match(source, /翻開你選的牌/u);
+  assert.match(source, /依序翻開你選的牌/u);
   assert.doesNotMatch(page, /trustGrid/u);
   assert.match(draw, /selectedCardIndexes/u);
   assert.match(draw, /deck\[deckIndex\]/u);
@@ -50,9 +52,9 @@ test("Phase 5 continuation stays with the same reading without messenger-style u
   const source = await readFile(flowPath, "utf8");
 
   assert.match(source, /\/api\/readings\/follow-up/u);
-  assert.match(source, /還想從這組牌多看一點嗎？/u);
-  assert.match(source, /同一張占卜桌/u);
-  assert.match(source, /followUpVelaNote/u);
+  assert.match(source, /還想沿著這組牌問一件事？/u);
+  assert.match(source, /followUps/u);
+  assert.match(source, /繼續問 Vela/u);
   assert.doesNotMatch(source, /className="followUpUser"/u);
   assert.match(source, /開始新的占卜/u);
   assert.match(source, /MAX_FOLLOW_UP_MESSAGE_LENGTH = 320/u);
