@@ -1,0 +1,711 @@
+/* Conversation-first UI correction.
+   Keep Vela and the active interaction on one viewport instead of stacking long cards below the hero. */
+
+/* ---------- Home: one immersive Vela stage ---------- */
+body:has(.velaGuideHome) {
+  overflow: hidden;
+}
+
+body:has(.velaGuideHome) .brandBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  width: 100%;
+  padding: max(14px, env(safe-area-inset-top)) 20px 0;
+  pointer-events: none;
+}
+
+body:has(.velaGuideHome) .brandBar .brandMark {
+  pointer-events: auto;
+}
+
+body:has(.velaGuideHome) .brandBar + .shell {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+.readingShell:has(.velaGuideHome),
+.velaGuideHome,
+.velaGuideHome .velaHomeStageLayout,
+.velaGuideHome .velaStage,
+.velaGuideHome .velaArtFrame {
+  width: 100%;
+  max-width: none;
+  min-height: 100svh;
+  height: 100svh;
+  margin: 0;
+}
+
+.velaGuideHome {
+  position: relative;
+  overflow: hidden;
+  background: #0d0912;
+}
+
+.velaGuideHome .velaHomeStageLayout {
+  display: block;
+}
+
+.velaGuideHome .velaStage {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background:
+    linear-gradient(180deg, rgba(22, 12, 30, .03), rgba(10, 6, 14, .17)),
+    url("/images/vela/vela-home-background.webp") center / cover no-repeat;
+}
+
+.velaGuideHome .velaArtFrame,
+.velaGuideHome .velaCharacterSlot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
+.velaGuideHome .velaCharacterSlot {
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+.velaGuideHome .velaCharacterArtwork {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: none !important;
+  filter: drop-shadow(0 20px 34px rgba(26, 12, 34, .18));
+  transition: opacity 520ms ease, filter 520ms ease !important;
+}
+
+/* vela-home-art.css forced both artworks to opacity:1; restore the intended two-state crossfade. */
+.velaGuideHome .velaHoodedArtwork {
+  opacity: 1 !important;
+}
+
+.velaGuideHome .velaHoodedArtwork.isHidden {
+  opacity: 0 !important;
+  filter: blur(5px) drop-shadow(0 20px 34px rgba(26, 12, 34, .18));
+}
+
+.velaGuideHome .velaRevealedArtwork {
+  opacity: 0 !important;
+}
+
+.velaGuideHome .velaRevealedArtwork.isVisible {
+  opacity: 1 !important;
+}
+
+.velaGuideHome .velaCharacterFallback,
+.velaGuideHome .velaCharacterHalo,
+.velaGuideHome .velaStageGlow,
+.velaGuideHome .velaStageStars,
+.velaGuideHome .velaTable {
+  display: none !important;
+}
+
+/* Crystal is the only CTA before the first tap. */
+.velaGuideHome .velaCrystalButton {
+  position: absolute;
+  left: 50%;
+  top: 82%;
+  bottom: auto;
+  z-index: 12;
+  width: clamp(172px, 25vw, 228px);
+  height: clamp(172px, 25vw, 228px);
+  transform: translate(-50%, -50%);
+  transition: opacity 320ms ease, transform 420ms ease;
+}
+
+.velaGuideHome .velaCrystalArtwork {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 28px rgba(205, 150, 255, .58));
+}
+
+.velaGuideHome .velaCrystalAura {
+  width: 82%;
+  height: 82%;
+  top: 50%;
+  background: radial-gradient(circle, rgba(221, 173, 255, .42), rgba(213, 146, 255, .16) 47%, transparent 72%);
+  filter: blur(10px);
+}
+
+.velaGuideHome .velaCrystalHint {
+  bottom: -4px;
+  padding: 8px 14px;
+  max-width: none;
+  border: 1px solid rgba(239, 218, 255, .28);
+  border-radius: 999px;
+  color: #f3e7fb;
+  background: rgba(16, 10, 22, .72);
+  box-shadow: 0 8px 28px rgba(0,0,0,.3);
+  text-shadow: none;
+  backdrop-filter: blur(12px);
+  font-size: .72rem;
+}
+
+.velaGuideHome .velaStage.isAwake .velaCrystalButton {
+  opacity: .16;
+  transform: translate(-50%, -50%) scale(.9);
+  pointer-events: none;
+}
+
+.velaGuideHome .velaStage.isAwake::after {
+  display: block;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(9, 5, 13, .06), rgba(9, 5, 13, .08) 48%, rgba(9, 5, 13, .48) 100%);
+}
+
+/* The post-crystal UI is an overlay on Vela, not a second page section. */
+.velaGuideHome .velaHomeEntry {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  height: 100svh;
+  margin: 0;
+  padding: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.velaGuideHome .velaDialogueBubble {
+  position: absolute;
+  top: max(76px, calc(env(safe-area-inset-top) + 60px));
+  left: 50%;
+  width: min(560px, calc(100% - 34px));
+  margin: 0;
+  padding: 17px 20px 18px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(229, 204, 255, .24);
+  border-radius: 22px;
+  background: rgba(17, 11, 23, .76);
+  box-shadow: 0 18px 54px rgba(0,0,0,.3);
+  backdrop-filter: blur(16px);
+  text-align: center;
+  pointer-events: auto;
+  animation: velaConversationIn 420ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.velaGuideHome .velaDialogueBubble::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 15px;
+  height: 15px;
+  transform: translate(-50%, -8px) rotate(45deg);
+  border-right: 1px solid rgba(229, 204, 255, .24);
+  border-bottom: 1px solid rgba(229, 204, 255, .24);
+  background: rgba(17, 11, 23, .82);
+}
+
+.velaGuideHome .velaDialogueBubble .eyebrow {
+  margin-bottom: 5px;
+  font-size: .66rem;
+}
+
+.velaGuideHome .velaDialogueBubble h1 {
+  margin: 0;
+  font-size: clamp(1.45rem, 5.6vw, 2.1rem);
+  line-height: 1.15;
+}
+
+.velaGuideHome .velaDialogueBubble p {
+  max-width: 460px;
+  margin: 8px auto 0;
+  color: rgba(234, 221, 240, .76);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.velaGuideHome .mode-choice .velaEntryChoices {
+  position: absolute;
+  left: 50%;
+  bottom: max(22px, calc(env(safe-area-inset-bottom) + 18px));
+  width: min(560px, calc(100% - 30px));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  pointer-events: auto;
+  animation: velaChoicesIn 480ms 80ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.velaGuideHome .mode-choice .velaEntryChoice {
+  min-height: 58px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(221, 195, 247, .24);
+  border-radius: 999px;
+  color: #f4edf7;
+  background: rgba(17, 11, 23, .82);
+  box-shadow: 0 14px 36px rgba(0,0,0,.24);
+  backdrop-filter: blur(14px);
+}
+
+.velaGuideHome .mode-choice .velaEntryChoice.isPrimary {
+  border-color: rgba(211, 169, 255, .52);
+  background: linear-gradient(135deg, rgba(147, 91, 193, .86), rgba(93, 57, 124, .86));
+}
+
+.velaGuideHome .mode-choice .velaEntryChoice > span,
+.velaGuideHome .mode-choice .velaEntryChoice small {
+  display: none;
+}
+
+.velaGuideHome .mode-choice .velaEntryChoice strong {
+  font-size: .98rem;
+  letter-spacing: .01em;
+}
+
+/* Keep the first interaction faithful to the agreed two-choice design. Direct mode links can return later. */
+.velaGuideHome .mode-choice .velaDirectModes {
+  display: none !important;
+}
+
+/* Free-form question stays on the same Vela background as a compact bottom sheet. */
+.velaGuideHome .mode-freeform .velaGuideForm,
+.velaGuideHome .mode-guided .guidedEntryPanel {
+  position: absolute;
+  left: 50%;
+  bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px));
+  width: min(620px, calc(100% - 24px));
+  transform: translateX(-50%);
+  margin: 0;
+  pointer-events: auto;
+  border: 1px solid rgba(226, 202, 250, .22);
+  border-radius: 26px;
+  background: rgba(15, 10, 20, .88);
+  box-shadow: 0 20px 60px rgba(0,0,0,.34);
+  backdrop-filter: blur(18px);
+  animation: velaChoicesIn 420ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.velaGuideHome .mode-freeform .velaGuideForm {
+  padding: 18px;
+}
+
+.velaGuideHome .mode-freeform .guidedPanelHeading {
+  margin-bottom: 10px;
+}
+
+.velaGuideHome .mode-freeform .guidedPanelHeading h2 {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+}
+
+.velaGuideHome .mode-freeform .velaGuideForm label {
+  display: none;
+}
+
+.velaGuideHome .mode-freeform .velaGuideForm textarea {
+  min-height: 104px;
+  max-height: 22svh;
+  resize: none;
+}
+
+.velaGuideHome .mode-freeform .velaQuickPrompts {
+  display: none;
+}
+
+.velaGuideHome .mode-guided .guidedEntryPanel {
+  max-height: 50svh;
+  padding: 17px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.velaGuideHome .mode-guided .guidedPanelHeading h2 {
+  margin: 3px 0 0;
+  font-size: 1.05rem;
+}
+
+.velaGuideHome .mode-guided .guidedChoiceGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.velaGuideHome .mode-guided .guidedChoiceGrid button {
+  min-height: 48px;
+  padding: 10px;
+}
+
+.guideRecommendationOverlay {
+  z-index: 110;
+}
+
+/* ---------- Tarot: remove the old dashboard feeling ---------- */
+.readingExperience[class*="stage-"] {
+  position: relative;
+}
+
+.readingExperience.stage-welcome,
+.readingExperience.stage-question,
+.readingExperience.stage-spread,
+.readingExperience.stage-select,
+.readingExperience.stage-drawing,
+.readingExperience.stage-reveal,
+.readingExperience.stage-interpreting {
+  min-height: calc(100svh - 76px);
+  align-content: start;
+}
+
+.stage-welcome::before,
+.stage-question::before,
+.stage-spread::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(184, 127, 242, .16), transparent 42%),
+    url("/images/vela/vela-tarot.webp") center bottom / min(70vw, 620px) auto no-repeat;
+  opacity: .9;
+}
+
+.stage-welcome .trustGrid {
+  display: none;
+}
+
+.stage-welcome .velaHeader {
+  position: relative;
+  z-index: 2;
+  width: min(620px, 92%);
+  margin: 0 auto;
+  padding: 8vh 0 0;
+  display: block;
+  text-align: center;
+}
+
+.stage-welcome .velaPortrait,
+.stage-welcome .velaHeader p,
+.stage-welcome .crystalStage > p {
+  display: none;
+}
+
+.stage-welcome .velaHeader h1 {
+  margin: 8px 0;
+  font-size: clamp(1.8rem, 6vw, 2.7rem);
+  text-shadow: 0 4px 24px rgba(8,4,12,.8);
+}
+
+.stage-welcome .crystalStage {
+  position: absolute;
+  left: 50%;
+  bottom: max(24px, calc(env(safe-area-inset-bottom) + 20px));
+  width: min(520px, calc(100% - 28px));
+  min-height: 0;
+  transform: translateX(-50%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.stage-welcome .crystalBall {
+  width: 100%;
+  height: 58px;
+  border-radius: 999px;
+  display: flex;
+  flex-direction: row;
+  gap: 9px;
+  border-color: rgba(215, 178, 252, .42);
+  background: rgba(19, 12, 25, .82);
+  box-shadow: 0 14px 38px rgba(0,0,0,.3), 0 0 35px rgba(174,118,255,.14);
+  backdrop-filter: blur(14px);
+}
+
+.stage-welcome .crystalBall span {
+  font-size: 1rem;
+}
+
+.stage-welcome .crystalBall strong {
+  font-size: .92rem;
+}
+
+/* Progress is secondary, not the dominant UI. */
+.readingExperience:not(.stage-result) .readingSteps {
+  position: relative;
+  z-index: 4;
+  width: min(520px, calc(100% - 24px));
+  margin: 10px auto 0;
+  gap: 6px;
+}
+
+.readingExperience:not(.stage-result) .readingStep {
+  justify-content: center;
+  padding: 7px 8px;
+  background: rgba(15,10,20,.48);
+  backdrop-filter: blur(10px);
+}
+
+.readingExperience:not(.stage-result) .readingStep strong {
+  font-size: .7rem;
+}
+
+/* Question and spread selection are compact sheets with Tarot Vela still visible behind them. */
+.stage-question .readingPanel,
+.stage-spread .readingPanel {
+  position: absolute;
+  left: 50%;
+  bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px));
+  width: min(680px, calc(100% - 24px));
+  max-height: 58svh;
+  margin: 0;
+  transform: translateX(-50%);
+  overflow-y: auto;
+  padding: 20px;
+  border-color: rgba(223, 196, 249, .22);
+  background: rgba(15,10,20,.9);
+  backdrop-filter: blur(18px);
+}
+
+.stage-question .readingPanel textarea {
+  min-height: 112px;
+  max-height: 22svh;
+  resize: none;
+}
+
+.stage-spread .spreadGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stage-spread .spreadOption {
+  min-height: 130px;
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.stage-spread .spreadOption strong {
+  margin-top: 8px;
+}
+
+.stage-spread .spreadOption p {
+  margin: 6px 0;
+  font-size: .75rem;
+}
+
+/* Once cards are involved, cards become the visual focus and Vela recedes. */
+.stage-select .readingPanel,
+.stage-drawing .readingPanel,
+.stage-reveal .readingPanel,
+.stage-interpreting .readingPanel {
+  width: min(920px, calc(100% - 20px));
+  margin: 0 auto;
+}
+
+.stage-select .readingPanel {
+  padding-top: 18px;
+  overflow: visible;
+  border-color: rgba(221, 196, 250, .16);
+  background: linear-gradient(180deg, rgba(18,12,24,.72), rgba(12,8,16,.9));
+}
+
+.stage-select .selectionHeading p {
+  max-width: 560px;
+}
+
+.stage-select .cardFan {
+  min-height: 300px;
+  padding-top: 50px;
+}
+
+.stage-select .selectionCard {
+  opacity: 0;
+  animation: velaFanDeal 620ms cubic-bezier(.18,.78,.24,1) forwards;
+}
+
+.stage-select .selectionCard:nth-child(1) { animation-delay: 30ms; }
+.stage-select .selectionCard:nth-child(2) { animation-delay: 65ms; }
+.stage-select .selectionCard:nth-child(3) { animation-delay: 100ms; }
+.stage-select .selectionCard:nth-child(4) { animation-delay: 135ms; }
+.stage-select .selectionCard:nth-child(5) { animation-delay: 170ms; }
+.stage-select .selectionCard:nth-child(6) { animation-delay: 205ms; }
+.stage-select .selectionCard:nth-child(7) { animation-delay: 240ms; }
+.stage-select .selectionCard:nth-child(8) { animation-delay: 275ms; }
+.stage-select .selectionCard:nth-child(9) { animation-delay: 310ms; }
+.stage-select .selectionCard:nth-child(10) { animation-delay: 345ms; }
+.stage-select .selectionCard:nth-child(11) { animation-delay: 380ms; }
+.stage-select .selectionCard:nth-child(12) { animation-delay: 415ms; }
+
+.stage-drawing .shuffleGlyph {
+  position: relative;
+  width: 104px;
+  height: 164px;
+  border: 0;
+  border-radius: 14px;
+  color: transparent;
+  background: #120d18 url("/images/vela/tarot-card-back.webp") center / cover no-repeat;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4);
+  animation: velaDeckShuffle 1.15s ease-in-out infinite;
+}
+
+.stage-drawing .shuffleGlyph::before,
+.stage-drawing .shuffleGlyph::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  box-shadow: inherit;
+  z-index: -1;
+}
+
+.stage-drawing .shuffleGlyph::before {
+  transform: translate(-14px, 5px) rotate(-5deg);
+}
+
+.stage-drawing .shuffleGlyph::after {
+  transform: translate(14px, 5px) rotate(5deg);
+}
+
+@keyframes velaConversationIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.98); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes velaChoicesIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes velaFanDeal {
+  from { opacity: 0; transform: translateY(110px) rotate(0deg) scale(.72); }
+  to { opacity: 1; transform: translateY(var(--fan-lift)) rotate(var(--fan-rotation)) scale(1); }
+}
+
+@keyframes velaDeckShuffle {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  35% { transform: translateX(-18px) rotate(-4deg); }
+  70% { transform: translateX(18px) rotate(4deg); }
+}
+
+@media (max-width: 760px) {
+  .velaGuideHome .velaCharacterArtwork {
+    object-fit: cover;
+    object-position: center bottom;
+  }
+
+  .velaGuideHome .velaCrystalButton {
+    top: 81.5%;
+    width: 164px;
+    height: 164px;
+  }
+
+  .velaGuideHome .velaDialogueBubble {
+    top: max(68px, calc(env(safe-area-inset-top) + 54px));
+    width: calc(100% - 24px);
+    padding: 14px 16px 15px;
+  }
+
+  .velaGuideHome .velaDialogueBubble p {
+    font-size: .76rem;
+  }
+
+  .velaGuideHome .mode-choice .velaEntryChoices {
+    width: calc(100% - 22px);
+  }
+
+  .velaGuideHome .mode-freeform .velaGuideForm,
+  .velaGuideHome .mode-guided .guidedEntryPanel {
+    width: calc(100% - 18px);
+    border-radius: 22px;
+  }
+
+  .velaGuideHome .mode-guided .guidedEntryPanel {
+    max-height: 46svh;
+  }
+
+  .stage-welcome::before,
+  .stage-question::before,
+  .stage-spread::before {
+    background-size: min(104vw, 520px) auto;
+    background-position: 50% 38%;
+    opacity: .72;
+  }
+
+  .stage-welcome .velaHeader {
+    padding-top: 9vh;
+  }
+
+  .readingExperience:not(.stage-result) .readingStep strong {
+    display: none;
+  }
+
+  .readingExperience:not(.stage-result) .readingStep {
+    padding: 6px;
+  }
+
+  .stage-question .readingPanel,
+  .stage-spread .readingPanel {
+    max-height: 52svh;
+    padding: 17px;
+  }
+
+  .stage-spread .spreadGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-spread .spreadOption {
+    min-height: 0;
+  }
+
+  .stage-select .readingPanel,
+  .stage-drawing .readingPanel,
+  .stage-reveal .readingPanel,
+  .stage-interpreting .readingPanel {
+    width: calc(100% - 12px);
+    margin-right: auto;
+  }
+
+  .stage-select .selectionHeading p {
+    display: none;
+  }
+
+  .stage-select .tarotVelaGuide {
+    top: 52px;
+    right: -32px;
+    width: 142px;
+    height: 244px;
+    opacity: .24;
+  }
+
+  .stage-select .cardFan {
+    min-height: 270px;
+    margin-inline: -12px;
+    padding-inline: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaGuideHome .velaDialogueBubble,
+  .velaGuideHome .velaEntryChoices,
+  .velaGuideHome .velaGuideForm,
+  .velaGuideHome .guidedEntryPanel,
+  .stage-select .selectionCard,
+  .stage-drawing .shuffleGlyph {
+    animation: none !important;
+  }
+}

@@ -6,6 +6,15 @@ import VelaAccount from "./VelaAccount.js";
 const SESSION_KEY = "askvela.current-dream.v1";
 const PENDING_AUTH_KEY = "askvela.pending-auth-experience.v1";
 
+const DREAM_WAITING_LINES = [
+  "我先把你最記得的畫面放在前面。",
+  "夢裡有些東西很吵，有些反而躲得很安靜。",
+  "我在分辨哪些是畫面，哪些是你醒來後留下的感覺。",
+  "有一個地方我想再停一下，不急著替它下結論。",
+  "我正在把夢裡的線索，和你最近的生活放到同一張桌上。",
+  "再一下，我想先從最有重量的那個畫面跟你說。",
+];
+
 function newRequestId() {
   if (globalThis.crypto?.randomUUID) return `dream-${globalThis.crypto.randomUUID()}`;
   return `dream-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
@@ -42,7 +51,9 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   const [requestId, setRequestId] = useState(() => newRequestId());
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [waitingLine, setWaitingLine] = useState(0);
   const [error, setError] = useState("");
+  const [shareNotice, setShareNotice] = useState("");
 
   const sourceGroups = useMemo(() => groupDreamSources(reading?.sources || []), [reading]);
   const retrievedSources = reading?.retrievedSources || [];
@@ -51,6 +62,17 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   const canInterpret = dreamText.trim().length >= 2 && !bareLead;
   const speechOverview = reading?.velaSpeech?.overview || reading?.result?.overview || "";
   const speechNarrative = reading?.velaSpeech?.narrative || reading?.result?.hypotheses?.[0]?.interpretation || "";
+
+  useEffect(() => {
+    if (!loading) {
+      setWaitingLine(0);
+      return undefined;
+    }
+    const timer = window.setInterval(() => {
+      setWaitingLine((current) => (current + 1) % DREAM_WAITING_LINES.length);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [loading]);
 
   function restoreDream(restored) {
     setReading(restored);
@@ -110,6 +132,7 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
     event.preventDefault();
     if (loading || !canInterpret) return;
     setLoading(true);
+    setWaitingLine(0);
     setError("");
     try {
       const response = await fetch("/api/dreams/reading", {
@@ -134,26 +157,56 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
     setWakingLifeContext("");
     setRequestId(newRequestId());
     setError("");
+    setShareNotice("");
     window.sessionStorage.removeItem(SESSION_KEY);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }
+
+  function goHome() {
+    if (onExperienceChange) onExperienceChange("home");
+    else window.dispatchEvent(new CustomEvent("vela:experience", { detail: "home" }));
+  }
+
+  async function shareReading() {
+    if (!reading) return;
+    const title = "Vela｜夢境解讀";
+    const text = `${speechOverview}\n\n${speechNarrative}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: window.location.href });
+        setShareNotice("分享完成");
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${title}\n${text}\n${window.location.href}`);
+        setShareNotice("已複製分享文字");
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") setShareNotice("這次沒有成功分享，可以再試一次。");
+    }
   }
 
   if (reading) {
     const [primaryHypothesis, ...otherHypotheses] = reading.result.hypotheses || [];
+    const [firstQuestion, ...otherQuestions] = reading.result.reflectionQuestions || [];
 
     return (
       <section className="dreamReadingFlow dreamReadingResult">
-        <VelaAccount
-          experience="dream"
-          activeDream={reading}
-          onRestoreDream={restoreDream}
-          onExperienceChange={onExperienceChange}
-        />
-
         <header className="dreamHero compact dreamSpeechHero">
           <div className="eyebrow">VELA · 解夢</div>
           <h1>{speechOverview}</h1>
           <p>{speechNarrative}</p>
         </header>
+
+        <section className="dreamMindsetCard dreamMindsetSpotlight">
+          <div className="eyebrow">最近的心境探索</div>
+          <p>{reading.result.wakingLifeConnection}</p>
+        </section>
+
+        {firstQuestion && (
+          <section className="velaCuriosityCard">
+            <div className="eyebrow">VELA 想問你</div>
+            <p>{firstQuestion}</p>
+          </section>
+        )}
 
         <details className="dreamDetails dreamFullAnalysis">
           <summary>查看完整夢境分析</summary>
@@ -165,11 +218,6 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
                 <p>{primaryHypothesis.interpretation}</p>
               </section>
             )}
-
-            <section className="dreamMindsetCard">
-              <div className="eyebrow">最近的心態線索</div>
-              <p>{reading.result.wakingLifeConnection}</p>
-            </section>
 
             {otherHypotheses.length > 0 && (
               <section className="dreamHypotheses isCollapsedSet">
@@ -190,11 +238,11 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
               </ul>
             </section>
 
-            {reading.result.reflectionQuestions?.length > 0 && (
+            {otherQuestions.length > 0 && (
               <section className="dreamReflectionSection">
-                <div className="eyebrow">如果你想再往下想一點（可選）</div>
+                <div className="eyebrow">如果你想再往下想一點</div>
                 <ul className="dreamCompactList">
-                  {reading.result.reflectionQuestions.map((item) => <li key={item}>{item}</li>)}
+                  {otherQuestions.map((item) => <li key={item}>{item}</li>)}
                 </ul>
               </section>
             )}
@@ -230,9 +278,19 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
         <aside className="dreamGrounding"><strong>Vela 的提醒：</strong> {reading.result.groundingNote}</aside>
         <p className="dreamDisclaimer">{reading.disclaimer}</p>
 
-        <div className="dreamActions">
-          <button className="primaryButton" type="button" onClick={startOver}>解讀另一個夢</button>
+        <VelaAccount
+          experience="dream"
+          activeDream={reading}
+          onRestoreDream={restoreDream}
+          onExperienceChange={onExperienceChange}
+        />
+
+        <div className="resultExitActions dreamActions">
+          <button className="primaryButton" type="button" onClick={shareReading}>分享這次結果</button>
+          <button className="ghostButton" type="button" onClick={startOver}>解讀另一個夢</button>
+          <button className="ghostButton" type="button" onClick={goHome}>回首頁</button>
         </div>
+        {shareNotice && <p className="shareNotice" role="status">{shareNotice}</p>}
       </section>
     );
   }
@@ -240,34 +298,45 @@ export default function DreamReadingFlow({ initialDream = "", onExperienceChange
   return (
     <section className="dreamReadingFlow dreamReadingEntry">
       <VelaAccount experience="dream" onExperienceChange={onExperienceChange} onRestoreDream={restoreDream} />
-      <header className="dreamHero dreamIntroHero">
-        <div className="eyebrow">VELA · 解夢</div>
-        <h1>先說你最記得的畫面就好。</h1>
-        <p>一句也可以。像「我夢到蛇」、「我一直在跑」或「我回到高中」。不用先把整個夢拼完整，也不用先想它代表什麼。</p>
-      </header>
 
-      <form className="dreamForm dreamQuickForm" onSubmit={interpretDream}>
-        <label>你還記得什麼？
-          <textarea rows={4} maxLength={4000} value={dreamText} onChange={(event) => setDreamText(event.target.value)} placeholder="例如：我夢到蛇。" />
-          <small>{dreamText.length}/4000</small>
-        </label>
+      {loading ? (
+        <section className="dreamLoadingStage" aria-live="polite">
+          <div className="dreamLoadingGlyph" aria-hidden="true">☾</div>
+          <p className="dreamWaitingLine" key={waitingLine}>{DREAM_WAITING_LINES[waitingLine]}</p>
+          <div className="dreamLoadingProgress" aria-hidden="true"><span /></div>
+        </section>
+      ) : (
+        <>
+          <header className="dreamHero dreamIntroHero">
+            <div className="eyebrow">VELA · 解夢</div>
+            <h1>先說你最記得的畫面就好。</h1>
+            <p>一句也可以。像「我夢到蛇」、「我一直在跑」或「我回到高中」。不用先把整個夢拼完整，也不用先想它代表什麼。</p>
+          </header>
 
-        {bareLead && (
-          <div className="dreamFormNote">不用寫完整。只要再補一個你最記得的畫面、東西或感覺就夠了，例如「夢裡有蛇」或「我一直在跑」。</div>
-        )}
+          <form className="dreamForm dreamQuickForm" onSubmit={interpretDream}>
+            <label>你還記得什麼？
+              <textarea rows={4} maxLength={4000} value={dreamText} onChange={(event) => setDreamText(event.target.value)} placeholder="例如：我夢到蛇。" />
+              <small>{dreamText.length}/4000</small>
+            </label>
 
-        <details className="dreamOptionalDetails">
-          <summary>想補充最近的生活背景（可選）</summary>
-          <label>最近有什麼事讓你比較有感？
-            <textarea rows={3} maxLength={1200} value={wakingLifeContext} onChange={(event) => setWakingLifeContext(event.target.value)} placeholder="不填也沒關係。" />
-            <small>{wakingLifeContext.length}/1200</small>
-          </label>
-        </details>
+            {bareLead && (
+              <div className="dreamFormNote">不用寫完整。只要再補一個你最記得的畫面、東西或感覺就夠了，例如「夢裡有蛇」或「我一直在跑」。</div>
+            )}
 
-        <div className="dreamFormNote isQuiet">只記得一個人、一個物件或一種感覺，也可以先從那裡開始。</div>
-        {error && <div className="accountMessage isError" role="alert">{error}</div>}
-        <button className="primaryButton dreamSubmit" type="submit" disabled={loading || !canInterpret}>{loading ? "Vela 正在整理這個夢…" : "先看看這個夢可能在說什麼"}</button>
-      </form>
+            <details className="dreamOptionalDetails">
+              <summary>想補充最近的生活背景（可選）</summary>
+              <label>最近有什麼事讓你比較有感？
+                <textarea rows={3} maxLength={1200} value={wakingLifeContext} onChange={(event) => setWakingLifeContext(event.target.value)} placeholder="不填也沒關係。" />
+                <small>{wakingLifeContext.length}/1200</small>
+              </label>
+            </details>
+
+            <div className="dreamFormNote isQuiet">只記得一個人、一個物件或一種感覺，也可以先從那裡開始。</div>
+            {error && <div className="accountMessage isError" role="alert">{error}</div>}
+            <button className="primaryButton dreamSubmit" type="submit" disabled={!canInterpret}>先看看這個夢可能在說什麼</button>
+          </form>
+        </>
+      )}
     </section>
   );
 }

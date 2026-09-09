@@ -12,7 +12,10 @@ export const runtime = "nodejs";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const requestId = request.headers.get("Idempotency-Key") || body?.requestId;
+    // requestId is part of the original tarot draw identity. Follow-up callers may
+    // use a distinct Idempotency-Key for the follow-up operation itself, so never
+    // let that header replace the original reading requestId when the body has it.
+    const requestId = body?.requestId || request.headers.get("Idempotency-Key");
     const result = await answerReadingFollowUp({ ...body, requestId });
 
     return NextResponse.json(result, {

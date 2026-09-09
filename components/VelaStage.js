@@ -25,11 +25,11 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
           <div className="velaCharacterFallback"><div className="velaFallbackHat" /><div className="velaFallbackHead" /><div className="velaFallbackHair velaFallbackHairLeft" /><div className="velaFallbackHair velaFallbackHairRight" /><div className="velaFallbackBody" /></div>
         </div>
 
-        <button className="velaCrystalButton" type="button" onClick={onCrystalClick} aria-label="觸碰水晶球開始">
+        <button className="velaCrystalButton" type="button" onClick={onCrystalClick} aria-label={awakened ? "Vela 的水晶球" : "觸碰水晶球開始"} disabled={awakened}>
           <span className="velaCrystalAura" aria-hidden="true" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className={`velaCrystalArtwork ${loaded.crystal ? "isLoaded" : ""}`} src="/images/vela/crystal-ball.webp" alt="" draggable="false" onLoad={() => markLoaded("crystal")} />
-          <span className="velaCrystalHint">{awakened ? "Vela 正在聽" : "觸碰水晶球開始"}</span>
+          {!awakened && <span className="velaCrystalHint">觸碰水晶球開始</span>}
         </button>
       </div>
     </div>

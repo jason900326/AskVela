@@ -1,0 +1,353 @@
+/* Tarot result v3 — mobile alignment, explicit article hierarchy, and limited clarifier draws. */
+
+/* Home: let Vela visually continue behind the journey panel instead of ending at a hard horizontal seam. */
+.velaGuideHome.entry-choice .velaCharacterArtwork {
+  top: 6.5svh !important;
+  height: 76svh !important;
+}
+
+.velaGuideHome.entry-choice .velaJourneyPanel {
+  bottom: max(18px, calc(env(safe-area-inset-bottom) + 12px)) !important;
+  overflow: visible;
+}
+
+.velaGuideHome.entry-choice .velaJourneyPanel::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: -26px;
+  height: 28px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(29,17,36,0), rgba(42,25,51,.78));
+  filter: blur(1px);
+}
+
+/* Interpreting: reset every legacy positioning rule. The panel must be centered in normal flow. */
+.stage-interpreting {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.stage-interpreting .readingPanel,
+.stage-interpreting .loadingPanel {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+  width: min(760px, calc(100% - 24px)) !important;
+  max-width: 760px !important;
+  min-height: min(58svh, 520px) !important;
+  margin: clamp(28px, 7svh, 76px) auto 28px !important;
+  padding-inline: clamp(18px, 4vw, 30px) !important;
+}
+
+/* Main Tarot result: the synthesis overview is the H1-like title. The long synthesis narrative belongs in details. */
+.stage-result .resultIntro {
+  text-align: left !important;
+}
+
+.stage-result .resultIntro .velaSummary {
+  display: none !important;
+}
+
+.stage-result .resultIntro h2 {
+  margin: 8px 0 0 !important;
+  font-size: clamp(2rem, 7vw, 3.25rem) !important;
+  line-height: 1.14 !important;
+  letter-spacing: -.025em;
+}
+
+/* Closed details doubles as the visible card-by-card article. */
+.stage-result .deepReading:not([open]) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .resultCards::before {
+  display: none !important;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .resultCards {
+  display: grid !important;
+  gap: 0 !important;
+}
+
+.stage-result .deepReading:not([open]) .resultCard {
+  padding: 22px 0 24px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(226,204,244,.12) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.stage-result .deepReading:not([open]) .resultCard:first-child {
+  padding-top: 8px !important;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: baseline !important;
+  justify-content: flex-start !important;
+  gap: 5px 8px !important;
+  text-align: left !important;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading > div {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading small {
+  display: inline !important;
+  color: #cba9ef !important;
+  font-size: clamp(1rem, 3.6vw, 1.2rem) !important;
+  font-weight: 820 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.45;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading small::after {
+  content: "的牌你抽到";
+  margin-left: .12em;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading h3 {
+  display: inline !important;
+  margin: 0 !important;
+  color: #f4edf6;
+  font: 820 clamp(1.08rem, 3.8vw, 1.3rem)/1.45 Inter, system-ui, sans-serif !important;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading h3 span {
+  display: none !important;
+}
+
+.stage-result .deepReading:not([open]) .resultCardHeading em {
+  position: static !important;
+  padding: 3px 8px !important;
+  border: 1px solid rgba(221,196,250,.22);
+  border-radius: 999px;
+  color: #d7c8df;
+  background: rgba(255,255,255,.025);
+  font-size: .68rem !important;
+  font-style: normal;
+}
+
+.stage-result .deepReading:not([open]) .resultCard > p {
+  margin: 12px 0 0 !important;
+  color: #dfd6e3 !important;
+  font-size: clamp(.98rem, 3.2vw, 1.08rem) !important;
+  line-height: 1.88 !important;
+  text-align: left !important;
+}
+
+.stage-result .deepReading:not([open]) .practicalFocus {
+  margin-top: 13px !important;
+}
+
+.stage-result .deepReading:not([open]) > summary {
+  margin-top: 18px !important;
+  border: 1px solid rgba(221,196,250,.13);
+  border-radius: 18px;
+  background: rgba(255,255,255,.014);
+}
+
+/* Result order: cards first, optional clarifiers second, then save / text follow-up. */
+.stage-result .resultIntro { order: 1; }
+.stage-result .deepReading { order: 2; }
+.stage-result .clarifierPanel { order: 3; }
+.stage-result .saveReadingPrompt { order: 4; }
+.stage-result .followUpPanel { order: 5; }
+.stage-result .readingDisclaimer { order: 6; }
+.stage-result .readingResult > .flowActions { order: 7; }
+
+.clarifierPanel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(211,169,255,.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(190,130,246,.1), transparent 42%),
+    rgba(255,255,255,.016);
+  text-align: left;
+}
+
+.clarifierHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.clarifierHeading h3 {
+  margin: 4px 0 0;
+  font-size: clamp(1.22rem, 4vw, 1.55rem);
+  line-height: 1.35;
+}
+
+.clarifierHeading p {
+  margin: 8px 0 0;
+  color: #b9adbF;
+  font-size: .84rem;
+  line-height: 1.65;
+}
+
+.clarifierCount {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(211,169,255,.2);
+  border-radius: 999px;
+  color: #cdb4e8;
+  font-size: .7rem;
+}
+
+.clarifierList {
+  display: grid;
+  gap: 12px;
+}
+
+.clarifierCard {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 15px;
+  border: 1px solid rgba(226,204,244,.11);
+  border-radius: 18px;
+  background: rgba(8,6,11,.24);
+}
+
+.clarifierCardArt {
+  width: 92px;
+  aspect-ratio: 2 / 3.35;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #100b15;
+  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+}
+
+.clarifierCardArt img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.clarifierCardArt.isReversed img {
+  transform: rotate(180deg);
+}
+
+.clarifierCardBody small {
+  color: #cba9ef;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+
+.clarifierCardBody h4 {
+  margin: 5px 0 0;
+  color: #f3edf6;
+  font-size: 1.08rem;
+}
+
+.clarifierCardBody p {
+  margin: 9px 0 0;
+  color: #dfd6e3;
+  font-size: .92rem;
+  line-height: 1.78;
+}
+
+.clarifierFocus {
+  margin-top: 10px;
+  padding-left: 11px;
+  border-left: 2px solid rgba(199,167,255,.34);
+  color: #b8aabd;
+  font-size: .8rem;
+  line-height: 1.6;
+}
+
+.clarifierActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.clarifierActions small {
+  color: #8f8297;
+  line-height: 1.5;
+}
+
+.clarifierError {
+  color: #e1a7ad;
+  font-size: .8rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .velaGuideHome.entry-choice .velaCharacterArtwork {
+    top: 7.5svh !important;
+    height: 71svh !important;
+  }
+
+  .velaGuideHome.entry-choice .velaJourneyPanel {
+    bottom: max(10px, calc(env(safe-area-inset-bottom) + 7px)) !important;
+  }
+
+  .stage-interpreting .readingPanel,
+  .stage-interpreting .loadingPanel {
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    min-height: 54svh !important;
+    margin: 14px auto 22px !important;
+  }
+
+  .stage-result .readingResult {
+    padding-inline: 18px !important;
+  }
+
+  .clarifierPanel {
+    padding: 16px;
+  }
+
+  .clarifierHeading {
+    display: grid;
+  }
+
+  .clarifierCount {
+    justify-self: start;
+  }
+
+  .clarifierCard {
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .clarifierCardArt {
+    width: 74px;
+  }
+
+  .clarifierActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clarifierActions .primaryButton {
+    width: 100%;
+  }
+}

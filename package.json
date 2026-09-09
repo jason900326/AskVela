@@ -18,7 +18,8 @@
     "ingest:dream": "node --env-file=.env.local scripts/ingest-dream-book.js",
     "smoke:reading": "node --env-file=.env.local scripts/smoke-reading.js",
     "smoke:production": "node --env-file=.env.local scripts/smoke-production.js",
-    "eval:voice": "node --env-file=.env.local scripts/eval-vela-voice.js"
+    "eval:voice": "node --env-file=.env.local scripts/eval-vela-voice.js",
+    "eval:reading-quality": "node --env-file=.env.local scripts/eval-reading-quality-v3.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",

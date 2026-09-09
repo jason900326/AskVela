@@ -1,0 +1,191 @@
+/* Final mobile fixes: viewport-safe waiting, fixed account dock, tarot card art, and result action order. */
+
+/* Fixed UI must be relative to the viewport, not to an old transformed stage. */
+.readingExperience,
+.astrologyExperience,
+.dreamReadingFlow,
+.finalModeFlow,
+.velaExperienceHub {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+  contain: initial !important;
+}
+
+.accountDock {
+  position: fixed !important;
+  top: max(10px, env(safe-area-inset-top)) !important;
+  right: max(12px, env(safe-area-inset-right)) !important;
+  z-index: 130 !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* Waiting is a viewport scene. Keep it visibly narrower than the phone so Safari cannot clip it. */
+.velaWaitingStage {
+  position: fixed !important;
+  inset: var(--vela-fixed-nav) 0 0 0 !important;
+  z-index: 45;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 18px 24px 26px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(180deg, rgba(20,11,29,.96), rgba(8,7,12,.98));
+}
+
+.velaWaitingCard {
+  width: min(600px, calc(100vw - 64px)) !important;
+  max-width: 600px !important;
+  min-width: 0 !important;
+  min-height: min(44svh, 420px) !important;
+  max-height: min(58svh, 500px);
+  margin: 0 auto !important;
+  padding: clamp(22px, 4vw, 34px) !important;
+  gap: 26px !important;
+  transform: none !important;
+}
+
+.velaWaitingLine {
+  max-width: 100% !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
+
+.velaWaitingProgress {
+  width: min(440px, 72vw) !important;
+}
+
+/* The uploaded back art lives with Vela assets, not under /images/tarot. */
+.finalCardPool .selectionCardBack,
+.clarifierCardPool .selectionCardBack,
+.selectionCardBack {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background-image: url('/images/vela/tarot-card-back.webp') !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
+
+/* Keep revealed card labels visually attached to the cards rather than drifting down the stage. */
+.finalRevealStage {
+  align-content: center !important;
+  grid-auto-rows: max-content !important;
+}
+.finalRevealCards {
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  align-items: end !important;
+}
+/* Legacy reveal CSS reserved 70-78px below every card for an old caption that V4 no longer renders. */
+.stage-reveal .finalTarotCard,
+.finalRevealStage .finalTarotCard {
+  margin-bottom: 0 !important;
+}
+.finalRevealedLabels {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  align-items: start !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
+.finalRevealedLabels > div {
+  align-content: start !important;
+  min-height: 0 !important;
+}
+
+/* Match the label row to the exact reveal-card geometry. :has() avoids relying on
+   sibling-specific legacy layouts and is supported by the iPhone Safari target. */
+.finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels {
+  width: min(220px, 72vw) !important;
+  max-width: 220px !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-self: center !important;
+  margin: -2px auto 0 !important;
+}
+.finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels > div {
+  width: 100% !important;
+  justify-self: stretch !important;
+  text-align: left !important;
+}
+.finalRevealStage:has(.finalRevealCards.cards-3) .finalRevealedLabels {
+  width: 100% !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  margin: -2px 0 0 !important;
+}
+
+/* Whatever the component's DOM order, save must sit between the reading/interactions and share CTA. */
+.finalReadingArticle > .saveReadingPrompt {
+  order: 80 !important;
+  position: static !important;
+  margin: 0 !important;
+}
+.finalReadingArticle > .finalResultActions { order: 90 !important; }
+.finalReadingArticle > .shareNotice { order: 91 !important; }
+.finalReadingArticle > .readingDisclaimer { order: 100 !important; }
+
+.curiosityReplyForm textarea {
+  min-height: 108px;
+}
+.curiosityReplyForm .primaryButton {
+  min-width: 132px;
+}
+.curiosityResponse {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(226,204,244,.12);
+}
+.curiosityResponse small {
+  color: #cfaaf3;
+  font-weight: 800;
+}
+.curiosityResponse p {
+  margin: 0;
+  color: #ddd3e2;
+  line-height: 1.8;
+  text-align: left;
+}
+
+@media (max-width: 760px) {
+  .velaWaitingStage {
+    padding: 12px 24px 22px !important;
+  }
+  .velaWaitingCard {
+    width: calc(100vw - 52px) !important;
+    min-height: min(42svh, 390px) !important;
+    padding: 20px 14px !important;
+    gap: 23px !important;
+    border-radius: 22px !important;
+  }
+  .velaWaitingGlyph {
+    width: 72px !important;
+    height: 72px !important;
+    font-size: 1.75rem !important;
+  }
+  .velaWaitingProgress { width: 68vw !important; }
+
+  .finalRevealStage { gap: 9px !important; }
+  .finalRevealCards.cards-3 { gap: 7px !important; }
+  .finalRevealedLabels { gap: 7px !important; }
+  .finalRevealedLabels small { font-size: .7rem !important; }
+  .finalRevealedLabels strong { font-size: .86rem !important; line-height: 1.25 !important; }
+  .finalRevealedLabels span { font-size: .68rem !important; }
+
+  .finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels {
+    width: min(220px, 72vw) !important;
+    margin-top: 0 !important;
+  }
+}

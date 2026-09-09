@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { getSupabaseBrowser } from "../lib/supabase-browser.js";
 
 const TAROT_SESSION_KEY = "askvela.current-reading.v2";
@@ -92,6 +93,7 @@ export default function VelaAccount({
   const client = useMemo(() => getSupabaseBrowser(), []);
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(() => !client);
+  const [portalReady, setPortalReady] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("signin");
   const [email, setEmail] = useState("");
@@ -112,6 +114,10 @@ export default function VelaAccount({
     if (onExperienceChange) onExperienceChange(next);
     else window.dispatchEvent(new CustomEvent("vela:experience", { detail: next }));
   }
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!client) return undefined;
@@ -378,7 +384,7 @@ export default function VelaAccount({
     await client.auth.signOut();
   }
 
-  if (!authReady) return <div className="accountDock" aria-hidden="true" />;
+  if (!authReady) return null;
 
   const savePromptTitle = activeEntry?.kind === "astrology"
     ? "想把這次星座解讀留下來嗎？"
@@ -386,7 +392,7 @@ export default function VelaAccount({
       ? "想把這次夢境解讀留下來嗎？"
       : "想把這次牌面留下來嗎？";
 
-  return (
+  const accountPortal = portalReady ? createPortal(
     <>
       <div className="accountDock" aria-label="Vela 帳號">
         {!client ? (
@@ -403,16 +409,6 @@ export default function VelaAccount({
           <button type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); setAuthOpen(true); }}>登入</button>
         )}
       </div>
-
-      {client && activeEntry && !user && (
-        <aside className="saveReadingPrompt">
-          <div>
-            <strong>{savePromptTitle}</strong>
-            <span>登入後會保存這次 Vela 解讀，之後可以跨裝置回來看。</span>
-          </div>
-          <button className="ghostButton" type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); setAuthOpen(true); }}>登入以保存</button>
-        </aside>
-      )}
 
       {authOpen && (
         <div className="accountOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false); }}>
@@ -487,6 +483,22 @@ export default function VelaAccount({
             {history.length > 0 && <button className="clearHistoryButton" type="button" onClick={clearHistory} disabled={historyLoading}>清除全部紀錄</button>}
           </section>
         </div>
+      )}
+    </>,
+    document.body,
+  ) : null;
+
+  return (
+    <>
+      {accountPortal}
+      {client && activeEntry && !user && (
+        <aside className="saveReadingPrompt">
+          <div>
+            <strong>{savePromptTitle}</strong>
+            <span>登入後會保存這次 Vela 解讀，之後可以跨裝置回來看。</span>
+          </div>
+          <button className="ghostButton" type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); setAuthOpen(true); }}>登入以保存</button>
+        </aside>
       )}
     </>
   );

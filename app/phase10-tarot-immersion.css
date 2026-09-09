@@ -1,0 +1,389 @@
+/* Phase 10 follow-up: Tarot immersion and legibility fixes.
+   This file intentionally loads after phase10-conversation-ui.css. */
+
+/* 1) Keep the invitation Vela inside the viewport on both desktop and mobile. */
+.stage-welcome::before,
+.stage-question::before,
+.stage-spread::before {
+  background-size: auto min(78svh, 760px) !important;
+  background-position: center 46% !important;
+}
+
+.stage-welcome .velaHeader {
+  padding-top: clamp(48px, 7svh, 78px) !important;
+}
+
+/* 10) Progress UI is useful structurally, but it breaks the reading-room illusion.
+   Remove the four step pills and the STEP XX labels from the visible surface. */
+.readingExperience .readingSteps {
+  display: none !important;
+}
+
+.stage-question .panelHeading .eyebrow,
+.stage-spread .panelHeading .eyebrow,
+.stage-select .selectionHeading .eyebrow,
+.stage-reveal .panelHeading .eyebrow,
+.stage-drawing .loadingPanel .eyebrow,
+.stage-interpreting .loadingPanel .eyebrow {
+  display: none !important;
+}
+
+/* 9) Spread choices should be allowed to breathe. No inner clipped scroll sheet. */
+.stage-spread {
+  min-height: auto !important;
+  padding-bottom: 42px;
+}
+
+.stage-spread .readingPanel {
+  position: relative !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: min(760px, calc(100% - 28px)) !important;
+  max-height: none !important;
+  margin: min(36svh, 320px) auto 32px !important;
+  transform: none !important;
+  overflow: visible !important;
+}
+
+.stage-spread .spreadGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch;
+}
+
+.stage-spread .spreadOption {
+  min-height: 168px !important;
+}
+
+/* 4) Vela should remain visible while waiting for the user to choose cards.
+   Give her a deliberate stage above the cards instead of hiding her behind the panel. */
+.stage-select {
+  position: relative;
+}
+
+.stage-select .tarotVelaGuide {
+  position: absolute !important;
+  top: 6px !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 2 !important;
+  width: 220px !important;
+  height: 230px !important;
+  transform: translateX(-50%);
+  opacity: .86 !important;
+  filter: drop-shadow(0 18px 42px rgba(0,0,0,.42));
+}
+
+.stage-select .selectionPanel {
+  position: relative;
+  z-index: 3;
+  margin-top: 205px !important;
+  background: linear-gradient(180deg, rgba(18,12,24,.82), rgba(12,8,16,.94)) !important;
+}
+
+/* 2) Make the pre-deal shuffle a real beat instead of a blink.
+   The veil/deck plays for ~2.6 seconds, then the fan is revealed. */
+.stage-select .selectionPanel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(190,130,246,.18), transparent 30%),
+    rgba(11,7,15,.94);
+  animation: velaPreDealVeil 2.7s ease forwards;
+}
+
+.stage-select .selectionPanel::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 41;
+  width: 104px;
+  aspect-ratio: 2 / 3.35;
+  border-radius: 13px;
+  pointer-events: none;
+  background: #120d18 url("/images/vela/tarot-card-back.webp") center / cover no-repeat;
+  box-shadow:
+    -13px 6px 0 -2px rgba(18,13,24,.9),
+    13px 7px 0 -2px rgba(18,13,24,.86),
+    0 20px 54px rgba(0,0,0,.5),
+    0 0 44px rgba(191,135,248,.18);
+  animation: velaPreDealShuffle 2.7s cubic-bezier(.2,.72,.24,1) forwards;
+}
+
+.stage-select .selectionHeading,
+.stage-select .selectionPositions,
+.stage-select .cardFan,
+.stage-select .selectionHint,
+.stage-select .flowActions {
+  animation: velaSelectionContentIn .42s 2.55s ease both;
+}
+
+/* Let the existing fan animation happen only after the shuffle has had time to read. */
+.stage-select .selectionCard {
+  opacity: 1 !important;
+  animation-duration: 640ms !important;
+  animation-fill-mode: backwards !important;
+}
+.stage-select .selectionCard:nth-child(1) { animation-delay: 2.58s !important; }
+.stage-select .selectionCard:nth-child(2) { animation-delay: 2.63s !important; }
+.stage-select .selectionCard:nth-child(3) { animation-delay: 2.68s !important; }
+.stage-select .selectionCard:nth-child(4) { animation-delay: 2.73s !important; }
+.stage-select .selectionCard:nth-child(5) { animation-delay: 2.78s !important; }
+.stage-select .selectionCard:nth-child(6) { animation-delay: 2.83s !important; }
+.stage-select .selectionCard:nth-child(7) { animation-delay: 2.88s !important; }
+.stage-select .selectionCard:nth-child(8) { animation-delay: 2.93s !important; }
+.stage-select .selectionCard:nth-child(9) { animation-delay: 2.98s !important; }
+.stage-select .selectionCard:nth-child(10) { animation-delay: 3.03s !important; }
+.stage-select .selectionCard:nth-child(11) { animation-delay: 3.08s !important; }
+.stage-select .selectionCard:nth-child(12) { animation-delay: 3.13s !important; }
+
+/* 3) Position labels do not belong on the card back. */
+.stage-reveal .tarotCardBack small {
+  display: none !important;
+}
+
+/* 8) Keep card names/orientation outside the artwork rather than covering the illustration. */
+.stage-reveal .tarotCard,
+.stage-reveal .tarotCardInner,
+.stage-reveal .tarotCardFront {
+  overflow: visible !important;
+}
+
+.stage-reveal .tarotCard {
+  margin-bottom: 78px;
+}
+
+.stage-reveal .tarotCardCaption {
+  left: 0 !important;
+  right: 0 !important;
+  top: calc(100% + 10px) !important;
+  bottom: auto !important;
+  min-height: 58px;
+  padding: 4px 2px !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-content: start;
+  gap: 3px 8px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.stage-reveal .tarotCardCaption small {
+  grid-column: 1 / -1 !important;
+  color: #bca7c9 !important;
+  font-size: .7rem !important;
+}
+
+.stage-reveal .tarotCardCaption strong {
+  color: #f3edf6;
+  font-size: .92rem !important;
+  line-height: 1.25 !important;
+}
+
+.stage-reveal .tarotCardCaption em {
+  align-self: start;
+  padding: 4px 8px !important;
+  border: 1px solid rgba(221,196,250,.22);
+  border-radius: 999px;
+  color: #d9cce1;
+  background: rgba(18,12,24,.72);
+}
+
+.stage-reveal .cardSpread {
+  padding-bottom: 34px !important;
+}
+
+/* 5) Interpreting should feel like part of the ritual, not an engine status message. */
+.stage-interpreting .loadingPanel h2 {
+  font-size: 0 !important;
+}
+
+.stage-interpreting .loadingPanel h2::after {
+  content: "Vela 正在讓牌意慢慢浮上來";
+  display: block;
+  font-size: clamp(1.35rem, 3.5vw, 2rem);
+  line-height: 1.3;
+  letter-spacing: .01em;
+}
+
+.stage-interpreting .loadingPanel p {
+  display: none !important;
+}
+
+/* 6) When the detail drawer is still closed, expose the per-card interpretations
+   so users can immediately reconnect the reading with what they drew. */
+.stage-result .deepReading:not([open]) {
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-result .deepReading:not([open]) > summary {
+  order: 2;
+  margin-top: 12px;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody {
+  order: 1;
+  display: block !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > * {
+  display: none !important;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .resultCards {
+  display: grid !important;
+  gap: 10px;
+  margin: 0;
+}
+
+.stage-result .deepReading:not([open]) > .deepReadingBody > .resultCards::before {
+  content: "你剛剛抽到的牌";
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+  color: #cba9ef;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.stage-result .deepReading:not([open]) .resultCard {
+  padding: 16px 18px;
+  border: 1px solid rgba(221,196,250,.13);
+  border-radius: 18px;
+  background: rgba(255,255,255,.018);
+}
+
+.stage-result .resultIntro .velaSummary {
+  max-width: 900px;
+  font-size: clamp(.98rem, 1.6vw, 1.08rem);
+  line-height: 1.9;
+}
+
+@keyframes velaPreDealVeil {
+  0%, 72% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes velaPreDealShuffle {
+  0% { opacity: 0; transform: translate(-50%, -44%) scale(.88) rotate(0deg); }
+  10% { opacity: 1; }
+  28% { transform: translate(calc(-50% - 20px), -50%) rotate(-7deg); }
+  44% { transform: translate(calc(-50% + 20px), -50%) rotate(7deg); }
+  60% { transform: translate(calc(-50% - 13px), -50%) rotate(-4deg); }
+  76% { transform: translate(calc(-50% + 13px), -50%) rotate(4deg); opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -58%) scale(.94) rotate(0deg); visibility: hidden; }
+}
+
+@keyframes velaSelectionContentIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 760px) {
+  /* 1) Height, not screen width, controls Vela's mobile size so her head never clips. */
+  .stage-welcome::before,
+  .stage-question::before,
+  .stage-spread::before {
+    background-size: auto min(70svh, 570px) !important;
+    background-position: center 38% !important;
+  }
+
+  .stage-welcome .velaHeader {
+    padding-top: max(48px, 7svh) !important;
+  }
+
+  /* 9) Let all spread options exist in normal document flow; page scroll is preferable to an inner clipped card. */
+  .stage-spread .readingPanel {
+    width: calc(100% - 18px) !important;
+    margin-top: 34svh !important;
+    padding: 18px !important;
+  }
+
+  .stage-spread .spreadGrid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .stage-spread .spreadOption {
+    min-height: 0 !important;
+    padding: 16px !important;
+  }
+
+  /* 4) Give mobile Vela her own visible band above the selection panel. */
+  .stage-select .tarotVelaGuide {
+    top: 4px !important;
+    left: 50% !important;
+    right: auto !important;
+    width: 180px !important;
+    height: 190px !important;
+    transform: translateX(-50%) !important;
+    opacity: .88 !important;
+  }
+
+  .stage-select .selectionPanel {
+    margin-top: 168px !important;
+  }
+
+  /* 7) Mobile card backs should be straight. The previous fan animation overrode mobile-selection.css. */
+  .stage-select .selectionCard,
+  .stage-select .selectionCard:first-child {
+    --fan-rotation: 0deg !important;
+    --fan-lift: 0px !important;
+    transform: none !important;
+    animation-name: velaMobileStraightDeal !important;
+  }
+
+  .stage-select .selectionCard.isSelected {
+    transform: translateY(-7px) !important;
+  }
+
+  .stage-select .selectionPanel::after {
+    width: 88px;
+  }
+
+  .stage-reveal .tarotCard {
+    margin-bottom: 70px;
+  }
+
+  .stage-reveal .tarotCardCaption strong {
+    font-size: .78rem !important;
+  }
+
+  .stage-reveal .tarotCardCaption small {
+    font-size: .64rem !important;
+  }
+
+  .stage-result .deepReading:not([open]) > .deepReadingBody > .resultCards {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@keyframes velaMobileStraightDeal {
+  from { opacity: 0; transform: translateY(34px) scale(.92); }
+  to { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-select .selectionPanel::before,
+  .stage-select .selectionPanel::after,
+  .stage-select .selectionHeading,
+  .stage-select .selectionPositions,
+  .stage-select .cardFan,
+  .stage-select .selectionHint,
+  .stage-select .flowActions,
+  .stage-select .selectionCard {
+    animation: none !important;
+  }
+}
