@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const paths = {
-  flow: new URL("../components/AstrologyReadingFlow.js", import.meta.url),
+  flow: new URL("../components/AstrologyReadingFlowV2.js", import.meta.url),
   hub: new URL("../components/VelaExperience.js", import.meta.url),
   account: new URL("../components/VelaAccount.js", import.meta.url),
   accountCss: new URL("../app/account.css", import.meta.url),
@@ -27,11 +27,12 @@ test("Phase 7 enables astrology only with the bundled attributable source corpus
   ]);
 
   assert.match(flow, /ZODIAC_SIGNS/u);
-  assert.match(flow, /今日運勢/u);
-  assert.match(flow, /本週運勢/u);
-  assert.match(flow, /不會保存生日/u);
-  assert.match(flow, /sourceGrounded/u);
-  assert.match(flow, /參考來源/u);
+  assert.match(flow, /ASTROLOGY_SOURCE_READY/u);
+  assert.match(flow, />今日</u);
+  assert.match(flow, />本週</u);
+  assert.match(flow, /getZodiacByBirthday/u);
+  assert.match(flow, /sourceGrounded !== true/u);
+  assert.match(flow, /查看完整星座分析與依據/u);
   assert.match(sourceStatus, /ASTROLOGY_SOURCE_READY = true/u);
   assert.match(route, /AstrologySourceError/u);
   assert.match(route, /503/u);
@@ -73,15 +74,18 @@ test("historical astrology claims are curated instead of copied as modern fact",
   assert.match(prompt, /不得沿用書中的醫療診斷/u);
 });
 
-test("Vela home stays conversation-first while later phases can enable additional grounded modes", async () => {
+test("Vela home stays conversation-first while all three grounded modes remain directly reachable", async () => {
   const hub = await readFile(paths.hub, "utf8");
   assert.match(hub, /VelaStage/u);
   assert.match(hub, /velaHomeStageLayout/u);
-  assert.match(hub, /今天想從哪件事開始/u);
-  assert.match(hub, /讓 Vela 幫我選/u);
-  assert.match(hub, /recommendExperience/u);
-  assert.match(hub, /DreamReadingFlow/u);
-  assert.match(hub, /好，從這個夢開始/u);
+  assert.match(hub, /今天，你帶了什麼來？/u);
+  assert.match(hub, /有件事想問/u);
+  assert.match(hub, /想看看最近的運勢/u);
+  assert.match(hub, /我做了一個夢/u);
+  assert.match(hub, /我也說不上來/u);
+  assert.match(hub, /AstrologyReadingFlowV2/u);
+  assert.match(hub, /DreamReadingFlowV2/u);
+  assert.match(hub, /TarotReadingFlowV4/u);
   assert.doesNotMatch(hub, /解夢資料庫準備中/u);
   assert.doesNotMatch(hub, /experienceTabs/u);
 });
