@@ -13,13 +13,14 @@ const result = {
   relationships: "relationships",
   workStudy: "workStudy",
   energy: "energy",
+  focusAreas: [{ title: "步調與負荷", body: "先整理最需要處理的事。" }],
   practicalGuidance: ["a", "b", "c"],
   reflectionQuestion: "question",
   basisNote: "basis",
 };
 
 const velaSpeech = {
-  version: "shared-speech-v2",
+  version: "shared-speech-v3",
   status: "rendered",
   attempts: 1,
   fallbackFields: [],
