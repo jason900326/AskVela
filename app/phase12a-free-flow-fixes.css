@@ -1,0 +1,285 @@
+/* Phase 12A — Free preset questions, Vela sign-in beat, and Safari-safe result scrolling.
+   Imported after the earlier Phase 12A layers so these rules intentionally win. */
+
+/* ---------- Home: Free is preset-only ---------- */
+.phase12PresetGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.phase12PresetGrid button,
+.freePresetGrid button {
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid rgba(224, 202, 249, .16);
+  border-radius: 14px;
+  background: rgba(30, 17, 55, .78);
+  color: #f8f2ff;
+  padding: 10px 11px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.42;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.phase12PresetGrid button:active,
+.phase12PresetGrid button:focus-visible,
+.freePresetGrid button:active,
+.freePresetGrid button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(232, 201, 119, .72);
+  background: rgba(61, 37, 83, .86);
+}
+
+.phase12FreePlusHint {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(231, 198, 113, .22);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(83, 49, 116, .3), rgba(24, 13, 45, .76));
+}
+
+.phase12FreePlusHint > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.phase12FreePlusHint span {
+  color: #e6c46f;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.phase12FreePlusHint strong {
+  font-size: 12px;
+}
+
+.phase12FreePlusHint p {
+  margin: 0;
+  color: rgba(247, 239, 255, .58);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.phase12FreePlusHint button {
+  white-space: nowrap;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+/* ---------- Free question page after a completed reading ---------- */
+.immersivePresetQuestionCard {
+  align-content: center;
+  overflow: hidden;
+}
+
+.freePresetGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.freeQuestionPlusHint {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 10px 11px;
+  border: 1px solid rgba(231, 198, 113, .22);
+  border-radius: 14px;
+  background: rgba(82, 49, 112, .22);
+}
+
+.freeQuestionPlusHint > span {
+  grid-column: 1 / -1;
+  color: #e6c46f;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.freeQuestionPlusHint p {
+  margin: 0;
+  color: rgba(247, 239, 255, .62);
+  font-size: 10px;
+  line-height: 1.42;
+}
+
+.freeQuestionPlusHint button {
+  min-height: 36px;
+  padding: 7px 9px;
+  white-space: nowrap;
+}
+
+/* ---------- Chosen-card interlude: hide AI latency behind ritual + Vela ---------- */
+.immersiveDrawingStage.hasLoginInvite {
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  gap: 10px;
+  padding: 14px 16px 16px;
+}
+
+.immersiveDrawingStage.hasLoginInvite .immersiveChosenBack {
+  width: min(36vw, 148px);
+}
+
+.immersiveLoginVela {
+  width: min(100%, 360px);
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+  padding: 8px 10px 8px 7px;
+  border: 1px solid rgba(223, 199, 248, .13);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(47, 27, 68, .72), rgba(21, 12, 39, .82));
+  box-shadow: 0 12px 30px rgba(4, 2, 12, .18);
+}
+
+.immersiveLoginVela img {
+  width: 62px;
+  height: 72px;
+  display: block;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,.25));
+}
+
+.immersiveLoginVela > div {
+  align-self: center;
+  display: grid;
+  gap: 3px;
+}
+
+.immersiveLoginVela strong {
+  color: #f5e9ff;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.immersiveLoginVela span {
+  color: rgba(247, 239, 255, .58);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+/* ---------- Result: the whole card is the scroll surface on iOS Safari ---------- */
+.immersiveQuickTarot.stage-result .velaFlipDeck {
+  perspective: none !important;
+}
+
+.immersiveQuickTarot.stage-result .velaFlipPage {
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+}
+
+.immersiveQuickTarot.stage-result .immersiveResultCard {
+  position: relative;
+  display: block !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  scroll-behavior: smooth;
+}
+
+.immersiveQuickTarot.stage-result .immersiveResultHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: linear-gradient(180deg, rgba(43, 24, 64, .98), rgba(25, 14, 45, .96));
+  backdrop-filter: blur(12px);
+}
+
+.immersiveQuickTarot.stage-result .immersiveResultScroll {
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  touch-action: auto;
+  overscroll-behavior: auto;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  padding-bottom: 26px;
+}
+
+.immersiveQuickTarot.stage-result .immersiveResultActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  margin-top: 0;
+  background: rgba(14, 8, 27, .97);
+  backdrop-filter: blur(12px);
+}
+
+@media (max-width: 420px) {
+  .phase12PresetGrid,
+  .freePresetGrid {
+    gap: 6px;
+  }
+
+  .phase12PresetGrid button,
+  .freePresetGrid button {
+    min-height: 44px;
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .phase12FreePlusHint {
+    grid-template-columns: 1fr;
+  }
+
+  .phase12FreePlusHint button {
+    width: 100%;
+  }
+}
+
+@media (max-height: 700px) {
+  .immersiveLoginVela {
+    grid-template-columns: 48px minmax(0, 1fr);
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .immersiveLoginVela img {
+    width: 48px;
+    height: 54px;
+  }
+
+  .immersiveDrawingStage.hasLoginInvite .immersiveChosenBack {
+    width: min(29vw, 120px);
+  }
+
+  .freePresetGrid button {
+    min-height: 38px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase12PresetGrid button,
+  .freePresetGrid button {
+    transition: none !important;
+  }
+}
