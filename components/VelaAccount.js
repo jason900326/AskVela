@@ -80,6 +80,27 @@ function historyLabel(item) {
   return item.question;
 }
 
+function historyTitle(item) {
+  if (!item) return "";
+  if (item.kind === "astrology") return `${item.signNameZhTw} · ${item.periodLabel}`;
+  if (item.kind === "dream") return item.title || "夢境解讀";
+  return item.question;
+}
+
+function historyCategory(item) {
+  if (!item) return "";
+  if (item.kind === "astrology") return `星座 · ${item.signNameZhTw}`;
+  if (item.kind === "dream") return "解夢";
+  return `塔羅 · ${item.spreadNameZhTw}`;
+}
+
+function historyMeta(item) {
+  if (!item) return "";
+  if (item.kind === "astrology") return `${item.periodLabel} · ${item.localDate}`;
+  if (item.kind === "dream") return `${item.themeCount || 0} 個夢境主題`;
+  return `${item.cardCount} 張牌${item.followUpCount ? ` · ${item.followUpCount} 次追問` : ""}`;
+}
+
 export default function VelaAccount({
   activeReading = null,
   activeAstrology = null,
@@ -107,6 +128,12 @@ export default function VelaAccount({
   const [historyNotice, setHistoryNotice] = useState("");
   const [saveState, setSaveState] = useState("idle");
   const [busyReadingId, setBusyReadingId] = useState("");
+  const [continuationTarget, setContinuationTarget] = useState(null);
+  const [continuationTurns, setContinuationTurns] = useState([]);
+  const [continuationMessage, setContinuationMessage] = useState("");
+  const [continuationLoading, setContinuationLoading] = useState(false);
+  const [continuationError, setContinuationError] = useState("");
+  const [continuationMaxTurns, setContinuationMaxTurns] = useState(6);
   const lastSavedFingerprint = useRef("");
   const activeEntry = activeDream || activeAstrology || activeReading;
 
@@ -141,6 +168,10 @@ export default function VelaAccount({
       if (event === "SIGNED_OUT") {
         setHistory([]);
         setHistoryOpen(false);
+        setContinuationTarget(null);
+        setContinuationTurns([]);
+        setContinuationMessage("");
+        setContinuationError("");
         setSaveState("idle");
         lastSavedFingerprint.current = "";
       }
@@ -256,6 +287,10 @@ export default function VelaAccount({
     setHistoryLoading(true);
     setHistoryError("");
     setHistoryNotice("");
+    setContinuationTarget(null);
+    setContinuationTurns([]);
+    setContinuationMessage("");
+    setContinuationError("");
 
     if (activeEntry) {
       const fingerprint = entryFingerprint(activeEntry);
@@ -341,6 +376,61 @@ export default function VelaAccount({
     }
   }
 
+  async function openContinuation(item) {
+    if (!client || !user || continuationLoading) return;
+    setContinuationTarget(item);
+    setContinuationTurns([]);
+    setContinuationMessage("");
+    setContinuationError("");
+    setContinuationLoading(true);
+    try {
+      const params = new URLSearchParams({ kind: item.kind, readingId: item.readingId });
+      const response = await authorizedFetch(client, `/api/retention/continue?${params.toString()}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "目前無法接續這筆解讀。");
+      setContinuationTurns(Array.isArray(data.turns) ? data.turns : []);
+      setContinuationMaxTurns(Number(data.maxTurns || 6));
+    } catch (error) {
+      setContinuationError(error.message || "目前無法接續這筆解讀。");
+    } finally {
+      setContinuationLoading(false);
+    }
+  }
+
+  async function submitContinuation(event) {
+    event.preventDefault();
+    const message = continuationMessage.trim();
+    if (!client || !user || !continuationTarget || !message || continuationLoading) return;
+    setContinuationLoading(true);
+    setContinuationError("");
+    try {
+      const response = await authorizedFetch(client, "/api/retention/continue", {
+        method: "POST",
+        body: JSON.stringify({
+          kind: continuationTarget.kind,
+          readingId: continuationTarget.readingId,
+          message,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "目前無法把這次對話接下去。");
+      setContinuationTurns(Array.isArray(data.turns) ? data.turns : []);
+      setContinuationMaxTurns(Number(data.maxTurns || continuationMaxTurns));
+      setContinuationMessage("");
+    } catch (error) {
+      setContinuationError(error.message || "目前無法把這次對話接下去。");
+    } finally {
+      setContinuationLoading(false);
+    }
+  }
+
+  function backToHistoryList() {
+    setContinuationTarget(null);
+    setContinuationTurns([]);
+    setContinuationMessage("");
+    setContinuationError("");
+  }
+
   async function deleteHistoryItem(item) {
     const label = historyLabel(item);
     if (!window.confirm(`要永久刪除「${label}」這筆紀錄嗎？`)) return;
@@ -351,6 +441,7 @@ export default function VelaAccount({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法刪除這筆紀錄。");
       setHistory((items) => items.filter((candidate) => !(candidate.kind === item.kind && candidate.readingId === item.readingId)));
+      if (continuationTarget?.kind === item.kind && continuationTarget?.readingId === item.readingId) backToHistoryList();
     } catch (error) {
       setHistoryError(error.message || "目前無法刪除這筆紀錄。");
     } finally {
@@ -372,6 +463,7 @@ export default function VelaAccount({
       const failed = results.findIndex((response) => !response.ok);
       if (failed >= 0) throw new Error(payloads[failed]?.error || "目前無法清除全部紀錄。");
       setHistory([]);
+      backToHistoryList();
     } catch (error) {
       setHistoryError(error.message || "目前無法清除全部紀錄。");
     } finally {
@@ -391,6 +483,7 @@ export default function VelaAccount({
     : activeEntry?.kind === "dream"
       ? "想把這次夢境解讀留下來嗎？"
       : "想把這次牌面留下來嗎？";
+  const continuationLimitReached = continuationTurns.length >= continuationMaxTurns;
 
   const accountPortal = portalReady ? createPortal(
     <>
@@ -444,43 +537,95 @@ export default function VelaAccount({
 
       {historyOpen && (
         <div className="accountOverlay historyOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setHistoryOpen(false); }}>
-          <section className="historyPanel" role="dialog" aria-modal="true" aria-labelledby="history-title">
+          <section className={`historyPanel ${continuationTarget ? "isContinuing" : ""}`} role="dialog" aria-modal="true" aria-labelledby="history-title">
             <div className="historyHeader">
-              <div><div className="eyebrow">YOUR VELA HISTORY</div><h2 id="history-title">我的紀錄</h2></div>
+              <div>
+                <div className="eyebrow">YOUR VELA HISTORY</div>
+                <h2 id="history-title">{continuationTarget ? "繼續問 Vela" : "我的紀錄"}</h2>
+              </div>
               <button className="accountClose" type="button" onClick={() => setHistoryOpen(false)} aria-label="關閉">×</button>
             </div>
-            <p className="historyPrivacy">只顯示這個登入帳號保存的私人紀錄；新解讀不會自動讀取舊內容。紀錄會在最後一次保存 365 天後到期，你也可以隨時刪除。</p>
-            {historyLoading && <p className="historyEmpty">正在整理你的 Vela 紀錄…</p>}
-            {historyNotice && <div className="accountMessage" role="status">{historyNotice}</div>}
-            {historyError && <div className="accountMessage isError" role="alert">{historyError}</div>}
-            {!historyLoading && !historyError && history.length === 0 && <p className="historyEmpty">還沒有保存的紀錄。登入後完成一次塔羅、星座或解夢，就會出現在這裡。</p>}
-            {!historyLoading && history.length > 0 && (
-              <div className="historyList">
-                {history.map((item) => {
-                  const isAstrology = item.kind === "astrology";
-                  const isDream = item.kind === "dream";
-                  const title = isAstrology ? `${item.signNameZhTw} · ${item.periodLabel}` : isDream ? item.title : item.question;
-                  const category = isAstrology ? `星座 · ${item.signNameZhTw}` : isDream ? "解夢" : `塔羅 · ${item.spreadNameZhTw}`;
-                  const meta = isAstrology
-                    ? `${item.periodLabel} · ${item.localDate}`
-                    : isDream
-                      ? `${item.themeCount || 0} 個夢境主題`
-                      : `${item.cardCount} 張牌${item.followUpCount ? ` · ${item.followUpCount} 次追問` : ""}`;
-                  return (
-                    <article className="historyItem" key={`${item.kind}-${item.readingId}`}>
-                      <button className="historyOpenButton" type="button" onClick={() => openHistoryItem(item)} disabled={busyReadingId === item.readingId}>
-                        <small>{formatHistoryDate(item.updatedAt)} · {category}</small>
-                        <strong>{title}</strong>
-                        <span>{item.overview}</span>
-                        <em>{meta}</em>
-                      </button>
-                      <button className="historyDeleteButton" type="button" onClick={() => deleteHistoryItem(item)} disabled={busyReadingId === item.readingId} aria-label={`刪除：${title}`}>刪除</button>
-                    </article>
-                  );
-                })}
+
+            {!continuationTarget ? (
+              <>
+                <p className="historyPrivacy">只有你主動打開某筆紀錄，或按「繼續問 Vela」時，Vela 才會讀取那一次的內容；新的解讀不會自動帶入舊紀錄。紀錄會在最後一次保存 365 天後到期，你也可以隨時刪除。</p>
+                {historyLoading && <p className="historyEmpty">正在整理你的 Vela 紀錄…</p>}
+                {historyNotice && <div className="accountMessage" role="status">{historyNotice}</div>}
+                {historyError && <div className="accountMessage isError" role="alert">{historyError}</div>}
+                {!historyLoading && !historyError && history.length === 0 && <p className="historyEmpty">還沒有保存的紀錄。登入後完成一次塔羅、星座或解夢，就會出現在這裡。</p>}
+                {!historyLoading && history.length > 0 && (
+                  <div className="historyList">
+                    {history.map((item) => {
+                      const title = historyTitle(item);
+                      const category = historyCategory(item);
+                      const meta = historyMeta(item);
+                      const busy = busyReadingId === item.readingId;
+                      return (
+                        <article className="historyItem" key={`${item.kind}-${item.readingId}`}>
+                          <div className="historyItemSummary">
+                            <small>{formatHistoryDate(item.updatedAt)} · {category}</small>
+                            <strong>{title}</strong>
+                            <span>{item.overview}</span>
+                            <em>{meta}</em>
+                          </div>
+                          <div className="historyItemActions">
+                            <button className="historyReturnButton" type="button" onClick={() => openHistoryItem(item)} disabled={busy}>回到這次解讀</button>
+                            <button className="historyContinueButton" type="button" onClick={() => openContinuation(item)} disabled={busy || continuationLoading}>繼續問 Vela</button>
+                            <button className="historyDeleteButton" type="button" onClick={() => deleteHistoryItem(item)} disabled={busy} aria-label={`刪除：${title}`}>刪除</button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+                {history.length > 0 && <button className="clearHistoryButton" type="button" onClick={clearHistory} disabled={historyLoading}>清除全部紀錄</button>}
+              </>
+            ) : (
+              <div className="historyConversation">
+                <button className="historyConversationBack" type="button" onClick={backToHistoryList}>‹ 回到我的紀錄</button>
+
+                <section className="historyConversationSource">
+                  <small>{historyCategory(continuationTarget)} · {formatHistoryDate(continuationTarget.updatedAt)}</small>
+                  <strong>{historyTitle(continuationTarget)}</strong>
+                  <p>{continuationTarget.overview}</p>
+                  <button type="button" onClick={() => openHistoryItem(continuationTarget)} disabled={busyReadingId === continuationTarget.readingId}>查看原解讀</button>
+                </section>
+
+                <p className="historyConversationPrivacy">這裡只延續上面這一次解讀。Vela 不會順便讀取你的其他紀錄。</p>
+
+                {continuationLoading && continuationTurns.length === 0 && <p className="historyEmpty">正在把這次解讀接回來…</p>}
+                {continuationError && <div className="accountMessage isError" role="alert">{continuationError}</div>}
+
+                {continuationTurns.length > 0 && (
+                  <div className="historyConversationTurns" aria-live="polite">
+                    {continuationTurns.map((turn, index) => (
+                      <article className="historyConversationTurn" key={`${index}-${turn.createdAt || turn.question}`}>
+                        <div className="historyUserTurn"><small>你</small><p>{turn.question}</p></div>
+                        <div className="historyVelaTurn"><small>VELA</small><p>{turn.answer}</p>{turn.reflectionQuestion && <em>{turn.reflectionQuestion}</em>}</div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                {!continuationLimitReached ? (
+                  <form className="historyContinueComposer" onSubmit={submitContinuation}>
+                    <label htmlFor="vela-history-continuation">接著想問什麼？</label>
+                    <textarea
+                      id="vela-history-continuation"
+                      rows={3}
+                      maxLength={500}
+                      value={continuationMessage}
+                      onChange={(event) => setContinuationMessage(event.target.value)}
+                      placeholder="例如：如果我現在還是很猶豫，你會建議我先看哪個地方？"
+                      disabled={continuationLoading}
+                    />
+                    <div><span>{continuationMessage.length}/500 · 還可問 {Math.max(0, continuationMaxTurns - continuationTurns.length)} 次</span><button className="primaryButton" type="submit" disabled={continuationLoading || continuationMessage.trim().length < 2}>{continuationLoading ? "Vela 正在看…" : "送給 Vela"}</button></div>
+                  </form>
+                ) : (
+                  <p className="historyConversationLimit">這次先聊到這裡。原本的脈絡會保留在這筆紀錄裡；需要新的角度時，可以再開始一次新的閱讀。</p>
+                )}
               </div>
             )}
-            {history.length > 0 && <button className="clearHistoryButton" type="button" onClick={clearHistory} disabled={historyLoading}>清除全部紀錄</button>}
           </section>
         </div>
       )}
