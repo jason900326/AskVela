@@ -85,35 +85,44 @@
   margin: 0 !important;
   align-items: end !important;
 }
+/* Legacy reveal CSS reserved 70-78px below every card for an old caption that V4 no longer renders. */
+.stage-reveal .finalTarotCard,
+.finalRevealStage .finalTarotCard {
+  margin-bottom: 0 !important;
+}
 .finalRevealedLabels {
   min-height: 0 !important;
-  margin: -8px 0 0 !important;
+  margin: 0 !important;
   padding: 0 !important;
   align-items: start !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
 }
 .finalRevealedLabels > div {
   align-content: start !important;
   min-height: 0 !important;
 }
 
-/* Match the label row to the exact reveal-card geometry. In particular, a one-card
-   reading must not keep the legacy three-column label grid and drift to the left. */
-.finalRevealCards.cards-1 + .finalRevealedLabels {
-  width: min(220px, 100%) !important;
+/* Match the label row to the exact reveal-card geometry. :has() avoids relying on
+   sibling-specific legacy layouts and is supported by the iPhone Safari target. */
+.finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels {
+  width: min(220px, 72vw) !important;
   max-width: 220px !important;
   grid-template-columns: minmax(0, 1fr) !important;
   justify-self: center !important;
-  margin: -4px auto 0 !important;
+  margin: -2px auto 0 !important;
 }
-.finalRevealCards.cards-1 + .finalRevealedLabels > div {
+.finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels > div {
   width: 100% !important;
   justify-self: stretch !important;
   text-align: left !important;
 }
-.finalRevealCards.cards-3 + .finalRevealedLabels {
+.finalRevealStage:has(.finalRevealCards.cards-3) .finalRevealedLabels {
   width: 100% !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  margin: -4px 0 0 !important;
+  margin: -2px 0 0 !important;
 }
 
 /* Whatever the component's DOM order, save must sit between the reading/interactions and share CTA. */
@@ -168,15 +177,15 @@
   }
   .velaWaitingProgress { width: 68vw !important; }
 
-  .finalRevealStage { gap: 12px !important; }
+  .finalRevealStage { gap: 9px !important; }
   .finalRevealCards.cards-3 { gap: 7px !important; }
-  .finalRevealedLabels { gap: 7px !important; margin-top: -5px !important; }
+  .finalRevealedLabels { gap: 7px !important; }
   .finalRevealedLabels small { font-size: .7rem !important; }
   .finalRevealedLabels strong { font-size: .86rem !important; line-height: 1.25 !important; }
   .finalRevealedLabels span { font-size: .68rem !important; }
 
-  .finalRevealCards.cards-1 + .finalRevealedLabels {
+  .finalRevealStage:has(.finalRevealCards.cards-1) .finalRevealedLabels {
     width: min(220px, 72vw) !important;
-    margin-top: -2px !important;
+    margin-top: 0 !important;
   }
 }
