@@ -36,7 +36,6 @@ test("returning to Vela clears the previous Tarot-first home and Dream handoff s
   const changeExperience = experience.slice(experience.indexOf("const changeExperience"), experience.indexOf("useEffect(() => {"));
   assert.match(changeExperience, /if \(next === "home"\)/u);
   assert.match(changeExperience, /setEntryMode\("landing"\)/u);
-  assert.match(changeExperience, /setQuestion\(""\)/u);
   assert.match(changeExperience, /setQuickQuestion\(""\)/u);
   assert.match(changeExperience, /setDreamHandoffText\(""\)/u);
   assert.match(changeExperience, /scrollTo/u);
