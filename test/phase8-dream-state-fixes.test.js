@@ -15,7 +15,7 @@ test("natural dream phrasing routes to Dream instead of Tarot", () => {
 
 test("a new Dream handoff discards the previous Dream session before entering the flow", async () => {
   const experience = await readFile(experiencePath, "utf8");
-  const beginDream = experience.slice(experience.indexOf("function beginDream"), experience.indexOf("const dialogueTitle"));
+  const beginDream = experience.slice(experience.indexOf("function beginDream"), experience.indexOf("function startDeepReading"));
   assert.match(beginDream, /sessionStorage\.removeItem\(DREAM_SESSION_KEY\)/u);
   assert.match(beginDream, /setDreamHandoffText\(nextDream\)/u);
 });
@@ -31,15 +31,13 @@ test("Dream V2 never restores an older reading over a fresh handoff", async () =
   assert.ok(restoreEffect.indexOf("initialDream") < restoreEffect.indexOf("sessionStorage.getItem(SESSION_KEY)"));
 });
 
-test("returning to Vela clears the previous home and handoff state", async () => {
+test("returning to Vela clears the previous Tarot-first home and Dream handoff state", async () => {
   const experience = await readFile(experiencePath, "utf8");
   const changeExperience = experience.slice(experience.indexOf("const changeExperience"), experience.indexOf("useEffect(() => {"));
   assert.match(changeExperience, /if \(next === "home"\)/u);
   assert.match(changeExperience, /setEntryMode\("landing"\)/u);
-  assert.match(changeExperience, /setGuideInput\(""\)/u);
-  assert.match(changeExperience, /setGuidedStep\("area"\)/u);
-  assert.match(changeExperience, /setGuidedAnswers\(\{ area: "", feeling: "", goal: "" \}\)/u);
-  assert.match(changeExperience, /setTarotHandoffQuestion\(""\)/u);
+  assert.match(changeExperience, /setQuestion\(""\)/u);
+  assert.match(changeExperience, /setQuickQuestion\(""\)/u);
   assert.match(changeExperience, /setDreamHandoffText\(""\)/u);
   assert.match(changeExperience, /scrollTo/u);
 });
