@@ -11,17 +11,18 @@ export default function VelaPlanSheet({ open, onClose, onStartDeep }) {
         <button className="velaPlanClose" type="button" onClick={onClose} aria-label="關閉方案比較">×</button>
         <div className="velaPlanEyebrow">ASK VELA</div>
         <h2 id="vela-plan-title">你想怎麼問 Vela？</h2>
-        <p className="velaPlanLead">免費版適合三個小問題；Vela+ 是把一件真正卡住你的事攤開來看。</p>
+        <p className="velaPlanLead">Free 適合從預設的小問題體驗 Vela；Vela+ 才能把自己的事情直接說給她聽。</p>
 
         <div className="velaPlanGrid">
           <article className="velaPlanCard isFree">
             <div className="velaPlanCardHead">
               <span>FREE</span>
-              <strong>輕鬆問問</strong>
+              <strong>先玩一張牌</strong>
             </div>
-            <p>完整回答，不把免費版做成比較笨的 Vela。</p>
+            <p>完整回答，不把免費版做成比較笨的 Vela；差別在你能不能自由提出自己的問題。</p>
             <ul>
-              <li>登入後每天 3 個小問題</li>
+              <li>從 Vela 準備的預設問題中選擇</li>
+              <li>登入後每天 3 次 Free 體驗</li>
               <li>每題自己抽 1 張牌</li>
               <li>完整、grounded 的單張解讀</li>
               <li>保存與分享結果</li>
@@ -32,10 +33,11 @@ export default function VelaPlanSheet({ open, onClose, onStartDeep }) {
           <article className="velaPlanCard isPlus">
             <div className="velaPlanCardHead">
               <span>VELA+</span>
-              <strong>把一件事看深</strong>
+              <strong>把自己的事看深</strong>
             </div>
-            <p>不是多抽幾張牌，而是讓 Vela 先理解問題，再主持整個閱讀 Session。</p>
+            <p>自由描述真正困擾你的事情；Vela 會先理解問題，再主持整個閱讀 Session。</p>
             <ul>
+              <li>自由輸入自己的問題，不受預設題目限制</li>
               <li>Vela 先幫你釐清真正卡住的地方</li>
               <li>依問題決定閱讀結構，不用自己選牌陣</li>
               <li>可以回答 Vela、追問同一件事</li>
