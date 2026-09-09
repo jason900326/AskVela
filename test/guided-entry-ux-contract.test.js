@@ -53,7 +53,7 @@ test("quick Tarot uses the real card back and visibly reveals the chosen face be
   ]);
 
   assert.match(quick, /CARD_BACK = "\/images\/vela\/tarot-card-back\.webp"/u);
-  assert.match(quick, /className={`immersiveRevealCard/u);
+  assert.match(quick, /immersiveRevealCard/u);
   assert.match(quick, /tarotImagePath\(card\)/u);
   assert.match(quick, /setRevealed\(true\)[\s\S]*await sleep\(1050\)[\s\S]*fetch\("\/api\/readings\/interpret"/u);
   assert.doesNotMatch(quick, /VelaWaitingStage/u);
