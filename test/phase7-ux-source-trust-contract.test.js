@@ -11,7 +11,7 @@ const accountCssPath = new URL("../app/account.css", import.meta.url);
 const sourceStatusPath = new URL("../lib/astrology-source-status.js", import.meta.url);
 const evidencePath = new URL("../lib/astrology-evidence.js", import.meta.url);
 
-test("AskVela home is conversation-first instead of three equal mode tabs", async () => {
+test("AskVela home is Tarot-first instead of exposing equal mode tabs", async () => {
   const [experience, velaStage] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(velaStagePath, "utf8"),
@@ -21,10 +21,11 @@ test("AskVela home is conversation-first instead of three equal mode tabs", asyn
   assert.match(experience, /velaHomeStageLayout/u);
   assert.match(velaStage, /velaCrystalButton/u);
   assert.match(velaStage, /onCrystalClick/u);
-  assert.match(experience, /今天，你帶了什麼來？/u);
-  assert.match(experience, /velaJourneyPanel/u);
-  assert.match(experience, /有件事想問/u);
-  assert.match(experience, /我也說不上來/u);
+  assert.match(experience, /今天想問 Vela 什麼？/u);
+  assert.match(experience, /抽一張牌/u);
+  assert.match(experience, /QUICK_SUGGESTIONS/u);
+  assert.match(experience, /phase12SecondaryJourneys/u);
+  assert.match(experience, /Deep Reading/u);
   assert.doesNotMatch(experience, /className="experienceTabs"/u);
 });
 
