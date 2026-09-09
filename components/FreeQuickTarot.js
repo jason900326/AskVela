@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowser } from "../lib/supabase-browser.js";
 import VelaAccount from "./VelaAccount.js";
 import VelaFlipPage from "./VelaFlipPage.js";
-import VelaWaitingStage from "./VelaWaitingStage.js";
 
 const SPREAD_ID = "single-guidance";
 const DAILY_LIMIT = 3;
 const ANONYMOUS_LIMIT = 1;
 const SELECTION_POOL_SIZE = 12;
+const CARD_BACK = "/images/vela/tarot-card-back.webp";
 const ANON_TRIAL_KEY = "askvela.free-quick.anonymous-trial.v1";
 const DAILY_PREFIX = "askvela.free-quick.daily.v1";
 const ORIENTATION_LABELS = { upright: "正位", reversed: "逆位" };
@@ -48,6 +48,10 @@ function readNumber(key) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 function tarotImagePath(card) {
   if (!card) return "";
   if (card.arcana === "major") {
@@ -75,7 +79,7 @@ function tarotImagePath(card) {
   return `/images/tarot/${card.suit}/${RANK_NUMBER[rank]}-${rank === "ace" ? "ace" : rank}-of-${card.suit}.webp`;
 }
 
-export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPlans, onQuotaExhausted }) {
+export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQuotaExhausted }) {
   const client = useMemo(() => getSupabaseBrowser(), []);
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(() => !client);
@@ -85,6 +89,8 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
   const [requestId, setRequestId] = useState("");
   const [draw, setDraw] = useState(null);
   const [result, setResult] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [waitingIndex, setWaitingIndex] = useState(0);
   const [usage, setUsage] = useState(() => {
     if (client || typeof window === "undefined") return 0;
     try { return window.localStorage.getItem(ANON_TRIAL_KEY) === "1" ? 1 : 0; } catch { return 0; }
@@ -154,6 +160,14 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
     };
   }, [client]);
 
+  useEffect(() => {
+    if (stage !== "interpreting") return undefined;
+    const timer = window.setInterval(() => {
+      setWaitingIndex((current) => (current + 1) % WAITING_LINES.length);
+    }, 3600);
+    return () => window.clearInterval(timer);
+  }, [stage]);
+
   function saveUsage(nextUsage) {
     const safeUsage = Math.min(limit, Math.max(0, nextUsage));
     setUsage(safeUsage);
@@ -175,6 +189,8 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
     setRequestId("");
     setDraw(null);
     setResult(null);
+    setRevealed(false);
+    setWaitingIndex(0);
     setStage("select");
   }
 
@@ -201,6 +217,7 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法完成抽牌。");
       setDraw(data);
+      setRevealed(false);
       setStage("reveal");
     } catch (err) {
       setError(err.message || "目前無法完成抽牌。");
@@ -211,10 +228,16 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
   }
 
   async function revealAndInterpret() {
-    if (!draw || loading) return;
-    setLoading(true);
+    if (!draw || loading || revealed) return;
+
+    setRevealed(true);
     setError("");
+    await sleep(1050);
+
+    setLoading(true);
+    setWaitingIndex(0);
     setStage("interpreting");
+
     try {
       const response = await fetch("/api/readings/interpret", {
         method: "POST",
@@ -230,11 +253,8 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "目前無法完成解讀。");
       setResult(data);
-      const nextUsage = saveUsage(usage + 1);
+      saveUsage(usage + 1);
       setStage("result");
-      if (user && nextUsage >= DAILY_LIMIT) {
-        window.setTimeout(() => onQuotaExhausted?.(), 900);
-      }
     } catch (err) {
       setError(err.message || "目前無法完成解讀。");
       setStage("reveal");
@@ -244,16 +264,20 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
   }
 
   function askAnother() {
-    if (remaining <= 0) return;
+    if (remaining <= 0) {
+      onQuotaExhausted?.();
+      return;
+    }
     setQuestion("");
     setSelectedIndex(null);
     setRequestId("");
     setDraw(null);
     setResult(null);
+    setRevealed(false);
+    setWaitingIndex(0);
     setError("");
     setShareNotice("");
     setStage("question");
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   async function shareResult() {
@@ -278,18 +302,20 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
         ? "第一次來？這一題不用登入。"
         : "這次試問已完成；登入後今天還能繼續問。";
 
+  const cardOrientation = ORIENTATION_LABELS[card?.orientation] || "";
+  const cardFaceClass = card?.orientation === "reversed" ? "isReversed" : "";
+
   return (
-    <section className="quickTarotExperience">
+    <section className={`quickTarotExperience immersiveQuickTarot stage-${stage}`}>
       <VelaAccount activeReading={activeReading} experience="tarot" />
       <button className="velaPlusStoreButton" type="button" onClick={onOpenPlans}>✦ Vela+</button>
-      <button className="quickBackButton" type="button" onClick={onBack}>← 回到首頁</button>
 
       <div className="quickTarotShell">
         <div className="quickTarotEyebrow">FREE · ONE CARD</div>
 
         {stage === "question" && (
-          <VelaFlipPage pageKey="quick-question" step={1} total={4} label="問一件小事">
-            <div className="quickQuestionCard velaFlipContentCard">
+          <VelaFlipPage pageKey="quick-question" step={1} total={5} label="問一件小事">
+            <div className="quickQuestionCard velaFlipContentCard immersiveQuestionCard">
               <h1>{remaining > 0 ? "今天想問 Vela 什麼？" : "今天先看到這裡。"}</h1>
               <p>{quotaLine}</p>
               <textarea
@@ -304,8 +330,9 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
                 disabled={remaining <= 0}
                 autoFocus
               />
-              {remaining > 0 && <button className="primaryButton quickDrawButton" type="button" onClick={beginQuestion}>翻到選牌 ✦</button>}
-              {remaining <= 0 && (
+              {remaining > 0 ? (
+                <button className="primaryButton quickDrawButton" type="button" onClick={beginQuestion}>翻到選牌 ✦</button>
+              ) : (
                 <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Free 與 Vela+ 的差別</button>
               )}
             </div>
@@ -313,14 +340,24 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
         )}
 
         {stage === "select" && (
-          <VelaFlipPage pageKey="quick-select" step={2} total={4} label="選一張牌">
-            <div className="quickSelectionStage velaFlipContentCard">
-              <h1>從牌桌上選一張。</h1>
-              <p>不用想哪張比較好。停在哪一張，就選哪一張。</p>
-              <div className="quickCardPool" aria-label="選擇一張塔羅牌">
+          <VelaFlipPage pageKey="quick-select" step={2} total={5} label="選一張牌">
+            <div className="quickSelectionStage velaFlipContentCard immersiveSelectionStage">
+              <div className="immersiveStageCopy">
+                <h1>從牌桌上選一張。</h1>
+                <p>不用猜哪張比較好。停在哪一張，就選哪一張。</p>
+              </div>
+              <div className="quickCardPool immersiveCardPool" aria-label="選擇一張塔羅牌">
                 {Array.from({ length: SELECTION_POOL_SIZE }, (_, index) => (
-                  <button key={index} type="button" className="quickCardBack" onClick={() => chooseCard(index)} aria-label={`選擇第 ${index + 1} 張牌`}>
-                    <span>☾</span>
+                  <button
+                    key={index}
+                    type="button"
+                    className="quickCardBack immersiveCardBack"
+                    style={{ "--card-index": index }}
+                    onClick={() => chooseCard(index)}
+                    aria-label={`選擇第 ${index + 1} 張牌`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CARD_BACK} alt="" draggable="false" />
                   </button>
                 ))}
               </div>
@@ -329,76 +366,126 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
         )}
 
         {stage === "drawing" && (
-          <VelaFlipPage pageKey="quick-drawing" step={2} total={4} label="洗牌中">
-            <div className="velaFlipContentCard velaFlipWaitingCard">
-              <VelaWaitingStage lines={["我把你選的那張牌收回來洗一下。", "好，這張牌的位置固定了。"]} glyph="✦" />
+          <VelaFlipPage pageKey="quick-drawing" step={2} total={5} label="把這張牌帶出來">
+            <div className="immersiveDrawingStage">
+              <div className="immersiveChosenBack" aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={CARD_BACK} alt="" />
+              </div>
+              <div className="immersiveDrawingCopy">
+                <strong>這張牌已經選定。</strong>
+                <span>我把它從牌堆裡帶出來。</span>
+              </div>
+              <div className="immersiveThinProgress" aria-hidden="true"><span /></div>
             </div>
           </VelaFlipPage>
         )}
 
         {stage === "reveal" && card && (
-          <VelaFlipPage pageKey="quick-reveal" step={3} total={4} label="翻開這張牌">
-            <div className="quickRevealStage velaFlipContentCard">
-              <p>這張就是你剛剛選的牌。</p>
-              <button className="quickRevealCard" type="button" onClick={revealAndInterpret} disabled={loading}>
-                <span className="quickRevealBack">☾</span>
+          <VelaFlipPage pageKey="quick-reveal" step={3} total={5} label="翻開這張牌">
+            <div className="immersiveRevealStage">
+              <div className="immersiveStageCopy">
+                <h1>{revealed ? "你抽到這張。" : "這張就是你剛剛選的牌。"}</h1>
+                <p>{revealed ? `${card.nameZhTw}・${cardOrientation}` : "點一下牌，親手把它翻開。"}</p>
+              </div>
+
+              <button
+                className={`immersiveRevealCard ${revealed ? "isFlipped" : ""}`}
+                type="button"
+                onClick={revealAndInterpret}
+                disabled={loading || revealed}
+                aria-label={revealed ? `${card.nameZhTw}，${cardOrientation}` : "翻開這張塔羅牌"}
+              >
+                <span className="immersiveCardInner">
+                  <span className="immersiveCardFace immersiveCardBackFace">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CARD_BACK} alt="" draggable="false" />
+                  </span>
+                  <span className={`immersiveCardFace immersiveCardFrontFace ${cardFaceClass}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${cardOrientation}）`} draggable="false" />
+                  </span>
+                </span>
               </button>
-              <button className="primaryButton" type="button" onClick={revealAndInterpret} disabled={loading}>翻牌</button>
+
+              {!revealed && <button className="primaryButton immersiveRevealButton" type="button" onClick={revealAndInterpret}>翻牌</button>}
+              {revealed && <div className="immersiveRevealName" aria-live="polite"><strong>{card.nameZhTw}</strong><span>{cardOrientation}</span></div>}
             </div>
           </VelaFlipPage>
         )}
 
-        {stage === "interpreting" && (
-          <VelaFlipPage pageKey="quick-interpreting" step={3} total={4} label="Vela 正在看牌">
-            <div className="velaFlipContentCard velaFlipWaitingCard">
-              <VelaWaitingStage lines={WAITING_LINES} glyph="☾" />
+        {stage === "interpreting" && card && (
+          <VelaFlipPage pageKey="quick-interpreting" step={4} total={5} label="Vela 正在看這張牌">
+            <div className="immersiveInterpretStage">
+              <div className="immersiveInterpretCardWrap">
+                <div className={`immersiveInterpretCard ${cardFaceClass}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${cardOrientation}）`} />
+                </div>
+                <span className="immersiveCardHalo" aria-hidden="true" />
+              </div>
+              <div className="immersiveInterpretCopy" aria-live="polite">
+                <span>{card.nameZhTw}・{cardOrientation}</span>
+                <p key={waitingIndex}>{WAITING_LINES[waitingIndex]}</p>
+              </div>
+              <div className="immersiveThinProgress isReading" aria-hidden="true"><span /></div>
+              {!user && <small className="immersiveSaveHint">想把這張牌留下來，可以從右上角登入；解讀不會被打斷。</small>}
             </div>
           </VelaFlipPage>
         )}
 
         {stage === "result" && result && card && (
-          <VelaFlipPage pageKey="quick-result" step={4} total={4} label="這次的訊息">
-            <article className="quickResultCard velaFlipContentCard">
-              <div className="quickResultQuestion">你問：{question.trim()}</div>
-              <div className="quickResultHero">
-                <div className={`quickResultCardImage ${card.orientation === "reversed" ? "isReversed" : ""}`}>
+          <VelaFlipPage pageKey="quick-result" step={5} total={5} label="這次的訊息">
+            <article className="immersiveResultCard">
+              <header className="immersiveResultHeader">
+                <div className={`immersiveResultCardImage ${cardFaceClass}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${ORIENTATION_LABELS[card.orientation]}）`} />
+                  <img src={tarotImagePath(card)} alt={`${card.nameZhTw}（${cardOrientation}）`} />
                 </div>
-                <div>
+                <div className="immersiveResultIdentity">
                   <span>你抽到</span>
                   <h1>{card.nameZhTw}</h1>
-                  <p>{ORIENTATION_LABELS[card.orientation]}</p>
+                  <p>{cardOrientation}</p>
                 </div>
+              </header>
+
+              <div className="immersiveResultScroll">
+                <div className="quickResultQuestion">你問：{question.trim()}</div>
+                <section className="quickResultReading">
+                  <h2>{result.synthesis?.overview || "這張牌先提醒你一件事。"}</h2>
+                  {result.synthesis?.narrative && <p>{result.synthesis.narrative}</p>}
+                  {card.contextInterpretation && <p>{card.contextInterpretation}</p>}
+                  {card.practicalFocus && (
+                    <div className="quickPracticalFocus">
+                      <strong>今天可以先留意</strong>
+                      <span>{card.practicalFocus}</span>
+                    </div>
+                  )}
+                  {result.synthesis?.reflectionQuestions?.[0] && <blockquote>{result.synthesis.reflectionQuestions[0]}</blockquote>}
+                </section>
+
+                <aside className="quickUpgradeCard immersiveUpgradeCard">
+                  <span>✦ VELA+ DEEP READING</span>
+                  <h3>有一件事情，不是一張牌能說完的嗎？</h3>
+                  <p>Deep Reading 會先讓 Vela 理解你的情況，再決定怎麼看；Free 不開放同一題自由追問。</p>
+                  <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Deep Reading</button>
+                </aside>
               </div>
 
-              <section className="quickResultReading">
-                <h2>{result.synthesis?.overview || "這張牌先提醒你一件事。"}</h2>
-                {result.synthesis?.narrative && <p>{result.synthesis.narrative}</p>}
-                {card.contextInterpretation && <p>{card.contextInterpretation}</p>}
-                {card.practicalFocus && <div className="quickPracticalFocus"><strong>今天可以先留意</strong><span>{card.practicalFocus}</span></div>}
-                {result.synthesis?.reflectionQuestions?.[0] && <blockquote>{result.synthesis.reflectionQuestions[0]}</blockquote>}
-              </section>
-
-              <div className="quickResultActions">
-                <button className="ghostButton" type="button" onClick={shareResult}>分享這次結果</button>
-                {remaining > 0 && <button className="primaryButton" type="button" onClick={askAnother}>再問一個小問題</button>}
-              </div>
+              <footer className="immersiveResultActions">
+                <button className="ghostButton" type="button" onClick={shareResult}>分享結果</button>
+                {remaining > 0 ? (
+                  <button className="primaryButton" type="button" onClick={askAnother}>再問一個</button>
+                ) : (
+                  <button className="primaryButton" type="button" onClick={() => onQuotaExhausted?.()}>看看 Vela+</button>
+                )}
+              </footer>
               {shareNotice && <p className="quickShareNotice" role="status">{shareNotice}</p>}
-
-              <aside className="quickUpgradeCard">
-                <span>✦ VELA+ DEEP READING</span>
-                <h3>有一件事情，不是一張牌能說完的嗎？</h3>
-                <p>Deep Reading 會先讓 Vela 理解你的情況，再決定要怎麼看；Free 不開放同一題自由追問。</p>
-                <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Deep Reading</button>
-              </aside>
-
-              <p className="quickQuotaAfter">{quotaLine}</p>
             </article>
           </VelaFlipPage>
         )}
 
-        {error && <div className="quickTarotError" role="alert">{error}</div>}
+        {error && <div className="quickTarotError immersiveError" role="alert">{error}</div>}
       </div>
     </section>
   );
