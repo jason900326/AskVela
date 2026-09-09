@@ -1,0 +1,209 @@
+/* Phase 12A — shared page-turn language for mobile Tarot and Deep Reading. */
+
+.velaFlipDeck {
+  position: relative;
+  width: 100%;
+  perspective: 1200px;
+  isolation: isolate;
+}
+
+.velaFlipDeck::before,
+.velaFlipDeck::after {
+  content: "";
+  position: absolute;
+  inset: 9px 8px -8px;
+  z-index: -2;
+  border: 1px solid rgba(226, 204, 250, .09);
+  border-radius: 24px;
+  background: rgba(28, 16, 49, .62);
+  transform: translateY(8px) scale(.985);
+  pointer-events: none;
+}
+
+.velaFlipDeck::after {
+  inset: 5px 4px -4px;
+  z-index: -1;
+  background: rgba(35, 20, 59, .76);
+  transform: translateY(4px) scale(.992);
+}
+
+.velaFlipPage {
+  position: relative;
+  width: 100%;
+  transform-origin: 8% 50%;
+  backface-visibility: hidden;
+  animation: velaPageTurnIn .42s cubic-bezier(.2, .78, .24, 1) both;
+}
+
+.velaFlipProgress {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 8px 9px;
+  color: rgba(247, 239, 255, .58);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.velaFlipPageLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.velaFlipCount {
+  min-width: 28px;
+  text-align: right;
+  color: rgba(231, 199, 116, .78);
+  font-variant-numeric: tabular-nums;
+}
+
+.velaFlipDots {
+  display: flex;
+  gap: 5px;
+}
+
+.velaFlipDots i {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(236, 222, 250, .14);
+  transition: background .2s ease, transform .2s ease;
+}
+
+.velaFlipDots i.isActive {
+  background: rgba(231, 199, 116, .82);
+  transform: scaleX(1.08);
+}
+
+.velaFlipContentCard,
+.phase12HomeFlipPage {
+  position: relative;
+}
+
+.quickTarotShell > .velaFlipDeck,
+.deepReadingShell > .velaFlipDeck {
+  width: min(100%, 620px);
+  margin: 0 auto;
+}
+
+.quickSelectionStage.velaFlipContentCard,
+.quickRevealStage.velaFlipContentCard,
+.velaFlipWaitingCard {
+  min-height: min(70svh, 640px);
+  border: 1px solid rgba(223, 202, 250, .14);
+  border-radius: 22px;
+  background: rgba(25, 14, 48, .76);
+  box-shadow: 0 24px 80px rgba(4, 2, 12, .28);
+  padding: 18px;
+}
+
+.quickRevealStage.velaFlipContentCard,
+.velaFlipWaitingCard {
+  display: grid;
+  place-items: center;
+  align-content: center;
+}
+
+.velaFlipWaitingCard .velaWaitingStage {
+  width: 100%;
+}
+
+.phase12HomeFlipPage {
+  width: min(100%, 560px);
+  padding: 8px;
+  border: 1px solid rgba(223, 202, 250, .13);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(30, 17, 53, .8), rgba(16, 9, 32, .9));
+  box-shadow: 0 25px 80px rgba(4, 2, 13, .34);
+}
+
+.phase12HomeFlipPage .velaFlipProgress {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.phase12HomeFlipPage .phase12QuickForm {
+  width: 100%;
+  border-radius: 17px;
+  box-shadow: none;
+}
+
+.phase12HomeFlipPage .phase12HomeBubble,
+.phase12HomeFlipPage .phase12SuggestionList,
+.phase12HomeFlipPage .phase12SecondaryJourneys {
+  width: 100% !important;
+}
+
+.phase12EntryError {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(135, 43, 70, .2);
+  color: #ffd9e5;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@keyframes velaPageTurnIn {
+  0% {
+    opacity: 0;
+    transform: rotateY(-13deg) translateX(18px) scale(.985);
+    filter: blur(1.5px);
+  }
+  58% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0) translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .phase12TarotHome .velaHomeEntry {
+    justify-content: flex-end;
+    padding: max(78px, 10vh) 8px max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .phase12HomeFlipPage {
+    max-height: calc(100svh - max(92px, env(safe-area-inset-top)) - 12px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .quickTarotExperience,
+  .deepReadingPrototype {
+    overflow-x: clip;
+  }
+
+  .quickTarotShell,
+  .deepReadingShell {
+    padding-bottom: 12px;
+  }
+
+  .quickSelectionStage.velaFlipContentCard {
+    min-height: auto;
+  }
+
+  .quickCardPool {
+    gap: 9px 7px;
+  }
+
+  .velaFlipProgress {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaFlipPage {
+    animation: none !important;
+  }
+
+  .velaFlipDots i {
+    transition: none !important;
+  }
+}
