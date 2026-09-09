@@ -114,7 +114,7 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
 
   const limit = user ? DAILY_LIMIT : ANONYMOUS_LIMIT;
   const remaining = Math.max(0, limit - usage);
-  const card = draw?.cards?.[0] || result?.cards?.[0] || null;
+  const card = result?.cards?.[0] || draw?.cards?.[0] || null;
   const activeReading = useMemo(() => {
     if (!draw || !result || !requestId) return null;
     return {
@@ -362,7 +362,7 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
       <img src={VELA_TAROT_ART} alt="" draggable="false" aria-hidden="true" />
       <div>
         <strong>想把這次解讀留下來嗎？</strong>
-        <span>結果出來後，從右上角登入就能保存；現在先讓我把這張牌看完。</span>
+        <span>結果出來後，從右上角登入就能保存。你可以先看牌，不用急。</span>
       </div>
     </div>
   ) : null;
@@ -429,7 +429,7 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
 
         {stage === "drawing" && (
           <VelaFlipPage pageKey="quick-drawing" step={2} total={5} label="把這張牌帶出來">
-            <div className="immersiveDrawingStage hasLoginInvite">
+            <div className={`immersiveDrawingStage ${!user ? "hasLoginInvite" : ""}`}>
               <div className="immersiveChosenBack" aria-hidden="true">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={CARD_BACK} alt="" />
@@ -492,14 +492,14 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
                 <p key={waitingIndex}>{WAITING_LINES[waitingIndex]}</p>
               </div>
               <div className="immersiveThinProgress isReading" aria-hidden="true"><span /></div>
-              {!user && <small className="immersiveSaveHint">剛剛那個登入邀請還在右上角；不用急，我會先把解讀完成。</small>}
+              {loginInvite}
             </div>
           </VelaFlipPage>
         )}
 
         {stage === "result" && result && card && (
           <VelaFlipPage pageKey="quick-result" step={5} total={5} label="這次的訊息">
-            <article className="immersiveResultCard">
+            <article className="immersiveResultCard" tabIndex={0} aria-label="塔羅解讀結果，可上下捲動">
               <header className="immersiveResultHeader">
                 <div className={`immersiveResultCardImage ${cardFaceClass}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -515,9 +515,10 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
               <div className="immersiveResultScroll">
                 <div className="quickResultQuestion">你選：{question.trim()}</div>
                 <section className="quickResultReading">
-                  <h2>{result.synthesis?.overview || "這張牌先提醒你一件事。"}</h2>
+                  <h2>Vela 給你的訊息</h2>
+                  <p className="quickResultOverview">{result.synthesis?.overview || "這張牌先提醒你一件事。"}</p>
                   {result.synthesis?.narrative && <p>{result.synthesis.narrative}</p>}
-                  {card.contextInterpretation && <p>{card.contextInterpretation}</p>}
+                  {card.contextInterpretation && <section className="quickCardMeaning"><h3>這張牌如何回應你</h3><p>{card.contextInterpretation}</p></section>}
                   {card.practicalFocus && (
                     <div className="quickPracticalFocus">
                       <strong>今天可以先留意</strong>
