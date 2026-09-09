@@ -84,7 +84,10 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
   const [requestId, setRequestId] = useState("");
   const [draw, setDraw] = useState(null);
   const [result, setResult] = useState(null);
-  const [usage, setUsage] = useState(0);
+  const [usage, setUsage] = useState(() => {
+    if (client || typeof window === "undefined") return 0;
+    try { return window.localStorage.getItem(ANON_TRIAL_KEY) === "1" ? 1 : 0; } catch { return 0; }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [shareNotice, setShareNotice] = useState("");
@@ -148,11 +151,6 @@ export default function FreeQuickTarot({ initialQuestion = "", onBack, onOpenPla
       mounted = false;
       subscription.subscription.unsubscribe();
     };
-  }, [client]);
-
-  useEffect(() => {
-    if (client || typeof window === "undefined") return;
-    try { setUsage(window.localStorage.getItem(ANON_TRIAL_KEY) === "1" ? 1 : 0); } catch { setUsage(0); }
   }, [client]);
 
   function saveUsage(nextUsage) {
