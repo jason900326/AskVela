@@ -289,6 +289,121 @@
   line-height: 1.6;
 }
 
+/* Retention v1.1 — continuation should feel like a revisited reading, not a chat app. */
+.historyPanel.isContinuing .historyHeader h2 {
+  font-size: 0;
+}
+
+.historyPanel.isContinuing .historyHeader h2::after {
+  content: "續讀札記";
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.historyConversation > .historyEmpty {
+  font-size: 0;
+}
+
+.historyConversation > .historyEmpty::before {
+  content: "正在把上次留下的宇宙訊號調回來…";
+  display: inline-block;
+  font-size: .82rem;
+  letter-spacing: .03em;
+}
+
+.historyConversationTurns {
+  counter-reset: vela-followup;
+  gap: 22px;
+}
+
+.historyConversationTurn {
+  counter-increment: vela-followup;
+  position: relative;
+  gap: 0;
+  padding: 17px 0 3px;
+  border-top: 1px solid rgba(199,167,255,.15);
+}
+
+.historyConversationTurn::before {
+  content: "續讀 " counter(vela-followup, decimal-leading-zero);
+  margin-bottom: 12px;
+  color: #bda1dc;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.historyUserTurn,
+.historyVelaTurn {
+  width: 100%;
+  justify-self: stretch;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.historyUserTurn {
+  margin-bottom: 15px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+.historyUserTurn small,
+.historyVelaTurn small {
+  display: none;
+}
+
+.historyUserTurn::before {
+  content: "這次你想追問";
+  margin-bottom: 7px;
+  color: #8f8099;
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.historyUserTurn p {
+  color: #d5c8dd;
+  font-size: .76rem;
+  line-height: 1.6;
+}
+
+.historyVelaTurn {
+  position: relative;
+  padding: 2px 0 2px 17px;
+}
+
+.historyVelaTurn::before {
+  content: "VELA 的補充";
+  margin-bottom: 9px;
+  color: #c7a7ef;
+  font-size: .66rem;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.historyVelaTurn::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(211,171,255,.8), rgba(211,171,255,.1));
+}
+
+.historyVelaTurn p {
+  color: #f0e8f4;
+  font-size: .84rem;
+  line-height: 1.72;
+}
+
+.historyVelaTurn em {
+  margin-top: 10px;
+  padding: 9px 0 0;
+  border-top: 1px solid rgba(199,167,255,.1);
+  color: #bfaaca;
+}
+
 @media (max-width: 760px) {
   .historyPanel.isContinuing {
     padding-bottom: max(12px, env(safe-area-inset-bottom));
@@ -312,8 +427,14 @@
     padding-bottom: max(4px, env(safe-area-inset-bottom));
   }
 
+  /* iOS Safari zooms focused controls smaller than 16px. Keep continuation inputs at 16px. */
+  .historyContinueComposer textarea,
+  .accountModal input {
+    font-size: 16px !important;
+  }
+
   .historyUserTurn,
   .historyVelaTurn {
-    width: 94%;
+    width: 100%;
   }
 }
