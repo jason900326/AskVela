@@ -139,7 +139,7 @@ if (!flagged.length) {
 lines.push("## Eval gate corrections", "");
 if (correctedClaims.length) {
   lines.push("以下 deterministic match 缺乏否定語境判斷，v3 不把它當 hard failure；LLM boundary rubric 仍會檢查完整句意。", "");
-  for (const item of correctedClaims) lines.push(`- ${item.id}: \`${item.claim}\```);
+  for (const item of correctedClaims) lines.push(`- ${item.id}: \`${item.claim}\``);
   lines.push("");
 }
 if (transientFailures.length) {
