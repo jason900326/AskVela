@@ -43,6 +43,9 @@ const STYLE_PATTERNS = Object.freeze([
   },
 ]);
 
+const TRANSIENT_RUN_FAILURE = /JWT issued at future|fetch failed|ECONNRESET|ETIMEDOUT|network/i;
+const KNOWN_FALSE_POSITIVE_OVERCLAIM = /^證明(?:他|她|對方)$/u;
+
 function collectStrings(value) {
   if (typeof value === "string") return value.trim() ? [value.trim()] : [];
   if (Array.isArray(value)) return value.flatMap(collectStrings);
@@ -61,6 +64,21 @@ function styleWarnings(mainOutput) {
   return warnings;
 }
 
+function effectiveHardFailures(item) {
+  if (!item?.ok) return [];
+  const deterministic = item.deterministic || {};
+  const sourceLeaks = Array.isArray(deterministic.sourceLeaks) ? deterministic.sourceLeaks : [];
+  const systemLeaks = Array.isArray(deterministic.systemLeaks) ? deterministic.systemLeaks : [];
+  const overclaims = (Array.isArray(deterministic.overclaims) ? deterministic.overclaims : [])
+    .filter((claim) => !KNOWN_FALSE_POSITIVE_OVERCLAIM.test(String(claim || "").trim()));
+
+  return [
+    ...(sourceLeaks.length ? [`internal source names: ${sourceLeaks.join("、")}`] : []),
+    ...(systemLeaks.length ? [`internal system terms: ${systemLeaks.join("、")}`] : []),
+    ...(overclaims.length ? [`deterministic claims: ${overclaims.join("、")}`] : []),
+  ];
+}
+
 async function newestResultJson() {
   const names = (await readdir(RESULTS_DIR)).filter((name) => /^reading-quality-.*\.json$/u.test(name));
   if (!names.length) throw new Error("Reading Quality 沒有產生 JSON 結果。");
@@ -75,12 +93,23 @@ async function newestResultJson() {
 await import("./eval-reading-quality.js");
 
 const latest = await newestResultJson();
-const cases = (latest.data.results || []).map((item) => ({
+const rawResults = latest.data.results || [];
+const cases = rawResults.map((item) => ({
   id: item.id,
   mode: item.mode,
   warnings: item.ok ? styleWarnings(item.mainOutput) : [],
 }));
 const flagged = cases.filter((item) => item.warnings.length);
+const transientFailures = rawResults.filter((item) => !item.ok && TRANSIENT_RUN_FAILURE.test(String(item.error || "")));
+const fatalRunFailures = rawResults.filter((item) => !item.ok && !TRANSIENT_RUN_FAILURE.test(String(item.error || "")));
+const correctedClaims = rawResults.flatMap((item) => {
+  if (!item.ok) return [];
+  const claims = Array.isArray(item.deterministic?.overclaims) ? item.deterministic.overclaims : [];
+  return claims
+    .filter((claim) => KNOWN_FALSE_POSITIVE_OVERCLAIM.test(String(claim || "").trim()))
+    .map((claim) => ({ id: item.id, claim }));
+});
+const effectiveFailures = rawResults.flatMap((item) => effectiveHardFailures(item).map((failure) => ({ id: item.id, failure })));
 const markdownPath = resolve(RESULTS_DIR, latest.name.replace(/\.json$/u, ".md"));
 
 const lines = [
@@ -107,8 +136,28 @@ if (!flagged.length) {
   }
 }
 
+lines.push("## Eval gate corrections", "");
+if (correctedClaims.length) {
+  lines.push("以下 deterministic match 缺乏否定語境判斷，v3 不把它當 hard failure；LLM boundary rubric 仍會檢查完整句意。", "");
+  for (const item of correctedClaims) lines.push(`- ${item.id}: \`${item.claim}\```);
+  lines.push("");
+}
+if (transientFailures.length) {
+  lines.push("以下屬暫時性基礎設施錯誤，不代表 Reading Quality 失敗；建議只重跑該 case。", "");
+  for (const item of transientFailures) lines.push(`- ${item.id}: ${item.error}`);
+  lines.push("");
+}
+if (!correctedClaims.length && !transientFailures.length) lines.push("- 無。", "");
+
+lines.push(`- **Effective hard failures:** ${effectiveFailures.length}`);
+lines.push(`- **Fatal run failures:** ${fatalRunFailures.length}`);
+lines.push("");
+
 await appendFile(markdownPath, `${lines.join("\n")}\n`, "utf8");
 console.log(`Style gate warnings: ${flagged.length}/${cases.length}`);
+console.log(`Effective hard failures: ${effectiveFailures.length}`);
+console.log(`Transient run warnings: ${transientFailures.length}`);
+console.log(`Fatal run failures: ${fatalRunFailures.length}`);
 console.log(`Style report appended to: ${markdownPath}`);
 
-if (flagged.length) process.exitCode = 1;
+process.exitCode = flagged.length || effectiveFailures.length || fatalRunFailures.length ? 1 : 0;
