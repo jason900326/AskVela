@@ -40,3 +40,46 @@ create policy "reading_continuations_delete_own"
 
 revoke all on public.reading_continuations from anon;
 grant select, insert, update, delete on public.reading_continuations to authenticated;
+
+-- A continuation belongs to one saved reading. Because the three source tables use
+-- different id types, cleanup is handled by delete triggers rather than a polymorphic FK.
+create or replace function public.delete_reading_continuation_on_source_delete()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_kind text;
+begin
+  v_kind := case TG_TABLE_NAME
+    when 'readings' then 'tarot'
+    when 'astrology_readings' then 'astrology'
+    when 'dream_readings' then 'dream'
+    else null
+  end;
+
+  if v_kind is not null then
+    delete from public.reading_continuations
+      where user_id = OLD.user_id
+        and kind = v_kind
+        and reading_id = OLD.id::text;
+  end if;
+  return OLD;
+end;
+$$;
+
+drop trigger if exists cleanup_tarot_continuation on public.readings;
+create trigger cleanup_tarot_continuation
+  after delete on public.readings
+  for each row execute function public.delete_reading_continuation_on_source_delete();
+
+drop trigger if exists cleanup_astrology_continuation on public.astrology_readings;
+create trigger cleanup_astrology_continuation
+  after delete on public.astrology_readings
+  for each row execute function public.delete_reading_continuation_on_source_delete();
+
+drop trigger if exists cleanup_dream_continuation on public.dream_readings;
+create trigger cleanup_dream_continuation
+  after delete on public.dream_readings
+  for each row execute function public.delete_reading_continuation_on_source_delete();
