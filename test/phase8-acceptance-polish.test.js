@@ -7,11 +7,14 @@ const accountPath = new URL("../components/VelaAccount.js", import.meta.url);
 const brandPath = new URL("../components/VelaBrandLink.js", import.meta.url);
 const polishPath = new URL("../app/phase8-polish.css", import.meta.url);
 
-test("Vela recommendation opens as a modal instead of extending the home page", async () => {
+test("Vela home choices stay on the same awakened stage instead of extending the page with a modal", async () => {
   const experience = await readFile(experiencePath, "utf8");
-  assert.match(experience, /guideRecommendationOverlay/u);
-  assert.match(experience, /aria-modal="true"/u);
-  assert.match(experience, /guideRecommendationClose/u);
+  assert.match(experience, /entryMode !== "landing"/u);
+  assert.match(experience, /velaHomeEntry/u);
+  assert.match(experience, /velaJourneyPanel/u);
+  assert.match(experience, /awakened=\{entryMode !== "landing"\}/u);
+  assert.doesNotMatch(experience, /aria-modal="true"/u);
+  assert.doesNotMatch(experience, /guideRecommendationOverlay/u);
 });
 
 test("the global Vela mark is the only top-level home navigation in mode flows", async () => {
