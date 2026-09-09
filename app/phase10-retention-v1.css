@@ -1,0 +1,319 @@
+/* Retention v1: saved readings become explicit, user-initiated continuations. */
+
+.historyPanel.isContinuing {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.historyItem {
+  display: block !important;
+  overflow: hidden;
+}
+
+.historyItemSummary {
+  display: grid;
+  gap: 6px;
+  padding: 15px 15px 12px;
+  text-align: left;
+}
+
+.historyItemSummary small {
+  color: #8f8497;
+  font-size: .68rem;
+}
+
+.historyItemSummary strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text);
+  font-size: .88rem;
+  line-height: 1.42;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.historyItemSummary span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #bfb4c5;
+  font-size: .76rem;
+  line-height: 1.5;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.historyItemSummary em {
+  color: var(--accent);
+  font-size: .68rem;
+  font-style: normal;
+}
+
+.historyItemActions {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto;
+  border-top: 1px solid var(--line);
+}
+
+.historyItemActions button {
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: #cfc3d5;
+  background: rgba(255,255,255,.012);
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.historyItemActions button:hover:not(:disabled),
+.historyItemActions button:focus-visible:not(:disabled) {
+  background: rgba(199,167,255,.055);
+}
+
+.historyItemActions .historyContinueButton {
+  color: #eadbfa;
+  background: rgba(199,167,255,.045);
+}
+
+.historyItemActions .historyDeleteButton {
+  align-self: auto;
+  padding-inline: 12px;
+  border-left: 0;
+  border-right: 0;
+  color: #9f8992;
+}
+
+.historyItemActions .historyDeleteButton:hover:not(:disabled) {
+  color: var(--danger);
+  background: rgba(255,95,95,.035);
+}
+
+.historyItemActions button:disabled {
+  opacity: .48;
+  cursor: wait;
+}
+
+.historyConversation {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 2px max(22px, env(safe-area-inset-bottom));
+}
+
+.historyConversationBack {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  color: #a99eb1;
+  background: transparent;
+  font: inherit;
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.historyConversationSource {
+  display: grid;
+  gap: 7px;
+  padding: 15px;
+  border: 1px solid rgba(199,167,255,.17);
+  border-radius: 17px;
+  background: linear-gradient(135deg, rgba(199,167,255,.055), rgba(255,255,255,.015));
+}
+
+.historyConversationSource small {
+  color: #9b8da4;
+  font-size: .68rem;
+}
+
+.historyConversationSource strong {
+  color: #f1e9f5;
+  font-size: .95rem;
+  line-height: 1.45;
+}
+
+.historyConversationSource p {
+  margin: 0;
+  color: #c5b9ca;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.historyConversationSource button {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 5px 0;
+  border: 0;
+  color: var(--accent);
+  background: transparent;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.historyConversationPrivacy {
+  margin: 0;
+  color: #8f8396;
+  font-size: .7rem;
+  line-height: 1.55;
+}
+
+.historyConversationTurns {
+  display: grid;
+  gap: 15px;
+}
+
+.historyConversationTurn {
+  display: grid;
+  gap: 10px;
+}
+
+.historyUserTurn,
+.historyVelaTurn {
+  display: grid;
+  gap: 5px;
+  padding: 11px 13px;
+  border-radius: 15px;
+}
+
+.historyUserTurn {
+  width: min(88%, 390px);
+  justify-self: end;
+  background: rgba(199,167,255,.11);
+  border: 1px solid rgba(199,167,255,.13);
+}
+
+.historyVelaTurn {
+  width: min(92%, 420px);
+  justify-self: start;
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.historyUserTurn small,
+.historyVelaTurn small {
+  color: #917f9b;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+
+.historyUserTurn p,
+.historyVelaTurn p {
+  margin: 0;
+  color: #eee6f1;
+  font-size: .8rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.historyVelaTurn em {
+  padding-top: 3px;
+  color: #c5afd2;
+  font-size: .76rem;
+  font-style: normal;
+  line-height: 1.55;
+}
+
+.historyContinueComposer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding: 14px 0 0;
+  background: linear-gradient(180deg, rgba(23,17,30,0), #17111e 20%);
+}
+
+.historyContinueComposer label {
+  color: #d3c7d9;
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.historyContinueComposer textarea {
+  width: 100%;
+  min-height: 86px;
+  max-height: 150px;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid rgba(232,220,255,.14);
+  border-radius: 14px;
+  outline: 0;
+  color: var(--text);
+  background: rgba(6,4,9,.38);
+  font: inherit;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.historyContinueComposer textarea:focus {
+  border-color: rgba(199,167,255,.48);
+  box-shadow: 0 0 0 3px rgba(199,167,255,.06);
+}
+
+.historyContinueComposer > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.historyContinueComposer > div > span {
+  color: #887b90;
+  font-size: .66rem;
+}
+
+.historyContinueComposer .primaryButton {
+  flex: 0 0 auto;
+  min-height: 39px;
+  padding: 8px 14px;
+}
+
+.historyConversationLimit {
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(199,167,255,.12);
+  border-radius: 14px;
+  color: #aa9caf;
+  background: rgba(199,167,255,.025);
+  font-size: .74rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .historyPanel.isContinuing {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .historyItemActions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .historyItemActions .historyDeleteButton {
+    grid-column: 1 / -1;
+    min-height: 34px;
+    border-top: 1px solid var(--line);
+  }
+
+  .historyConversation {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .historyContinueComposer {
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
+  }
+
+  .historyUserTurn,
+  .historyVelaTurn {
+    width: 94%;
+  }
+}
