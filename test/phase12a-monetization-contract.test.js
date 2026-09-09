@@ -6,6 +6,8 @@ const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
+const flipPath = new URL("../components/VelaFlipPage.js", import.meta.url);
+const flipCssPath = new URL("../app/phase12a-flip-pages.css", import.meta.url);
 
 test("Phase 12A exposes Free and Vela+ without a wallet or recharge model", async () => {
   const plan = await readFile(planPath, "utf8");
@@ -43,4 +45,33 @@ test("the product has both a persistent plan entry and contextual upgrade entry"
   assert.match(experience, /setPlanOpen\(true\)/u);
   assert.match(quick, /onQuotaExhausted/u);
   assert.match(quick, /有一件事情，不是一張牌能說完的嗎？/u);
+});
+
+test("mobile quick-start advances explicitly instead of depending on form submit", async () => {
+  const experience = await readFile(experiencePath, "utf8");
+
+  assert.match(experience, /type="button" onClick=\{\(\) => startQuick\(question\)\}/u);
+  assert.match(experience, /setExperience\("quick-tarot"\)/u);
+  assert.match(experience, /mobile IME composition/u);
+  assert.doesNotMatch(experience, /onSubmit=\{submitQuick\}/u);
+});
+
+test("Free and Deep Reading share the same bounded flip-page language", async () => {
+  const [experience, quick, deep, flip, css] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(quickPath, "utf8"),
+    readFile(deepPath, "utf8"),
+    readFile(flipPath, "utf8"),
+    readFile(flipCssPath, "utf8"),
+  ]);
+
+  assert.match(experience, /VelaFlipPage/u);
+  assert.match(quick, /step=\{1\} total=\{4\}/u);
+  assert.match(quick, /step=\{4\} total=\{4\}/u);
+  assert.match(deep, /step=\{1\} total=\{3\}/u);
+  assert.match(deep, /step=\{3\} total=\{3\}/u);
+  assert.match(flip, /velaFlipProgress/u);
+  assert.match(css, /@keyframes velaPageTurnIn/u);
+  assert.match(css, /perspective:\s*1200px/u);
+  assert.match(css, /prefers-reduced-motion/u);
 });
