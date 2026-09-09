@@ -195,7 +195,9 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
   }
 
   async function chooseCard(index) {
-    if (loading || remaining <= 0) return;
+    // Once the user has reached selection, never let a late auth/quota sync
+    // invalidate the active reading. Quota gates the next reading, not this one.
+    if (loading) return;
     const nextRequestId = makeRequestId();
     setSelectedIndex(index);
     setRequestId(nextRequestId);
@@ -354,6 +356,7 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
                     className="quickCardBack immersiveCardBack"
                     style={{ "--card-index": index }}
                     onClick={() => chooseCard(index)}
+                    disabled={loading}
                     aria-label={`選擇第 ${index + 1} 張牌`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
