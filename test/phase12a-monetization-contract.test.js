@@ -56,7 +56,7 @@ test("mobile quick-start advances explicitly instead of depending on form submit
   assert.doesNotMatch(experience, /onSubmit=\{submitQuick\}/u);
 });
 
-test("Free and Deep Reading share the same bounded flip-page language", async () => {
+test("Free and Deep Reading share bounded flip-page language with their own stage counts", async () => {
   const [experience, quick, deep, flip, css] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(quickPath, "utf8"),
@@ -66,8 +66,8 @@ test("Free and Deep Reading share the same bounded flip-page language", async ()
   ]);
 
   assert.match(experience, /VelaFlipPage/u);
-  assert.match(quick, /step=\{1\} total=\{4\}/u);
-  assert.match(quick, /step=\{4\} total=\{4\}/u);
+  assert.match(quick, /step=\{1\} total=\{5\}/u);
+  assert.match(quick, /step=\{5\} total=\{5\}/u);
   assert.match(deep, /step=\{1\} total=\{3\}/u);
   assert.match(deep, /step=\{3\} total=\{3\}/u);
   assert.match(flip, /velaFlipProgress/u);
