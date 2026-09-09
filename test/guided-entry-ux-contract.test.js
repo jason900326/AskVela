@@ -7,6 +7,8 @@ const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const flipCssPath = new URL("../app/phase12a-flip-pages.css", import.meta.url);
+const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
+const layoutPath = new URL("../app/layout.js", import.meta.url);
 
 test("home lowers first-use friction with quick Tarot suggestions", async () => {
   const experience = await readFile(experiencePath, "utf8");
@@ -41,6 +43,32 @@ test("free quick Tarot is a one-card product with no free-form follow-up loop", 
   assert.match(quick, /Free 不開放同一題自由追問/u);
   assert.doesNotMatch(quick, /followUpMessage/u);
   assert.doesNotMatch(quick, /MAX_FOLLOW_UPS/u);
+});
+
+test("quick Tarot uses the real card back and visibly reveals the chosen face before interpretation", async () => {
+  const [quick, immersiveCss, layout] = await Promise.all([
+    readFile(quickPath, "utf8"),
+    readFile(immersiveCssPath, "utf8"),
+    readFile(layoutPath, "utf8"),
+  ]);
+
+  assert.match(quick, /CARD_BACK = "\/images\/vela\/tarot-card-back\.webp"/u);
+  assert.match(quick, /className={`immersiveRevealCard/u);
+  assert.match(quick, /tarotImagePath\(card\)/u);
+  assert.match(quick, /setRevealed\(true\)[\s\S]*await sleep\(1050\)[\s\S]*fetch\("\/api\/readings\/interpret"/u);
+  assert.doesNotMatch(quick, /VelaWaitingStage/u);
+  assert.doesNotMatch(quick, /quickBackButton/u);
+  assert.match(immersiveCss, /\.immersiveRevealCard\.isFlipped \.immersiveCardInner\s*\{[^}]*rotateY\(180deg\)/su);
+  assert.match(layout, /phase12a-immersive-tarot\.css/u);
+});
+
+test("quick Tarot stays on one mobile stage and limits scrolling to the result reading body", async () => {
+  const immersiveCss = await readFile(immersiveCssPath, "utf8");
+
+  assert.match(immersiveCss, /body:has\(\.immersiveQuickTarot\)\s*\{[^}]*overflow:\s*hidden;/su);
+  assert.match(immersiveCss, /\.quickTarotExperience\.immersiveQuickTarot\s*\{[^}]*height:\s*100svh;[^}]*overflow:\s*hidden;/su);
+  assert.match(immersiveCss, /\.immersiveResultScroll\s*\{[^}]*overflow-y:\s*auto;/su);
+  assert.match(immersiveCss, /\.immersiveResultActions\s*\{[^}]*display:\s*grid;/su);
 });
 
 test("Deep Reading starts with clarification rather than a card-count picker", async () => {
