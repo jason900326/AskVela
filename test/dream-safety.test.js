@@ -12,9 +12,10 @@ test("Dream guardrails reject diagnostic and predictive certainty", () => {
   assert.match(rules, /Freud 是目前預設/u);
 });
 
-test("Dream prompt is Freud-first, concise, and does not turn short dreams into an intake form", () => {
+test("Dream prompt stays source-grounded, concise, and does not turn short dreams into an intake form", () => {
   const instructions = buildDreamInstructions();
-  assert.match(instructions, /Freud 是目前主要歷史框架/u);
+  assert.match(instructions, /內部主要歷史框架包含夢的表面內容、個人聯想、濃縮、移置與近期生活素材/u);
+  assert.match(instructions, /主要解讀不要說出框架作者姓名/u);
   assert.match(instructions, /即使 dreamText 很短/u);
   assert.match(instructions, /不要要求使用者先補齊人物、時間、地點/u);
   assert.match(instructions, /hypotheses 以 2 個為主/u);
