@@ -22,9 +22,9 @@ test("shared speech renderer is a delivery layer, not another interpretation eng
   assert.match(instructions, /禁止使用『不是 A，而是 B』/u);
   assert.match(instructions, /他現在……/u);
   assert.match(instructions, /不要使用 bullet/u);
-  assert.match(instructions, /0–1 次就夠/u);
-  assert.match(instructions, /不要故意結巴、打錯字/u);
-  assert.equal(VELA_SPEECH_VERSION, "shared-speech-v2");
+  assert.match(instructions, /不要刻意模擬人類正在思考/u);
+  assert.match(instructions, /預設不用『嗯……』『我想一下』/u);
+  assert.equal(VELA_SPEECH_VERSION, "shared-speech-v3");
 });
 
 test("mode-specific speech instructions keep one Vela without flattening the tasks", () => {
@@ -39,7 +39,8 @@ test("mode-specific speech instructions keep one Vela without flattening the tas
 test("speech retry instructions become stricter without changing the analysis contract", () => {
   const instructions = buildVelaSpeechInstructions(safety, { retry: true, mode: "dream" });
   assert.match(instructions, /Speech Layer 的修正重試/u);
-  assert.match(instructions, /完全避開工整對偶句/u);
+  assert.match(instructions, /避開二分翻轉句/u);
+  assert.match(instructions, /表演式思考痕跡/u);
   assert.match(instructions, /第三人稱內在斷言/u);
   assert.match(instructions, /高風險行動指令/u);
 });
