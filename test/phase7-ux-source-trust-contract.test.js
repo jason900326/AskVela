@@ -4,7 +4,7 @@ import test from "node:test";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
 const velaStagePath = new URL("../components/VelaStage.js", import.meta.url);
-const astrologyFlowPath = new URL("../components/AstrologyReadingFlow.js", import.meta.url);
+const astrologyFlowPath = new URL("../components/AstrologyReadingFlowV2.js", import.meta.url);
 const astrologyRoutePath = new URL("../app/api/astrology/reading/route.js", import.meta.url);
 const astrologyCssPath = new URL("../app/astrology.css", import.meta.url);
 const accountCssPath = new URL("../app/account.css", import.meta.url);
@@ -21,9 +21,10 @@ test("AskVela home is conversation-first instead of three equal mode tabs", asyn
   assert.match(experience, /velaHomeStageLayout/u);
   assert.match(velaStage, /velaCrystalButton/u);
   assert.match(velaStage, /onCrystalClick/u);
-  assert.match(experience, /今天想從哪件事開始/u);
-  assert.match(experience, /讓 Vela 幫我選/u);
-  assert.match(experience, /recommendExperience/u);
+  assert.match(experience, /今天，你帶了什麼來？/u);
+  assert.match(experience, /velaJourneyPanel/u);
+  assert.match(experience, /有件事想問/u);
+  assert.match(experience, /我也說不上來/u);
   assert.doesNotMatch(experience, /className="experienceTabs"/u);
 });
 
@@ -36,9 +37,10 @@ test("astrology is enabled only through canonical evidence and still refuses mis
   ]);
 
   assert.match(status, /ASTROLOGY_SOURCE_READY\s*=\s*true/u);
-  assert.match(flow, /來源解讀已啟用/u);
-  assert.match(flow, /sourceGrounded\s*!==\s*true/u);
-  assert.match(flow, /參考來源/u);
+  assert.match(flow, /ASTROLOGY_SOURCE_READY/u);
+  assert.match(flow, /sourceGrounded !== true/u);
+  assert.match(flow, /這次星座解讀沒有通過來源驗證/u);
+  assert.match(flow, /查看完整星座分析與依據/u);
   assert.match(route, /AstrologySourceError/u);
   assert.match(route, /503/u);
   assert.match(evidence, /sufficient/u);
