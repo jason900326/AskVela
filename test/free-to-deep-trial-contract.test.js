@@ -11,14 +11,18 @@ const trialRoutePath = new URL("../app/api/deep-trial/route.js", import.meta.url
 const trialMigrationPath = new URL("../supabase/migrations/20260910101559_deep_reading_trial_entitlement.sql", import.meta.url);
 const immutableMigrationPath = new URL("../supabase/migrations/20260910111300_deep_reading_trial_immutable.sql", import.meta.url);
 
-test("Free Tarot chooses three cards but only previews the first card", async () => {
+test("Free Tarot chooses and reveals three cards but only previews the first card", async () => {
   const free = await readFile(freePath, "utf8");
 
   assert.match(free, /selectedIndexes\.length !== 3/u);
   assert.match(free, /selectedCardIndexes: selectedIndexes/u);
   assert.match(free, /previewCardCount: 1/u);
-  assert.match(free, /免費先看第一張/u);
-  assert.match(free, /另外兩張牌，還在這裡/u);
+  assert.match(free, /免費解析會先從第一張開始/u);
+  assert.match(free, /const \[revealedIndexes, setRevealedIndexes\] = useState\(\[\]\)/u);
+  assert.match(free, /index !== revealedIndexes\.length/u);
+  assert.match(free, /nextRevealed\.length < draw\.cards\.length/u);
+  assert.match(free, /另外兩張牌已經翻開/u);
+  assert.match(free, /revealedIndexes,/u);
   assert.match(free, /登入，免費完成深度解析/u);
   assert.doesNotMatch(free, /selectedCardIndexes: \[selectedIndex\]/u);
 });
@@ -37,7 +41,7 @@ test("one-card preview reuses the same three-card reading identity", async () =>
   assert.match(interpreter, /selectedCardIndexes: fullDraw\.selectedCardIndexes/u);
 });
 
-test("login resumes the same draw instead of asking the user to redraw", async () => {
+test("login resumes the same revealed draw instead of asking the user to redraw or reflip", async () => {
   const [experience, trial] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(trialPath, "utf8"),
@@ -50,8 +54,8 @@ test("login resumes the same draw instead of asking the user to redraw", async (
   assert.doesNotMatch(experience, /deep-trial\.used/u);
   assert.doesNotMatch(experience, /markDeepTrialUsed/u);
   assert.match(trial, /const draw = seed\?\.draw/u);
-  assert.match(trial, /const \[revealedIndexes, setRevealedIndexes\] = useState\(\[0\]\)/u);
-  assert.match(trial, /第一張剛才已經看過了/u);
+  assert.match(trial, /Array\.isArray\(seed\?\.revealedIndexes\)/u);
+  assert.match(trial, /三張牌剛才都已經翻開了/u);
   assert.match(trial, /selectedCardIndexes: selectedIndexes/u);
   assert.doesNotMatch(trial, /fetch\("\/api\/readings\/draw"/u);
 });
