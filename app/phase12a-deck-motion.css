@@ -1,4 +1,4 @@
-/* Phase 12A — Vela atmosphere + layered mist motion.
+/* Phase 12A — Vela atmosphere + seamless optical dissolve.
    Imported after mobile stability so these rules intentionally win. */
 
 /* ---------- Home: keep Vela present behind the Free entry card ---------- */
@@ -47,131 +47,68 @@
   gap: 0 !important;
 }
 
-/* ---------- Mist page transition ---------- */
+/* ---------- Optical dissolve page transition ---------- */
 html.velaDeckMotionReady .velaFlipPage {
   animation: none !important;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.velaMistTransition {
+.velaDissolveTransition {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 998;
   pointer-events: none;
   overflow: hidden;
+  background: transparent;
   contain: layout paint style;
-  visibility: hidden;
 }
 
-.velaMistDim,
-.velaMistCloud {
-  position: absolute;
-  pointer-events: none;
-}
-
-.velaMistDim {
-  inset: 0;
-  background:
-    radial-gradient(circle at 50% 44%, rgba(83, 61, 102, .16), transparent 45%),
-    rgba(8, 5, 14, .82);
-  will-change: opacity;
-}
-
-.velaMistCloud {
-  inset: -28% -38%;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-}
-
-.velaMistCloudA {
-  background:
-    radial-gradient(ellipse at 18% 42%, rgba(210, 198, 221, .38) 0%, rgba(170, 149, 188, .19) 24%, transparent 56%),
-    radial-gradient(ellipse at 56% 62%, rgba(145, 120, 164, .28) 0%, rgba(123, 98, 143, .12) 26%, transparent 60%),
-    radial-gradient(ellipse at 82% 34%, rgba(224, 212, 231, .18) 0%, transparent 52%);
-}
-
-.velaMistCloudB {
-  background:
-    radial-gradient(ellipse at 76% 44%, rgba(193, 179, 207, .34) 0%, rgba(150, 129, 167, .17) 27%, transparent 58%),
-    radial-gradient(ellipse at 38% 68%, rgba(126, 103, 145, .26) 0%, rgba(105, 84, 124, .1) 30%, transparent 62%),
-    radial-gradient(ellipse at 20% 28%, rgba(218, 207, 225, .14) 0%, transparent 50%);
-}
-
-.velaMistCloudC {
-  inset: -18% -22%;
-  background:
-    radial-gradient(ellipse at 50% 52%, rgba(170, 151, 187, .28) 0%, rgba(128, 106, 147, .12) 31%, transparent 65%),
-    radial-gradient(ellipse at 24% 76%, rgba(212, 198, 220, .13) 0%, transparent 48%),
-    radial-gradient(ellipse at 80% 20%, rgba(193, 178, 207, .12) 0%, transparent 44%);
-}
-
-/* ---------- Home opening: mist is visible before the first meaningful paint ---------- */
-.velaHomeIntroMist {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
+.velaDissolveOutgoing {
+  pointer-events: none !important;
+  user-select: none !important;
   overflow: hidden;
-  pointer-events: none;
-  opacity: 1;
-  visibility: visible;
-  background: #09060f;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-.velaHomeIntroMistShade,
-.velaHomeIntroMistCloud {
-  position: absolute;
-  pointer-events: none;
+/* ---------- Home opening: visible from frame one, then gently resolves ---------- */
+.velaStage.isIntroPending .velaHoodedArtwork {
+  opacity: .58 !important;
+  transform: translateY(12px) scale(.985) !important;
 }
 
-.velaHomeIntroMistShade {
-  inset: 0;
-  z-index: 1;
-  background:
-    radial-gradient(circle at 50% 55%, rgba(51, 34, 65, .22), transparent 38%),
-    linear-gradient(180deg, rgba(8, 5, 13, .96), rgba(10, 6, 16, .88));
-  will-change: opacity;
+.velaStage.isIntroPending .velaCrystalButton {
+  opacity: .34 !important;
+  transform: translateY(8px) scale(.96) !important;
 }
 
-.velaHomeIntroMistCloud {
-  inset: -28% -36%;
-  z-index: 2;
-  transform: translateZ(0);
-  will-change: transform, opacity;
+.velaStage.isIntroPending .velaCrystalAura {
+  opacity: .2 !important;
+  transform: scale(.86) !important;
 }
 
-.velaHomeIntroMistCloudA {
-  background:
-    radial-gradient(ellipse at 24% 46%, rgba(210, 197, 219, .42) 0%, rgba(157, 137, 174, .2) 27%, transparent 59%),
-    radial-gradient(ellipse at 66% 62%, rgba(136, 112, 154, .28) 0%, rgba(111, 88, 130, .1) 30%, transparent 63%);
+.velaStage.isIntroPending .velaCrystalHint {
+  opacity: 0 !important;
+  transform: translateY(6px) !important;
 }
 
-.velaHomeIntroMistCloudB {
-  background:
-    radial-gradient(ellipse at 74% 42%, rgba(195, 181, 207, .36) 0%, rgba(145, 125, 160, .17) 28%, transparent 60%),
-    radial-gradient(ellipse at 34% 72%, rgba(119, 96, 138, .24) 0%, rgba(96, 76, 115, .09) 31%, transparent 63%);
+.velaStage.isIntroPending .velaStageGlow {
+  opacity: .28 !important;
 }
 
-.velaHomeIntroMistCloudC {
-  inset: -14% -20%;
-  background:
-    radial-gradient(ellipse at 50% 55%, rgba(171, 151, 186, .29) 0%, rgba(127, 105, 144, .11) 32%, transparent 66%);
+.velaStage.isIntroPending .velaStageStars i {
+  opacity: .18 !important;
 }
 
-.velaStage[data-intro-complete="true"] .velaHomeIntroMist {
-  visibility: hidden;
+.velaStage:not(.isIntroPending):not(.isAwake) .velaCrystalAura {
+  animation: velaCoverAuraBreath 3.8s ease-in-out infinite;
+  transform-origin: 50% 50%;
 }
 
-.velaStage[data-intro-ready="true"] .velaCrystalButton,
-.velaStage[data-intro-ready="true"] .velaCrystalHint,
-.velaStage[data-intro-ready="true"] .velaCrystalAura {
-  will-change: transform, opacity;
-}
-
-.velaStage[data-intro-complete="true"] .velaCrystalButton,
-.velaStage[data-intro-complete="true"] .velaCrystalHint,
-.velaStage[data-intro-complete="true"] .velaCrystalAura {
-  will-change: auto;
+@keyframes velaCoverAuraBreath {
+  0%, 100% { transform: scale(.985); opacity: .76; }
+  50% { transform: scale(1.035); opacity: 1; }
 }
 
 @media (max-width: 600px) {
@@ -189,27 +126,24 @@ html.velaDeckMotionReady .velaFlipPage {
     width: min(calc(100% - 8px), 560px);
     max-height: calc(100svh - max(166px, 20vh) - max(14px, env(safe-area-inset-bottom))) !important;
   }
-
-  .velaMistCloud {
-    inset: -22% -62%;
-  }
-
-  .velaMistCloudC {
-    inset: -16% -42%;
-  }
-
-  .velaHomeIntroMistCloud {
-    inset: -24% -58%;
-  }
-
-  .velaHomeIntroMistCloudC {
-    inset: -14% -38%;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .velaMistTransition,
-  .velaHomeIntroMist {
+  .velaDissolveOutgoing {
     display: none !important;
+  }
+
+  .velaStage.isIntroPending .velaHoodedArtwork,
+  .velaStage.isIntroPending .velaCrystalButton,
+  .velaStage.isIntroPending .velaCrystalAura,
+  .velaStage.isIntroPending .velaCrystalHint,
+  .velaStage.isIntroPending .velaStageGlow,
+  .velaStage.isIntroPending .velaStageStars i {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .velaStage:not(.isIntroPending):not(.isAwake) .velaCrystalAura {
+    animation: none !important;
   }
 }
