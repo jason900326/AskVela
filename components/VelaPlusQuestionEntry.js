@@ -2,15 +2,10 @@
 
 import { useState } from "react";
 
-export default function VelaPlusQuestionEntry({ onReady, suggestions = [] }) {
+export default function VelaPlusQuestionEntry({ onReady, onNeedHelp }) {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  function applySuggestion(text) {
-    setQuestion(String(text || "").slice(0, 700));
-    setError("");
-  }
 
   async function submit(event) {
     event.preventDefault();
@@ -43,7 +38,6 @@ export default function VelaPlusQuestionEntry({ onReady, suggestions = [] }) {
       <div className="velaDialogueBubble phase12HomeBubble velaPlusHomeBubble">
         <span className="velaSharedTrust">免費一張 · 約 60 秒 · 不需註冊</span>
         <h1>最近有什麼事一直放在心上？</h1>
-        <p>不用先把問題想得很完整。說給 Vela 聽，她會先抓到你真正卡住的地方。</p>
       </div>
 
       <form className="velaPlusHomeForm" onSubmit={submit}>
@@ -67,16 +61,9 @@ export default function VelaPlusQuestionEntry({ onReady, suggestions = [] }) {
         {error && <div className="phase12EntryError" role="alert">{error}</div>}
       </form>
 
-      {suggestions.length > 0 && (
-        <div className="velaHomeSuggestions" aria-label="不知道怎麼問時可以從這裡開始">
-          <span>不知道怎麼問？可以先從這些方向開始</span>
-          <div>
-            {suggestions.map((item) => (
-              <button type="button" key={item} onClick={() => applySuggestion(item)}>{item}</button>
-            ))}
-          </div>
-        </div>
-      )}
+      <button className="ghostButton velaQuestionHelpButton" type="button" onClick={onNeedHelp} disabled={loading}>
+        我不知道怎麼說
+      </button>
     </div>
   );
 }
