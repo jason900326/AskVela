@@ -35,7 +35,7 @@ test("Free remains full-quality while product depth and free-form questions are 
   assert.match(quick, /card\.practicalFocus/u);
   assert.match(quick, /FREE_QUESTION_PRESETS/u);
   assert.doesNotMatch(quick, /<textarea/u);
-  assert.match(deep, /不用你先選牌陣/u);
+  assert.match(deep, /不需要你先選牌陣/u);
   assert.match(deep, /繼續聊這件事/u);
   assert.match(deep, /補一張/u);
 });
