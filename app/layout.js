@@ -27,6 +27,7 @@ import "./phase10-final-fixes.css";
 import "./phase10-auth-waiting.css";
 import "./phase10-retention-v1.css";
 import "./phase10-history-exit.css";
+import "./motion.css";
 
 export const metadata = {
   title: "Vela",
