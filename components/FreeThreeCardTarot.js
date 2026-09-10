@@ -137,6 +137,7 @@ export default function FreeThreeCardTarot({
   const [draw, setDraw] = useState(null);
   const [result, setResult] = useState(null);
   const [revealed, setRevealed] = useState(false);
+  const [revealedIndexes, setRevealedIndexes] = useState([]);
   const [waitingIndex, setWaitingIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -166,11 +167,12 @@ export default function FreeThreeCardTarot({
       plan,
       selectedOptionId: selectedOption.id,
       selectedIndexes,
+      revealedIndexes,
       requestId,
       draw,
       previewResult: result,
     };
-  }, [draw, plan, question, readingQuestion, requestId, result, selectedIndexes, selectedOption]);
+  }, [draw, plan, question, readingQuestion, requestId, result, revealedIndexes, selectedIndexes, selectedOption]);
 
   useEffect(() => {
     if (!client) return undefined;
@@ -291,6 +293,7 @@ export default function FreeThreeCardTarot({
       if (!response.ok) throw new Error(data.error || "目前無法完成抽牌。");
       setDraw(data);
       setRevealed(false);
+      setRevealedIndexes([]);
       createPreviewPromise(data, nextRequestId);
       setStage("reveal");
     } catch (err) {
@@ -301,10 +304,17 @@ export default function FreeThreeCardTarot({
     }
   }
 
-  async function revealAndInterpret() {
-    if (!draw || revealed) return;
-    setRevealed(true);
+  async function revealAndInterpret(index) {
+    if (!draw || revealed || revealedIndexes.includes(index)) return;
+    if (index !== revealedIndexes.length) return;
+
+    const nextRevealed = [...revealedIndexes, index];
+    setRevealedIndexes(nextRevealed);
     setError("");
+
+    if (nextRevealed.length < draw.cards.length) return;
+
+    setRevealed(true);
     await sleep(900);
     setWaitingIndex(0);
     setStage("interpreting");
@@ -316,6 +326,7 @@ export default function FreeThreeCardTarot({
     if (!outcome.ok) {
       setError(outcome.error || "目前無法完成解讀。");
       setRevealed(false);
+      setRevealedIndexes([]);
       interpretationPromiseRef.current = null;
       setStage("reveal");
       return;
@@ -415,23 +426,24 @@ export default function FreeThreeCardTarot({
         )}
 
         {stage === "reveal" && draw && card && (
-          <VelaFlipPage pageKey="free-three-reveal" step={3} total={5} label="先看第一張">
+          <VelaFlipPage pageKey="free-three-reveal" step={3} total={5} label="翻開三張牌">
             <div className="deepReadingStep velaFlipContentCard deepRevealCard">
-              <div className="deepVelaLine">三張都在。先翻第一張，看看這件事現在最值得注意什麼。</div>
+              <div className="deepVelaLine">三張都在。照順序把它們翻開；免費解析會先從第一張開始。</div>
               <div className="deepRevealRow">
                 {draw.cards.map((item, index) => {
-                  const isFirst = index === 0;
-                  const isRevealed = isFirst && revealed;
+                  const isRevealed = revealedIndexes.includes(index);
+                  const canReveal = index === revealedIndexes.length && !isRevealed && !revealed;
                   const lens = selectedOption.lenses[index];
+                  const orientation = ORIENTATION_LABELS[item.orientation] || item.orientation;
                   return (
                     <article key={item.cardId} className={isRevealed ? "isRevealed" : ""}>
                       <span>{lens.label}</span>
                       <button
                         type="button"
                         className={`deepRevealTap ${isRevealed ? "isRevealed" : ""}`}
-                        onClick={isFirst ? revealAndInterpret : undefined}
-                        disabled={!isFirst || revealed}
-                        aria-label={isFirst ? (revealed ? `${item.nameZhTw}，已翻開` : "翻開第一張牌") : `${lens.label}，稍後再看`}
+                        onClick={() => revealAndInterpret(index)}
+                        disabled={!canReveal}
+                        aria-label={isRevealed ? `${item.nameZhTw}，${orientation}，已翻開` : canReveal ? `翻開「${lens.label}」` : `先翻前一張牌`}
                       >
                         <div className="deepRevealFlip">
                           <div className="deepRevealFlipInner">
@@ -446,8 +458,8 @@ export default function FreeThreeCardTarot({
                           </div>
                         </div>
                       </button>
-                      <strong>{isRevealed ? item.nameZhTw : isFirst ? "點牌翻開" : "先留著"}</strong>
-                      {isRevealed && <small>{cardOrientation}</small>}
+                      <strong>{isRevealed ? item.nameZhTw : canReveal ? "點牌翻開" : "等前一張"}</strong>
+                      {isRevealed && <small>{orientation}</small>}
                     </article>
                   );
                 })}
@@ -504,18 +516,26 @@ export default function FreeThreeCardTarot({
 
                 <aside className="quickUpgradeCard immersiveUpgradeCard">
                   <span>{user && !trialUsed ? "第一次深度解析免費" : "深度解析"}</span>
-                  <h3>另外兩張牌，還在這裡。</h3>
-                  <div className="deepRevealRow" aria-hidden="true">
-                    {draw.cards.slice(1).map((item, index) => (
-                      <article key={item.cardId}>
-                        <span>{selectedOption.lenses[index + 1]?.label}</span>
-                        <div className="deepRevealTap"><div className="deepRevealFlip"><div className="deepRevealFlipInner"><div className="deepRevealFace deepRevealBack"><img src={CARD_BACK} alt="" /></div></div></div></div>
-                      </article>
-                    ))}
+                  <h3>另外兩張牌已經翻開，完整關係還沒解讀。</h3>
+                  <div className="deepRevealRow" aria-label="另外兩張已翻開的牌">
+                    {draw.cards.slice(1).map((item, index) => {
+                      const orientation = ORIENTATION_LABELS[item.orientation] || item.orientation;
+                      return (
+                        <article key={item.cardId}>
+                          <span>{selectedOption.lenses[index + 1]?.label}</span>
+                          <div className={`deepRevealImage ${item.orientation === "reversed" ? "isReversed" : ""}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={tarotImagePath(item)} alt={item.nameZhTw} draggable="false" />
+                          </div>
+                          <strong>{item.nameZhTw}</strong>
+                          <small>{orientation}</small>
+                        </article>
+                      );
+                    })}
                   </div>
-                  {!user && <p>登入後不用重新抽牌，直接從這兩張接著看，第一次完整深度解析免費。</p>}
-                  {user && !trialUsed && <p>第一次完整深度解析免費。第二、第三張與最後的三牌結論都會沿用剛才這組牌。</p>}
-                  {user && trialUsed && <p>剛才這一張已經完整回答。需要時，可以再把另外兩個位置一起看完整。</p>}
+                  {!user && <p>登入後不用重新抽牌，也不用再翻一次。第一次完整深度解析會直接沿用這三張，補上第二、第三張與三牌結論。</p>}
+                  {user && !trialUsed && <p>第一次完整深度解析免費。直接沿用剛才三張，補上第二、第三張與最後的三牌結論。</p>}
+                  {user && trialUsed && <p>三張牌面都已經保留。需要時，可以把另外兩個位置和整體關係一起看完整。</p>}
                   <button className="ghostButton" type="button" onClick={continueDeep}>
                     {!user ? "登入，免費完成深度解析" : trialUsed ? "深度解析" : "免費完成深度解析"}
                   </button>
