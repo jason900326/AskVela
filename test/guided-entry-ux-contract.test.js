@@ -7,6 +7,7 @@ const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const entryPath = new URL("../components/VelaPlusQuestionEntry.js", import.meta.url);
+const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
@@ -14,33 +15,53 @@ const deepPolishCssPath = new URL("../app/phase12a-deep-reading-polish.css", imp
 const readingPromptsPath = new URL("../lib/reading-prompts.js", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
 
-test("home gives everyone one free-form question entry without inline paid advertising", async () => {
+test("home keeps the first question page focused on typing plus one help CTA", async () => {
   const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
   ]);
 
-  assert.match(experience, /FREE_QUESTION_PRESETS/u);
-  assert.match(experience, /<VelaPlusQuestionEntry onReady=\{handleHomeQuestionReady\} suggestions=\{FREE_QUESTION_PRESETS\} \/>/u);
+  assert.match(experience, /<VelaPlusQuestionEntry/u);
+  assert.match(experience, /onNeedHelp=\{\(\) => setHomeHelpOpen\(true\)\}/u);
   assert.match(entry, /<textarea/u);
   assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
   assert.match(entry, /最近有什麼事一直放在心上？/u);
+  assert.match(entry, /我不知道怎麼說/u);
+  assert.doesNotMatch(entry, /不用先把問題想得很完整/u);
+  assert.doesNotMatch(entry, /suggestions\.map/u);
   assert.doesNotMatch(entry, /NT\$29/u);
   assert.doesNotMatch(entry, /VELA\+/u);
 });
 
-test("home keeps Astrology and Dream as explicit secondary destinations without a carousel", async () => {
-  const [experience, css] = await Promise.all([
+test("guided choices live on the next page and start intake directly instead of filling the textarea", async () => {
+  const [experience, help] = await Promise.all([
     readFile(experiencePath, "utf8"),
-    readFile(stabilityCssPath, "utf8"),
+    readFile(helpPath, "utf8"),
   ]);
 
-  assert.match(experience, /<strong>星座運勢<\/strong>/u);
-  assert.match(experience, /onClick=\{\(\) => changeExperience\("astrology"\)\}/u);
-  assert.match(experience, /<strong>解夢<\/strong>/u);
-  assert.match(experience, /onClick=\{\(\) => beginDream\(""\)\}/u);
-  assert.match(css, /\.phase12SecondaryModes > div[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/u);
-  assert.doesNotMatch(css, /\.phase12SecondaryModes > div[\s\S]*overflow-x:\s*(auto|scroll)/u);
+  assert.match(experience, /pageKey="home-help"/u);
+  assert.match(experience, /<VelaQuestionHelp/u);
+  assert.match(help, /GUIDED_CHOICES/u);
+  assert.match(help, /onClick=\{\(\) => choose\(item\.question\)\}/u);
+  assert.match(help, /\/api\/deep-reading\/intake/u);
+  assert.match(help, /onReady\?\.\(\{ question, plan \}\)/u);
+  assert.doesNotMatch(help, /setQuestion/u);
+  assert.doesNotMatch(help, /<textarea/u);
+});
+
+test("Astrology and Dream move off the first entry page and remain available from question help", async () => {
+  const [experience, entry, help] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(entryPath, "utf8"),
+    readFile(helpPath, "utf8"),
+  ]);
+
+  assert.doesNotMatch(entry, /星座運勢/u);
+  assert.doesNotMatch(entry, /解夢/u);
+  assert.match(help, /星座運勢/u);
+  assert.match(help, /解夢/u);
+  assert.match(experience, /onAstrology=\{\(\) => changeExperience\("astrology"\)\}/u);
+  assert.match(experience, /onDream=\{\(\) => beginDream\(""\)\}/u);
 });
 
 test("Free gets the AI clarification before entering its one-card reading", async () => {
@@ -85,7 +106,7 @@ test("confirmed card starts analysis immediately and skips the artificial chosen
   assert.match(quick, /interpretationPromiseRef\.current \|\| createInterpretationPromise/u);
 });
 
-test("Free result sharing generates a PNG file instead of copying plain text", async () => {
+test("Free result sharing still generates an image while the user-facing action simply says share", async () => {
   const [quick, share] = await Promise.all([
     readFile(quickPath, "utf8"),
     readFile(sharePath, "utf8"),
@@ -93,7 +114,9 @@ test("Free result sharing generates a PNG file instead of copying plain text", a
 
   assert.match(quick, /buildTarotSharePng/u);
   assert.match(quick, /shareTarotPng/u);
-  assert.match(quick, /分享 PNG/u);
+  assert.match(quick, /準備分享中/u);
+  assert.match(quick, />分享<\/button>/u);
+  assert.doesNotMatch(quick, /分享 PNG<\/button>/u);
   assert.doesNotMatch(quick, /clipboard\.writeText/u);
   assert.match(share, /canvas\.toBlob/u);
   assert.match(share, /type: "image\/png"/u);
