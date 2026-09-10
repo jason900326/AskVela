@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import { gsap } from "gsap";
 import { VELA_FLIP_PAGE_READY_EVENT } from "./VelaFlipPage.js";
 
-const CARD_BACK = "/images/vela/tarot-card-back.webp";
-
 function isReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
 }
@@ -17,18 +15,14 @@ function isDrawingRevealBridge(previous, next) {
   );
 }
 
-function createEclipseLayer() {
+function createCinematicLayer() {
   const root = document.createElement("div");
-  root.className = "velaEclipseTransition";
+  root.className = "velaCinematicTransition";
   root.setAttribute("aria-hidden", "true");
   root.innerHTML = `
-    <div class="velaEclipseVeil"></div>
-    <div class="velaEclipseSeal">
-      <span class="velaEclipseOrbit"></span>
-      <span class="velaEclipseOrbit velaEclipseOrbitSecondary"></span>
-      <img class="velaEclipseCard" src="${CARD_BACK}" alt="" draggable="false" />
-      <span class="velaEclipseGleam"></span>
-    </div>
+    <div class="velaCinematicVeil"></div>
+    <div class="velaCinematicLight"></div>
+    <div class="velaCinematicVignette"></div>
   `;
   document.body.append(root);
   return root;
@@ -43,13 +37,10 @@ export default function VelaPageStackMotion() {
   useEffect(() => {
     document.documentElement.classList.add("velaDeckMotionReady");
 
-    const layer = createEclipseLayer();
-    const veil = layer.querySelector(".velaEclipseVeil");
-    const seal = layer.querySelector(".velaEclipseSeal");
-    const card = layer.querySelector(".velaEclipseCard");
-    const orbit = layer.querySelector(".velaEclipseOrbit");
-    const orbitSecondary = layer.querySelector(".velaEclipseOrbitSecondary");
-    const gleam = layer.querySelector(".velaEclipseGleam");
+    const layer = createCinematicLayer();
+    const veil = layer.querySelector(".velaCinematicVeil");
+    const light = layer.querySelector(".velaCinematicLight");
+    const vignette = layer.querySelector(".velaCinematicVignette");
 
     let activePage = null;
     let activeTimeline = null;
@@ -60,7 +51,7 @@ export default function VelaPageStackMotion() {
       activeTimeline?.kill();
       activeTimeline = null;
       gsap.set(layer, { autoAlpha: 0, clearProps: "pointerEvents" });
-      gsap.set([veil, seal, card, orbit, orbitSecondary, gleam], { clearProps: "all" });
+      gsap.set([veil, light, vignette], { clearProps: "all" });
       clearPageStyles(activePage);
     }
 
@@ -79,27 +70,20 @@ export default function VelaPageStackMotion() {
 
       activeTimeline?.kill();
 
-      // The incoming page is prepared before paint. The eclipse layer is a
-      // lightweight visual bridge; we never clone or re-layout the outgoing page.
+      // Keep the page exchange visually continuous without animating a copied DOM
+      // tree. The incoming page waits behind a lightweight cinematic veil.
       gsap.set(nextPage, {
         autoAlpha: 0,
-        y: 14,
-        scale: 0.992,
+        y: 10,
+        scale: 0.994,
         force3D: true,
         willChange: "transform,opacity",
       });
 
       gsap.set(layer, { autoAlpha: 1, pointerEvents: "none" });
-      gsap.set(veil, {
-        scaleX: 0,
-        transformOrigin: "50% 50%",
-        force3D: true,
-      });
-      gsap.set(seal, { autoAlpha: 0, scale: 0.72, rotation: -4, force3D: true });
-      gsap.set(card, { y: 10, rotationY: -10, scale: 0.94, force3D: true });
-      gsap.set(orbit, { scale: 0.74, rotation: -26, autoAlpha: 0 });
-      gsap.set(orbitSecondary, { scale: 0.86, rotation: 18, autoAlpha: 0 });
-      gsap.set(gleam, { xPercent: -150, autoAlpha: 0 });
+      gsap.set(veil, { autoAlpha: 0, scale: 1.035, force3D: true });
+      gsap.set(vignette, { autoAlpha: 0 });
+      gsap.set(light, { xPercent: -125, autoAlpha: 0, force3D: true });
 
       const timeline = gsap.timeline({
         defaults: { overwrite: "auto" },
@@ -111,61 +95,44 @@ export default function VelaPageStackMotion() {
       });
       activeTimeline = timeline;
 
-      // Vela Eclipse: close the veil, let the tarot seal appear at totality,
-      // then open directly onto the next page. Only transform/opacity animate.
+      // Vela cinematic cut: lower the room light, let a restrained light sweep
+      // bridge the edit, then bring the next page into focus. No emblems, cards,
+      // spinning rings, or other game-like transition objects.
       timeline
-        .to(veil, {
-          scaleX: 1,
-          duration: 0.2,
-          ease: "power3.inOut",
+        .to(vignette, {
+          autoAlpha: 0.72,
+          duration: 0.18,
+          ease: "power2.out",
         }, 0)
-        .to(seal, {
-          autoAlpha: 1,
-          scale: 1,
-          rotation: 0,
-          duration: 0.22,
-          ease: "back.out(1.35)",
-        }, 0.1)
-        .to(card, {
-          y: 0,
-          rotationY: 0,
+        .to(veil, {
+          autoAlpha: 0.9,
           scale: 1,
           duration: 0.24,
-          ease: "power2.out",
-        }, 0.1)
-        .to([orbit, orbitSecondary], {
-          autoAlpha: 0.88,
-          scale: 1,
-          rotation: 0,
-          duration: 0.22,
-          stagger: 0.025,
-          ease: "power2.out",
-        }, 0.12)
-        .to(gleam, {
-          xPercent: 145,
-          autoAlpha: 0.72,
-          duration: 0.22,
+          ease: "power2.inOut",
+        }, 0.02)
+        .to(light, {
+          xPercent: 130,
+          autoAlpha: 0.28,
+          duration: 0.38,
           ease: "power1.inOut",
-        }, 0.2)
-        .set(nextPage, { autoAlpha: 1 }, 0.31)
+        }, 0.08)
+        .set(nextPage, { autoAlpha: 1 }, 0.2)
         .to(nextPage, {
           y: 0,
           scale: 1,
-          duration: 0.28,
+          duration: 0.34,
           ease: "power2.out",
-        }, 0.31)
-        .to(seal, {
-          autoAlpha: 0,
-          scale: 1.08,
-          duration: 0.16,
-          ease: "power2.in",
-        }, 0.34)
+        }, 0.2)
         .to(veil, {
-          scaleX: 0,
-          transformOrigin: "100% 50%",
-          duration: 0.24,
-          ease: "power3.inOut",
-        }, 0.36);
+          autoAlpha: 0,
+          duration: 0.3,
+          ease: "power2.out",
+        }, 0.24)
+        .to(vignette, {
+          autoAlpha: 0,
+          duration: 0.32,
+          ease: "power2.out",
+        }, 0.22);
     }
 
     window.addEventListener(VELA_FLIP_PAGE_READY_EVENT, handlePageReady);
