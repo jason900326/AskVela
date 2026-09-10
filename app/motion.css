@@ -97,6 +97,14 @@
   pointer-events: none !important;
 }
 
+.velaGuideHome.isCrystalTransitioning.entry-landing .velaArtFrame,
+.velaGuideHome.isCrystalTransitioning.entry-landing .velaCrystalAura,
+.velaGuideHome.isCrystalTransitioning.entry-landing .velaCrystalArtwork,
+.velaGuideHome.isCrystalTransitioning.entry-landing .velaCrystalButton::before,
+.velaGuideHome.isCrystalTransitioning.entry-landing .velaCrystalButton::after {
+  animation: none !important;
+}
+
 .velaGuideHome.isCrystalTransitioning .velaCrystalAura {
   will-change: transform, opacity;
 }
