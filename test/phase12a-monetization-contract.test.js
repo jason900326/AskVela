@@ -25,7 +25,7 @@ test("Phase 12A exposes Free, one-off Deep Reading, and Vela+ without stored val
   assert.doesNotMatch(plan, /top_up/u);
 });
 
-test("Free and Vela+ share a free-form intake while Free still gives a complete one-card answer", async () => {
+test("Free and Vela+ share a free-form intake while optional broad guidance skips AI", async () => {
   const [experience, entry, help, quick, deep] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
@@ -38,9 +38,12 @@ test("Free and Vela+ share a free-form intake while Free still gives a complete 
   assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
   assert.match(entry, /\/api\/deep-reading\/intake/u);
   assert.match(entry, /我不知道怎麼說/u);
-  assert.match(help, /\/api\/deep-reading\/intake/u);
+  assert.doesNotMatch(entry, /length < 8/u);
+  assert.doesNotMatch(help, /\/api\/deep-reading\/intake/u);
+  assert.match(help, /onChooseQuestion\?\.\(item\.question\)/u);
   assert.match(experience, /homeSeed\.plan\.clarifyingQuestion/u);
   assert.match(experience, /option\.focusQuestion/u);
+  assert.match(experience, /onChooseQuestion=\{\(question\) => startQuick\(question\)\}/u);
   assert.match(quick, /result\.synthesis\?\.overview/u);
   assert.match(quick, /card\.contextInterpretation/u);
   assert.match(quick, /card\.practicalFocus/u);
@@ -61,13 +64,30 @@ test("one-card result stays complete and mentions no price until the user opens 
   assert.match(quick, /onClick=\{onOpenPlans\}/u);
 });
 
-test("the product keeps a persistent plan entry without turning the home intake into an ad", async () => {
+test("Free and anonymous users cannot enter the full Deep prototype from plans", async () => {
+  const [experience, plan] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(planPath, "utf8"),
+  ]);
+
+  assert.match(experience, /function startDeepReading[\s\S]*if \(!isVelaPlus\)[\s\S]*setPlanOpen\(true\);[\s\S]*return;/u);
+  assert.match(experience, /if \(next === "deep" && !isVelaPlus\)[\s\S]*setPlanOpen\(true\)/u);
+  assert.match(plan, /isVelaPlus \? "已包含在 Vela\+" : "即將開放"/u);
+  assert.match(plan, /isVelaPlus \? \([\s\S]*開始深度解析[\s\S]*onClick=\{onStartDeep\}/u);
+  assert.doesNotMatch(plan, /預覽完整 Deep Reading/u);
+  assert.doesNotMatch(plan, /先體驗 Vela\+ Reading/u);
+  assert.doesNotMatch(plan, /目前按鈕只開啟產品原型/u);
+});
+
+test("the product keeps a persistent plan entry without pretending Free is Vela+", async () => {
   const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
   ]);
 
   assert.match(experience, /velaPlusStoreButton/u);
+  assert.match(experience, /isVelaPlus \? "✦ Vela\+" : "方案"/u);
+  assert.match(experience, /isVelaPlus \? "isActivePlan" : "isPlanEntry"/u);
   assert.match(experience, /setPlanOpen\(true\)/u);
   assert.doesNotMatch(entry, /VELA\+/u);
   assert.doesNotMatch(entry, /NT\$29/u);
