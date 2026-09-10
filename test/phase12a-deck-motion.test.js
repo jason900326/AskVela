@@ -34,63 +34,50 @@ test("the transient draw bridge never shows the preparing-label flash", async ()
   assert.match(css, /\.immersiveQuickTarot\.stage-drawing \.immersivePreparingLabel[\s\S]*display:\s*none\s*!important/u);
 });
 
-test("Vela transition uses GSAP lifecycle events without observing or cloning whole pages", async () => {
-  const [pkg, flipPage, controller] = await Promise.all([
+test("Vela transition reuses the detached outgoing page for a true dissolve without a full-screen veil", async () => {
+  const [pkg, flipPage, controller, css] = await Promise.all([
     readFile(packagePath, "utf8"),
     readFile(flipPagePath, "utf8"),
     readFile(controllerPath, "utf8"),
+    readFile(motionCssPath, "utf8"),
   ]);
 
   assert.match(pkg, /"gsap":\s*"3\.15\.0"/u);
   assert.match(flipPage, /useLayoutEffect/u);
   assert.match(flipPage, /vela:flip-page-ready/u);
-  assert.match(controller, /import \{ gsap \} from "gsap"/u);
-  assert.match(controller, /gsap\.timeline/u);
-  assert.match(controller, /VELA_FLIP_PAGE_READY_EVENT/u);
-  assert.match(controller, /createMistLayer/u);
-  assert.doesNotMatch(controller, /tarot-card-back\.webp/u);
+  assert.match(controller, /createDissolveLayer/u);
+  assert.match(controller, /previousPage\.isConnected/u);
+  assert.match(controller, /layer\.append\(outgoingPage\)/u);
+  assert.match(controller, /previousRect/u);
+  assert.match(controller, /autoAlpha:\s*0\.18/u);
+  assert.match(controller, /duration:\s*0\.36/u);
+  assert.match(controller, /duration:\s*0\.42/u);
   assert.doesNotMatch(controller, /MutationObserver/u);
   assert.doesNotMatch(controller, /offsetWidth/u);
   assert.doesNotMatch(controller, /cloneNode/u);
+  assert.doesNotMatch(controller, /Mist|Eclipse|Cinematic/u);
+  assert.match(css, /\.velaDissolveTransition[\s\S]*background:\s*transparent/u);
+  assert.doesNotMatch(css, /\.velaMistTransition|\.velaEclipseTransition|\.velaCinematicTransition/u);
 });
 
-test("mist transition is layered, atmospheric, and compositor-friendly", async () => {
-  const [css, controller] = await Promise.all([
-    readFile(motionCssPath, "utf8"),
-    readFile(controllerPath, "utf8"),
-  ]);
-
-  assert.match(controller, /velaMistCloudA/u);
-  assert.match(controller, /velaMistCloudB/u);
-  assert.match(controller, /velaMistCloudC/u);
-  assert.match(controller, /force3D:\s*true/u);
-  assert.match(controller, /willChange:\s*"transform,opacity"/u);
-  assert.doesNotMatch(controller, /filter:/u);
-  assert.doesNotMatch(controller, /Eclipse|Cinematic|Orbit|Gleam/u);
-  assert.match(css, /\.velaMistTransition/u);
-  assert.match(css, /\.velaMistCloudA/u);
-  assert.match(css, /radial-gradient\(ellipse/u);
-  assert.doesNotMatch(css, /\.velaEclipseCard|\.velaEclipseOrbit/u);
-  assert.doesNotMatch(css, /@keyframes velaTopPageToDeckBottom/u);
-});
-
-test("home cover keeps mist visible until assets are ready and starts after first paint", async () => {
+test("home cover is visible on frame one and resolves into focus after assets are ready", async () => {
   const [stage, css] = await Promise.all([
     readFile(stagePath, "utf8"),
     readFile(motionCssPath, "utf8"),
   ]);
 
   assert.match(stage, /import \{ gsap \} from "gsap"/u);
-  assert.match(stage, /useEffect/u);
   assert.match(stage, /loaded\.hooded/u);
   assert.match(stage, /loaded\.crystal/u);
   assert.match(stage, /requestAnimationFrame/u);
-  assert.match(stage, /\.velaHomeIntroMist/u);
-  assert.match(stage, /\.velaHomeIntroMistCloudA/u);
+  assert.match(stage, /isIntroPending/u);
+  assert.match(stage, /\.velaHoodedArtwork/u);
+  assert.match(stage, /\.velaCrystalArtwork/u);
   assert.match(stage, /\.velaCrystalHint/u);
   assert.match(stage, /gsap\.timeline/u);
   assert.match(stage, /prefersReducedMotion/u);
-  assert.match(css, /\.velaHomeIntroMist[\s\S]*opacity:\s*1/u);
-  assert.match(css, /\.velaHomeIntroMistCloudA/u);
-  assert.match(css, /data-intro-complete/u);
+  assert.doesNotMatch(stage, /velaHomeIntroMist/u);
+  assert.match(css, /\.velaStage\.isIntroPending \.velaHoodedArtwork[\s\S]*opacity:\s*\.58/u);
+  assert.match(css, /\.velaStage\.isIntroPending \.velaCrystalArtwork[\s\S]*opacity:\s*\.34/u);
+  assert.match(css, /@keyframes velaCoverAuraBreath/u);
 });
