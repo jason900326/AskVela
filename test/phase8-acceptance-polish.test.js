@@ -3,18 +3,23 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
+const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const accountPath = new URL("../components/VelaAccount.js", import.meta.url);
 const brandPath = new URL("../components/VelaBrandLink.js", import.meta.url);
 const polishPath = new URL("../app/phase8-polish.css", import.meta.url);
 
-test("Vela home opens a bounded Free question page with explicit secondary modes", async () => {
-  const experience = await readFile(experiencePath, "utf8");
+test("Vela home opens a bounded question page and keeps secondary modes on optional help", async () => {
+  const [experience, help] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(helpPath, "utf8"),
+  ]);
   assert.match(experience, /entryMode !== "landing"/u);
   assert.match(experience, /velaHomeEntry/u);
   assert.match(experience, /VelaFlipPage/u);
-  assert.match(experience, /phase12SecondaryModes/u);
-  assert.match(experience, /星座運勢/u);
-  assert.match(experience, /解夢/u);
+  assert.match(experience, /pageKey="home-help"/u);
+  assert.match(experience, /VelaQuestionHelp/u);
+  assert.match(help, /星座運勢/u);
+  assert.match(help, /解夢/u);
   assert.match(experience, /awakened=\{entryMode !== "landing"\}/u);
   assert.doesNotMatch(experience, /guideRecommendationOverlay/u);
 });
