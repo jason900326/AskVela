@@ -35,6 +35,7 @@ import "./phase12a-free-flow-fixes.css";
 import "./phase12a-mobile-stability.css";
 import "./phase12a-deep-reading.css";
 import "./phase12a-deck-motion.css";
+import "./phase12a-vela-plus-home.css";
 
 export const metadata = {
   title: "Vela",
