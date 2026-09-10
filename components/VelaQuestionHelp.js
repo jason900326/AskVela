@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 const GUIDED_CHOICES = [
   { label: "今天的提醒", question: "今天的我最需要注意什麼？" },
   { label: "感情", question: "最近的感情有什麼提醒？" },
@@ -11,30 +9,7 @@ const GUIDED_CHOICES = [
   { label: "現在最需要聽見的話", question: "現在的我最需要聽見什麼？" },
 ];
 
-export default function VelaQuestionHelp({ onReady, onBack, onAstrology, onDream }) {
-  const [loadingQuestion, setLoadingQuestion] = useState("");
-  const [error, setError] = useState("");
-
-  async function choose(question) {
-    if (loadingQuestion) return;
-    setLoadingQuestion(question);
-    setError("");
-
-    try {
-      const response = await fetch("/api/deep-reading/intake", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-      const plan = await response.json();
-      if (!response.ok) throw new Error(plan.error || "Vela 現在沒有整理好這個方向。");
-      onReady?.({ question, plan });
-    } catch (err) {
-      setError(err.message || "Vela 現在沒有整理好這個方向。");
-      setLoadingQuestion("");
-    }
-  }
-
+export default function VelaQuestionHelp({ onChooseQuestion, onBack, onAstrology, onDream }) {
   return (
     <div className="velaQuestionHelp">
       <div className="velaDialogueBubble phase12HomeBubble velaQuestionHelpBubble">
@@ -42,43 +17,29 @@ export default function VelaQuestionHelp({ onReady, onBack, onAstrology, onDream
       </div>
 
       <div className="velaQuestionHelpGrid" aria-label="選擇想看的方向">
-        {GUIDED_CHOICES.map((item) => {
-          const isLoading = loadingQuestion === item.question;
-          return (
-            <button
-              type="button"
-              key={item.question}
-              className={isLoading ? "isLoading" : ""}
-              disabled={Boolean(loadingQuestion)}
-              onClick={() => choose(item.question)}
-              aria-busy={isLoading}
-            >
-              <strong>{item.label}</strong>
-              {isLoading && (
-                <span className="velaChoiceLoader" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {GUIDED_CHOICES.map((item) => (
+          <button
+            type="button"
+            key={item.question}
+            onClick={() => onChooseQuestion?.(item.question)}
+          >
+            <strong>{item.label}</strong>
+          </button>
+        ))}
       </div>
 
       <section className="velaQuestionHelpOther" aria-label="其他占卜方式">
         <span>或直接前往</span>
         <div>
-          <button type="button" disabled={Boolean(loadingQuestion)} onClick={onAstrology}>
+          <button type="button" onClick={onAstrology}>
             <b>◎</b><strong>星座運勢</strong>
           </button>
-          <button type="button" disabled={Boolean(loadingQuestion)} onClick={onDream}>
+          <button type="button" onClick={onDream}>
             <b>☾</b><strong>解夢</strong>
           </button>
         </div>
       </section>
 
-      {error && <div className="phase12EntryError" role="alert">{error}</div>}
       <button className="deepTextBack velaQuestionHelpBack" type="button" onClick={onBack}>我想自己說</button>
     </div>
   );
