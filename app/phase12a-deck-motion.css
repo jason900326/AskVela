@@ -47,13 +47,17 @@
   gap: 0 !important;
 }
 
-/* ---------- Page stack motion ---------- */
+/* ---------- Page stack motion ----------
+   GSAP owns motion. CSS only establishes layers; no animated filters/blur here. */
 html.velaDeckMotionReady .velaFlipPage {
   animation: none !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .velaFlipDeck {
   overflow: visible;
+  transform-style: preserve-3d;
 }
 
 .velaFlipOutgoingGhost {
@@ -64,57 +68,17 @@ html.velaDeckMotionReady .velaFlipPage {
   margin: 0 !important;
   pointer-events: none !important;
   user-select: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   transform-origin: 50% 50%;
-  will-change: transform, opacity, filter;
-  animation: velaTopPageToDeckBottom .72s cubic-bezier(.2, .72, .18, 1) both !important;
+  box-shadow: 0 20px 32px rgba(0, 0, 0, .22);
 }
 
-.velaFlipPage.velaFlipEntering {
-  position: relative;
-  z-index: 2;
-  animation: velaNextPageFadeIn .72s cubic-bezier(.2, .72, .18, 1) both !important;
-}
-
-@keyframes velaTopPageToDeckBottom {
-  0% {
-    z-index: 4;
-    opacity: 1;
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-    filter: none;
-  }
-  46% {
-    z-index: 4;
-    opacity: 1;
-    transform: translate3d(38%, -8px, 0) rotate(2.8deg) scale(.988);
-    filter: drop-shadow(0 22px 28px rgba(0, 0, 0, .32));
-  }
-  54% {
-    z-index: 1;
-    opacity: .82;
-    transform: translate3d(42%, 5px, 0) rotate(2.2deg) scale(.98);
-    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .18));
-  }
-  100% {
-    z-index: 1;
-    opacity: 0;
-    transform: translate3d(0, 13px, 0) rotate(0deg) scale(.965);
-    filter: none;
-  }
-}
-
-@keyframes velaNextPageFadeIn {
-  0%, 42% {
-    opacity: .46;
-    filter: blur(1.2px) brightness(.84);
-  }
-  68% {
-    opacity: .84;
-    filter: blur(.3px) brightness(.96);
-  }
-  100% {
-    opacity: 1;
-    filter: none;
-  }
+/* A moving backdrop-filter layer is expensive on iOS. The outgoing page is a
+   temporary visual card, so freeze it as an opaque composite during the move. */
+.velaFlipOutgoingGhost.phase12HomeFlipPage {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 @media (max-width: 600px) {
@@ -135,8 +99,7 @@ html.velaDeckMotionReady .velaFlipPage {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .velaFlipOutgoingGhost,
-  .velaFlipPage.velaFlipEntering {
-    animation: none !important;
+  .velaFlipOutgoingGhost {
+    display: none !important;
   }
 }
