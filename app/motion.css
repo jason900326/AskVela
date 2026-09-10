@@ -1,0 +1,54 @@
+/* Scene-level motion for AskVela. Keep this separate from component micro-interactions. */
+
+.velaCrystalTransition {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  clip-path: circle(0% at 50% 78%);
+  background:
+    radial-gradient(circle at 50% 72%, rgba(238, 199, 255, .34) 0 8%, rgba(179, 110, 231, .38) 22%, transparent 48%),
+    radial-gradient(circle at 50% 78%, #8e57b5 0%, #5b3477 32%, #2a1738 67%, #130b1b 100%);
+  will-change: clip-path, opacity;
+}
+
+.velaGuideHome.isCrystalTransitioning .velaCrystalButton {
+  pointer-events: none !important;
+}
+
+.velaGuideHome.isCrystalTransitioning .velaCrystalAura {
+  will-change: transform, opacity;
+}
+
+.velaGuideHome.isCrystalTransitioning .velaCrystalArtwork,
+.velaGuideHome.isCrystalTransitioning .velaDialogueBubble,
+.velaGuideHome.isCrystalTransitioning .velaJourneyPanel,
+.velaGuideHome.isCrystalTransitioning .velaJourneyChoice,
+.velaGuideHome.isCrystalTransitioning .velaRevealedArtwork {
+  will-change: transform, opacity, filter;
+}
+
+/* Existing CSS entrance animations would fight the GSAP scene timeline. */
+.velaGuideHome.isCrystalTransitioning .velaDialogueBubble,
+.velaGuideHome.isCrystalTransitioning .velaJourneyPanel,
+.velaGuideHome.isCrystalTransitioning .velaJourneyChoice {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaCrystalTransition {
+    display: none !important;
+  }
+
+  .velaGuideHome.isCrystalTransitioning .velaCrystalArtwork,
+  .velaGuideHome.isCrystalTransitioning .velaCrystalAura,
+  .velaGuideHome.isCrystalTransitioning .velaDialogueBubble,
+  .velaGuideHome.isCrystalTransitioning .velaJourneyPanel,
+  .velaGuideHome.isCrystalTransitioning .velaJourneyChoice,
+  .velaGuideHome.isCrystalTransitioning .velaRevealedArtwork {
+    animation: none !important;
+    transition: none !important;
+  }
+}
