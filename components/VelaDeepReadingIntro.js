@@ -9,6 +9,14 @@ const ORIENTATION_LABELS = { upright: "正位", reversed: "逆位" };
 const RANK_NUMBER = { ace: "01", two: "02", three: "03", four: "04", five: "05", six: "06", seven: "07", eight: "08", nine: "09", ten: "10", page: "11", knight: "12", queen: "13", king: "14" };
 const SELECTION_POOL_SIZE = 12;
 const CLARIFIER_POOL_SIZE = 6;
+const WAITING_MIN_MS = 2800;
+const WAITING_LINE_MS = 1200;
+const DEEP_WAITING_LINES = [
+  "我先看三張牌之間哪裡在呼應。",
+  "有些訊息要放回你的問題裡，才會看出真正的重量。",
+  "我再確認一下，哪些是牌面真的有說到的。",
+  "快好了，我把最值得你帶走的地方整理出來。",
+];
 
 function makeRequestId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -39,7 +47,15 @@ function tarotImagePath(card) {
     return `/images/tarot/major/${filename}.webp`;
   }
   const rank = card.numberOrRank;
+  if (!card.suit || !rank || !RANK_NUMBER[rank]) return "";
   return `/images/tarot/${card.suit}/${RANK_NUMBER[rank]}-${rank === "ace" ? "ace" : rank}-of-${card.suit}.webp`;
+}
+
+function cardWithDrawMetadata(card, draw, index) {
+  const source = draw?.cards?.find((item) => item.cardId === card?.cardId)
+    || draw?.cards?.[index]
+    || {};
+  return { ...source, ...card };
 }
 
 function initialReadingPayload(result) {
@@ -58,6 +74,7 @@ function initialReadingPayload(result) {
 
 export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", initialPlan = null }) {
   const interpretationPromiseRef = useRef(null);
+  const waitingStartedAtRef = useRef(0);
   const [stage, setStage] = useState(() => initialPlan ? "clarify" : "intake");
   const [question, setQuestion] = useState(() => String(initialQuestion || "").slice(0, 700));
   const [plan, setPlan] = useState(() => initialPlan || null);
@@ -66,7 +83,8 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
   const [requestId, setRequestId] = useState("");
   const [draw, setDraw] = useState(null);
   const [result, setResult] = useState(null);
-  const [revealedCount, setRevealedCount] = useState(0);
+  const [revealedIndexes, setRevealedIndexes] = useState([]);
+  const [waitingIndex, setWaitingIndex] = useState(0);
   const [walkthroughCount, setWalkthroughCount] = useState(1);
   const [showSynthesis, setShowSynthesis] = useState(false);
   const [followUpText, setFollowUpText] = useState("");
@@ -83,9 +101,36 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
     [plan, selectedOptionId],
   );
 
+  const activeReading = useMemo(() => {
+    if (!draw || !result || !requestId || !selectedOption || !plan?.spreadId) return null;
+    return {
+      kind: "tarot",
+      readingId: draw.readingId,
+      requestId,
+      question: selectedOption.readingQuestion,
+      spreadId: plan.spreadId,
+      selectedCardIndexes: selectedIndexes,
+      draw,
+      result,
+      followUps,
+    };
+  }, [draw, followUps, plan, requestId, result, selectedIndexes, selectedOption]);
+
+  useEffect(() => {
+    if (stage !== "interpreting") return undefined;
+    const timer = window.setInterval(() => {
+      setWaitingIndex((current) => (current + 1) % DEEP_WAITING_LINES.length);
+    }, WAITING_LINE_MS);
+    return () => window.clearInterval(timer);
+  }, [stage]);
+
   useEffect(() => {
     if (stage !== "interpreting" || !result) return undefined;
-    const timer = window.setTimeout(() => setStage("result"), 800);
+    const elapsed = Date.now() - waitingStartedAtRef.current;
+    const timer = window.setTimeout(
+      () => setStage("result"),
+      Math.max(0, WAITING_MIN_MS - elapsed),
+    );
     return () => window.clearTimeout(timer);
   }, [result, stage]);
 
@@ -157,7 +202,7 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
       if (!response.ok) throw new Error(drawData.error || "目前無法完成抽牌。");
 
       setDraw(drawData);
-      setRevealedCount(0);
+      setRevealedIndexes([]);
       setStage("reveal");
 
       interpretationPromiseRef.current = (async () => {
@@ -187,11 +232,16 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
     }
   }
 
-  function revealNext() {
-    if (!draw || revealedCount >= 3) return;
-    const next = revealedCount + 1;
-    setRevealedCount(next);
-    if (next === 3) setStage(result ? "result" : "interpreting");
+  function revealCard(index) {
+    if (!draw || revealedIndexes.includes(index)) return;
+    setRevealedIndexes((current) => [...current, index]);
+  }
+
+  function beginInterpretation() {
+    if (!draw || revealedIndexes.length !== draw.cards.length) return;
+    waitingStartedAtRef.current = Date.now();
+    setWaitingIndex(0);
+    setStage("interpreting");
   }
 
   function advanceWalkthrough() {
@@ -269,7 +319,7 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
 
   return (
     <section className={`deepReadingPrototype deep-stage-${stage}`}>
-      <VelaAccount experience="tarot" />
+      <VelaAccount activeReading={activeReading} experience="tarot" />
       <button className="deepBackButton" type="button" onClick={onBack}>← 回到首頁</button>
 
       <div className="deepReadingShell">
@@ -372,38 +422,53 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
         )}
 
         {stage === "reveal" && draw && selectedOption && (
-          <VelaFlipPage pageKey="deep-reveal" step={5} total={total} label="一張一張看">
+          <VelaFlipPage pageKey="deep-reveal" step={5} total={total} label="看看你抽到了什麼">
             <div className="deepReadingStep velaFlipContentCard deepRevealCard">
-              <div className="deepVelaLine">先不要急著看結論。我們一張一張來。</div>
+              <div className="deepVelaLine">直接點牌翻開。三張都看清楚後，我們再往下。</div>
               <div className="deepRevealRow">
                 {draw.cards.map((card, index) => {
-                  const revealed = index < revealedCount;
+                  const revealed = revealedIndexes.includes(index);
                   const lens = selectedOption.lenses[index];
                   return (
                     <article key={card.cardId} className={revealed ? "isRevealed" : ""}>
                       <span>{lens.label}</span>
-                      <div className={`deepRevealImage ${revealed && card.orientation === "reversed" ? "isReversed" : ""}`}>
-                        <img src={revealed ? tarotImagePath(card) : CARD_BACK} alt={revealed ? card.nameZhTw : "尚未翻開的塔羅牌"} draggable="false" />
-                      </div>
-                      <strong>{revealed ? card.nameZhTw : "尚未翻開"}</strong>
+                      <button
+                        type="button"
+                        className={`deepRevealTap ${revealed ? "isRevealed" : ""}`}
+                        onClick={() => revealCard(index)}
+                        aria-label={revealed ? `${card.nameZhTw}，已翻開` : `翻開「${lens.label}」`}
+                      >
+                        <div className="deepRevealFlip">
+                          <div className="deepRevealFlipInner">
+                            <div className="deepRevealFace deepRevealBack">
+                              <img src={CARD_BACK} alt="" draggable="false" />
+                            </div>
+                            <div className={`deepRevealFace deepRevealFront ${card.orientation === "reversed" ? "isReversed" : ""}`}>
+                              <img src={tarotImagePath(card)} alt={card.nameZhTw} draggable="false" />
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <strong>{revealed ? card.nameZhTw : "點牌翻開"}</strong>
                       {revealed && <small>{ORIENTATION_LABELS[card.orientation] || card.orientation}</small>}
                     </article>
                   );
                 })}
               </div>
-              <button className="primaryButton deepRevealNext" type="button" onClick={revealNext}>
-                {revealedCount < 3 ? `翻開第 ${revealedCount + 1} 張` : "繼續"}
-              </button>
+              {revealedIndexes.length === draw.cards.length && (
+                <button className="primaryButton deepRevealContinue" type="button" onClick={beginInterpretation}>
+                  讓 Vela 把三張牌放在一起看
+                </button>
+              )}
             </div>
           </VelaFlipPage>
         )}
 
         {stage === "interpreting" && selectedOption && (
-          <VelaFlipPage pageKey="deep-interpreting" step={6} total={total} label="Vela 正在把三張牌放在一起看">
+          <VelaFlipPage pageKey="deep-interpreting" step={6} total={total} label="整理這次 Reading">
             <div className="deepReadingStep velaFlipContentCard deepWaitingCard">
-              <div className="deepWaitingOrb" aria-hidden="true" />
-              <h1>我已經看到三張牌各自在說什麼了。</h1>
-              <p>現在把它們放回你真正問的那件事裡，看它們彼此是在呼應、拉扯，還是補上前面沒說清楚的地方。</p>
+              <div className="deepWaitingOrb" aria-hidden="true"><i /><i /><i /></div>
+              <p key={waitingIndex} className="deepWaitingLine" aria-live="polite">{DEEP_WAITING_LINES[waitingIndex]}</p>
             </div>
           </VelaFlipPage>
         )}
@@ -421,10 +486,11 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
               <section className="deepCardWalkthrough">
                 {result.cards.slice(0, walkthroughCount).map((card, index) => {
                   const lens = selectedOption.lenses[index];
+                  const artCard = cardWithDrawMetadata(card, draw, index);
                   return (
                     <article key={card.cardId} className="deepWalkthroughCard">
                       <div className={`deepResultCardImage ${card.orientation === "reversed" ? "isReversed" : ""}`}>
-                        <img src={tarotImagePath(card)} alt={card.nameZhTw} draggable="false" />
+                        <img src={tarotImagePath(artCard)} alt={card.nameZhTw} draggable="false" />
                       </div>
                       <div>
                         <span>{lens.label}</span>
