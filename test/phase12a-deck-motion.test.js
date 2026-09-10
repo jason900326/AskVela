@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const layoutPath = new URL("../app/layout.js", import.meta.url);
+const packagePath = new URL("../package.json", import.meta.url);
+const flipPagePath = new URL("../components/VelaFlipPage.js", import.meta.url);
 const motionCssPath = new URL("../app/phase12a-deck-motion.css", import.meta.url);
 const controllerPath = new URL("../components/VelaPageStackMotion.js", import.meta.url);
 
@@ -31,19 +33,36 @@ test("the transient draw bridge never shows the preparing-label flash", async ()
   assert.match(css, /\.immersiveQuickTarot\.stage-drawing \.immersivePreparingLabel[\s\S]*display:\s*none\s*!important/u);
 });
 
-test("page changes cycle the old top page toward the deck bottom before the next page finishes fading in", async () => {
+test("page-stack motion uses GSAP lifecycle events instead of observing and reflowing the whole document", async () => {
+  const [pkg, flipPage, controller] = await Promise.all([
+    readFile(packagePath, "utf8"),
+    readFile(flipPagePath, "utf8"),
+    readFile(controllerPath, "utf8"),
+  ]);
+
+  assert.match(pkg, /"gsap":\s*"3\.15\.0"/u);
+  assert.match(flipPage, /useLayoutEffect/u);
+  assert.match(flipPage, /vela:flip-page-ready/u);
+  assert.match(controller, /import \{ gsap \} from "gsap"/u);
+  assert.match(controller, /gsap\.timeline/u);
+  assert.match(controller, /VELA_FLIP_PAGE_READY_EVENT/u);
+  assert.doesNotMatch(controller, /MutationObserver/u);
+  assert.doesNotMatch(controller, /offsetWidth/u);
+});
+
+test("deck transition only animates compositor-friendly transforms and opacity", async () => {
   const [css, controller] = await Promise.all([
     readFile(motionCssPath, "utf8"),
     readFile(controllerPath, "utf8"),
   ]);
 
-  assert.match(controller, /cloneNode\(true\)/u);
-  assert.match(controller, /nextDeck\.prepend\(ghost\)/u);
-  assert.match(controller, /MutationObserver/u);
-  assert.match(controller, /isDrawingRevealBridge/u);
-  assert.match(css, /@keyframes velaTopPageToDeckBottom/u);
-  assert.match(css, /46%[\s\S]*translate3d\(38%, -8px, 0\)/u);
-  assert.match(css, /54%[\s\S]*z-index:\s*1/u);
-  assert.match(css, /@keyframes velaNextPageFadeIn/u);
-  assert.match(css, /0%, 42%[\s\S]*opacity:\s*\.46/u);
+  assert.match(controller, /xPercent:\s*40/u);
+  assert.match(controller, /zIndex:\s*1/u);
+  assert.match(controller, /autoAlpha:\s*1/u);
+  assert.match(controller, /force3D:\s*true/u);
+  assert.match(controller, /willChange:\s*"transform,opacity"/u);
+  assert.doesNotMatch(controller, /filter:/u);
+  assert.doesNotMatch(css, /@keyframes velaTopPageToDeckBottom/u);
+  assert.doesNotMatch(css, /@keyframes velaNextPageFadeIn/u);
+  assert.match(css, /moving backdrop-filter layer is expensive on iOS/u);
 });
