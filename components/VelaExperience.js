@@ -221,7 +221,6 @@ export default function VelaExperience() {
             {homeSeed && (
               <VelaFlipPage pageKey="home-clarify" step={2} total={5} label="先釐清你真正想看的地方" className="phase12HomeFlipPage">
                 <div className="phase12HomeClarify">
-                  <div className="deepVelaLine">{homeSeed.plan.velaLine}</div>
                   <h1>{homeSeed.plan.clarifyingQuestion}</h1>
                   <div className="deepDynamicChoices">
                     {homeSeed.plan.options.map((option) => (
