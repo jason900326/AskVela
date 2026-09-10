@@ -67,6 +67,8 @@ export default function VelaDeepReadingIntro({ onBack }) {
   const [draw, setDraw] = useState(null);
   const [result, setResult] = useState(null);
   const [revealedCount, setRevealedCount] = useState(0);
+  const [walkthroughCount, setWalkthroughCount] = useState(1);
+  const [showSynthesis, setShowSynthesis] = useState(false);
   const [followUpText, setFollowUpText] = useState("");
   const [followUps, setFollowUps] = useState([]);
   const [followUpResolution, setFollowUpResolution] = useState("idle");
@@ -134,6 +136,11 @@ export default function VelaDeepReadingIntro({ onBack }) {
     setRequestId(nextRequestId);
     setLoading(true);
     setError("");
+    setWalkthroughCount(1);
+    setShowSynthesis(false);
+    setFollowUps([]);
+    setFollowUpResolution("idle");
+    setClarifier(null);
 
     try {
       const response = await fetch("/api/readings/draw", {
@@ -185,6 +192,14 @@ export default function VelaDeepReadingIntro({ onBack }) {
     const next = revealedCount + 1;
     setRevealedCount(next);
     if (next === 3) setStage(result ? "result" : "interpreting");
+  }
+
+  function advanceWalkthrough() {
+    if (walkthroughCount < 3) {
+      setWalkthroughCount((current) => Math.min(3, current + 1));
+      return;
+    }
+    setShowSynthesis(true);
   }
 
   async function submitFollowUp() {
@@ -399,14 +414,15 @@ export default function VelaDeepReadingIntro({ onBack }) {
               <header>
                 <span>{plan.readingTitle}</span>
                 <h1>{selectedOption.focusQuestion}</h1>
-                <p>{result.synthesis?.overview}</p>
+                {!showSynthesis && <p>我先一個位置一個位置說。前一張看清楚之後，再把下一張接上來。</p>}
+                {showSynthesis && <p>{result.synthesis?.overview}</p>}
               </header>
 
               <section className="deepCardWalkthrough">
-                {result.cards.map((card, index) => {
+                {result.cards.slice(0, walkthroughCount).map((card, index) => {
                   const lens = selectedOption.lenses[index];
                   return (
-                    <article key={card.cardId}>
+                    <article key={card.cardId} className="deepWalkthroughCard">
                       <div className={`deepResultCardImage ${card.orientation === "reversed" ? "isReversed" : ""}`}>
                         <img src={tarotImagePath(card)} alt={card.nameZhTw} draggable="false" />
                       </div>
@@ -421,74 +437,87 @@ export default function VelaDeepReadingIntro({ onBack }) {
                 })}
               </section>
 
-              <section className="deepSynthesis">
-                <h2>三張牌放在一起</h2>
-                <p>{result.synthesis?.narrative}</p>
-                {result.synthesis?.crossCardPattern && <blockquote>{result.synthesis.crossCardPattern}</blockquote>}
-                {Array.isArray(result.synthesis?.practicalGuidance) && result.synthesis.practicalGuidance.length > 0 && (
-                  <div className="deepGuidanceList">
-                    {result.synthesis.practicalGuidance.map((item) => <span key={item}>{item}</span>)}
-                  </div>
-                )}
-              </section>
+              {!showSynthesis && (
+                <div className="deepWalkthroughAdvance">
+                  <span>{walkthroughCount < 3 ? `${walkthroughCount}/3 個位置已看` : "三個位置都看過了"}</span>
+                  <button className="primaryButton" type="button" onClick={advanceWalkthrough}>
+                    {walkthroughCount < 3 ? `接著看「${selectedOption.lenses[walkthroughCount].label}」` : "把三張牌放在一起看"}
+                  </button>
+                </div>
+              )}
 
-              <section className="deepContinuation">
-                <h2>這裡有哪一點，你還想跟我繼續看？</h2>
-                <p>沿用這三張牌，不會因為追問就重抽。</p>
-                {followUps.map((item, index) => (
-                  <article className="deepFollowUpExchange" key={`${item.question}-${index}`}>
-                    <strong>你：{item.question}</strong>
-                    <p>{item.answer}</p>
-                    {item.practicalFocus && <small>{item.practicalFocus}</small>}
-                  </article>
-                ))}
-                {followUps.length < 6 && (
-                  <div className="deepFollowUpComposer">
-                    <textarea rows={3} maxLength={320} value={followUpText} onChange={(event) => setFollowUpText(event.target.value)} placeholder="例如：你剛剛說要看實際互動，那我現在最該觀察的是什麼？" />
-                    <button className="primaryButton" type="button" disabled={!followUpText.trim() || followUpLoading} onClick={submitFollowUp}>
-                      {followUpLoading ? "Vela 正在接著看…" : "繼續聊這件事"}
-                    </button>
-                  </div>
-                )}
+              {showSynthesis && (
+                <>
+                  <section className="deepSynthesis deepSynthesisReveal">
+                    <h2>三張牌放在一起</h2>
+                    <p>{result.synthesis?.narrative}</p>
+                    {result.synthesis?.crossCardPattern && <blockquote>{result.synthesis.crossCardPattern}</blockquote>}
+                    {Array.isArray(result.synthesis?.practicalGuidance) && result.synthesis.practicalGuidance.length > 0 && (
+                      <div className="deepGuidanceList">
+                        {result.synthesis.practicalGuidance.map((item) => <span key={item}>{item}</span>)}
+                      </div>
+                    )}
+                  </section>
 
-                {followUps.length > 0 && !clarifier && followUpResolution === "idle" && (
-                  <div className="deepResolutionCheck">
-                    <span>剛才這段有比較清楚嗎？</span>
-                    <div>
-                      <button type="button" onClick={() => setFollowUpResolution("resolved")}>有，先到這裡</button>
-                      <button type="button" onClick={() => setFollowUpResolution("stuck")}>還卡著</button>
-                    </div>
-                  </div>
-                )}
-
-                {followUpResolution === "stuck" && !clarifier && (
-                  <div className="deepClarifierOffer">
-                    <h3>那這一點可以補一張。</h3>
-                    <p>這張只用來釐清剛才沒解開的地方，不會推翻前面的三張牌。選一張就好。</p>
-                    <div className="deepClarifierPool">
-                      {Array.from({ length: CLARIFIER_POOL_SIZE }, (_, index) => (
-                        <button type="button" key={index} disabled={clarifierLoading} onClick={() => drawClarifier(index)} aria-label={`補充牌第 ${index + 1} 張`}>
-                          <img src={CARD_BACK} alt="" draggable="false" />
+                  <section className="deepContinuation">
+                    <h2>這裡有哪一點，你還想跟我繼續看？</h2>
+                    <p>沿用這三張牌，不會因為追問就重抽。</p>
+                    {followUps.map((item, index) => (
+                      <article className="deepFollowUpExchange" key={`${item.question}-${index}`}>
+                        <strong>你：{item.question}</strong>
+                        <p>{item.answer}</p>
+                        {item.practicalFocus && <small>{item.practicalFocus}</small>}
+                      </article>
+                    ))}
+                    {followUps.length < 6 && (
+                      <div className="deepFollowUpComposer">
+                        <textarea rows={3} maxLength={320} value={followUpText} onChange={(event) => setFollowUpText(event.target.value)} placeholder="例如：你剛剛說要看實際互動，那我現在最該觀察的是什麼？" />
+                        <button className="primaryButton" type="button" disabled={!followUpText.trim() || followUpLoading} onClick={submitFollowUp}>
+                          {followUpLoading ? "Vela 正在接著看…" : "繼續聊這件事"}
                         </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    )}
 
-                {clarifier && (
-                  <article className="deepClarifierResult">
-                    <div className={`deepResultCardImage ${clarifier.card.orientation === "reversed" ? "isReversed" : ""}`}>
-                      <img src={tarotImagePath(clarifier.card)} alt={clarifier.card.nameZhTw} draggable="false" />
-                    </div>
-                    <div>
-                      <span>補充牌</span>
-                      <h3>{clarifier.card.nameZhTw} · {ORIENTATION_LABELS[clarifier.card.orientation] || clarifier.card.orientation}</h3>
-                      <p>{clarifier.interpretation}</p>
-                      {clarifier.practicalFocus && <small>{clarifier.practicalFocus}</small>}
-                    </div>
-                  </article>
-                )}
-              </section>
+                    {followUps.length > 0 && !clarifier && followUpResolution === "idle" && (
+                      <div className="deepResolutionCheck">
+                        <span>剛才這段有比較清楚嗎？</span>
+                        <div>
+                          <button type="button" onClick={() => setFollowUpResolution("resolved")}>有，先到這裡</button>
+                          <button type="button" onClick={() => setFollowUpResolution("stuck")}>還卡著</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {followUpResolution === "stuck" && !clarifier && (
+                      <div className="deepClarifierOffer">
+                        <h3>那這一點可以補一張。</h3>
+                        <p>這張只用來釐清剛才沒解開的地方，不會推翻前面的三張牌。選一張就好。</p>
+                        <div className="deepClarifierPool">
+                          {Array.from({ length: CLARIFIER_POOL_SIZE }, (_, index) => (
+                            <button type="button" key={index} disabled={clarifierLoading} onClick={() => drawClarifier(index)} aria-label={`補充牌第 ${index + 1} 張`}>
+                              <img src={CARD_BACK} alt="" draggable="false" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {clarifier && (
+                      <article className="deepClarifierResult">
+                        <div className={`deepResultCardImage ${clarifier.card.orientation === "reversed" ? "isReversed" : ""}`}>
+                          <img src={tarotImagePath(clarifier.card)} alt={clarifier.card.nameZhTw} draggable="false" />
+                        </div>
+                        <div>
+                          <span>補充牌</span>
+                          <h3>{clarifier.card.nameZhTw} · {ORIENTATION_LABELS[clarifier.card.orientation] || clarifier.card.orientation}</h3>
+                          <p>{clarifier.interpretation}</p>
+                          {clarifier.practicalFocus && <small>{clarifier.practicalFocus}</small>}
+                        </div>
+                      </article>
+                    )}
+                  </section>
+                </>
+              )}
             </article>
           </VelaFlipPage>
         )}
