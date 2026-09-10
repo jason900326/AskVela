@@ -134,7 +134,7 @@ export default function VelaExperience() {
           { autoAlpha: 1, clipPath: "circle(145% at 50% 78%)", duration: 0.58, ease: "power4.inOut" },
         )
         .fromTo(
-          ".velaRevealedArtwork",
+          ".velaCharacterSlot",
           { scale: 1.035, y: 12 },
           { scale: 1, y: 0, duration: 0.48, ease: "power3.out" },
           "-=0.22",
