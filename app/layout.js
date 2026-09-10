@@ -1,6 +1,7 @@
 import PendingAuthResume from "../components/PendingAuthResume.js";
 import VelaBrandLink from "../components/VelaBrandLink.js";
 import VelaHistoryNavigationGuard from "../components/VelaHistoryNavigationGuard.js";
+import VelaPageStackMotion from "../components/VelaPageStackMotion.js";
 import "./globals.css";
 import "./reading.css";
 import "./follow-up.css";
@@ -32,6 +33,7 @@ import "./phase12a-flip-pages.css";
 import "./phase12a-immersive-tarot.css";
 import "./phase12a-free-flow-fixes.css";
 import "./phase12a-mobile-stability.css";
+import "./phase12a-deck-motion.css";
 
 export const metadata = {
   title: "Vela",
@@ -46,6 +48,7 @@ export default function RootLayout({ children }) {
           <VelaBrandLink />
         </div>
         {children}
+        <VelaPageStackMotion />
         <PendingAuthResume />
         <VelaHistoryNavigationGuard />
       </body>
