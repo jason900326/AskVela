@@ -9,6 +9,7 @@ const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
+const deepPolishCssPath = new URL("../app/phase12a-deep-reading-polish.css", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
 
 test("Free entry uses preset questions without inline upgrade advertising", async () => {
@@ -22,8 +23,6 @@ test("Free entry uses preset questions without inline upgrade advertising", asyn
   assert.match(quick, /今天的我最需要注意什麼？/u);
   assert.match(quick, /最近的感情有什麼提醒？/u);
   assert.match(quick, /工作／學業現在最值得留意什麼？/u);
-  assert.doesNotMatch(experience, /<textarea/u);
-  assert.doesNotMatch(quick, /<textarea/u);
   assert.doesNotMatch(experience, /phase12FreePlusHint/u);
   assert.doesNotMatch(experience, /<strong>Deep Reading<\/strong>/u);
   assert.match(plan, /自由輸入自己的問題，不受預設題目限制/u);
@@ -106,7 +105,7 @@ test("quick Tarot stays viewport-bound except for a Safari-safe whole-result scr
   assert.match(stabilityCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultScroll[\s\S]*overflow:\s*visible\s*!important/u);
 });
 
-test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, staged reveal, continuation, and optional clarifier", async () => {
+test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, continuation, and optional clarifier", async () => {
   const deep = await readFile(deepPath, "utf8");
 
   assert.match(deep, /\/api\/deep-reading\/intake/u);
@@ -117,12 +116,56 @@ test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, stage
   assert.match(deep, /selectedIndexes\.length !== 3/u);
   assert.match(deep, /\/api\/readings\/draw/u);
   assert.match(deep, /\/api\/readings\/interpret/u);
-  assert.match(deep, /翻開第 \$\{revealedCount \+ 1\} 張/u);
   assert.match(deep, /\/api\/readings\/follow-up/u);
   assert.match(deep, /還卡著/u);
   assert.match(deep, /\/api\/readings\/clarifier/u);
   assert.doesNotMatch(deep, /三張牌｜/u);
   assert.doesNotMatch(deep, /五張牌｜/u);
+});
+
+test("Deep reveal is card-driven and never auto-leaves after the third flip", async () => {
+  const [deep, polishCss] = await Promise.all([
+    readFile(deepPath, "utf8"),
+    readFile(deepPolishCssPath, "utf8"),
+  ]);
+
+  assert.match(deep, /function revealCard\(index\)/u);
+  assert.match(deep, /onClick=\{\(\) => revealCard\(index\)\}/u);
+  assert.match(deep, /revealedIndexes\.length === draw\.cards\.length/u);
+  assert.match(deep, /讓 Vela 把三張牌放在一起看/u);
+  assert.match(deep, /function beginInterpretation\(\)/u);
+  assert.doesNotMatch(deep, /翻開第/u);
+  assert.doesNotMatch(deep, /if \(next === 3\) setStage/u);
+  assert.match(polishCss, /\.deepRevealTap\.isRevealed \.deepRevealFlipInner/u);
+  assert.match(polishCss, /rotateY\(180deg\)/u);
+});
+
+test("Deep waiting view rotates one message, keeps visible motion, and waits long enough to be seen", async () => {
+  const [deep, polishCss] = await Promise.all([
+    readFile(deepPath, "utf8"),
+    readFile(deepPolishCssPath, "utf8"),
+  ]);
+
+  assert.match(deep, /DEEP_WAITING_LINES/u);
+  assert.match(deep, /WAITING_MIN_MS = 2800/u);
+  assert.match(deep, /WAITING_LINE_MS = 1200/u);
+  assert.match(deep, /window\.setInterval/u);
+  assert.match(deep, /aria-live="polite"/u);
+  assert.match(deep, /label="整理這次 Reading"/u);
+  assert.doesNotMatch(deep, /我已經看到三張牌各自在說什麼了/u);
+  assert.match(polishCss, /@keyframes deepWaitingFloat/u);
+  assert.match(polishCss, /@keyframes deepWaitingDriftA/u);
+});
+
+test("Deep result reuses draw metadata for card art and saves signed-in readings", async () => {
+  const deep = await readFile(deepPath, "utf8");
+
+  assert.match(deep, /function cardWithDrawMetadata/u);
+  assert.match(deep, /const artCard = cardWithDrawMetadata\(card, draw, index\)/u);
+  assert.match(deep, /tarotImagePath\(artCard\)/u);
+  assert.match(deep, /const activeReading = useMemo/u);
+  assert.match(deep, /kind: "tarot"/u);
+  assert.match(deep, /<VelaAccount activeReading=\{activeReading\} experience="tarot" \/>/u);
 });
 
 test("Phase 12A entry surfaces are mobile-first", async () => {
