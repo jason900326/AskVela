@@ -284,7 +284,15 @@ export default function VelaExperience() {
 
   function startQuick(nextQuestion, seed = null) {
     const text = String(nextQuestion || "").trim();
-    if (!text || text.length > 500) return;
+    if (!text || text.length > 500 || !planReady) return;
+
+    if (isVelaPlus) {
+      const plusSeed = seed?.question
+        ? seed
+        : { question: text };
+      startDeepReading(plusSeed);
+      return;
+    }
 
     setQuickQuestion(text);
     setQuickDeepSeed(seed);
@@ -306,10 +314,10 @@ export default function VelaExperience() {
       return;
     }
 
-    const nextSeed = seed?.question && seed?.plan
+    const nextSeed = seed?.question
       ? {
         question: String(seed.question),
-        plan: seed.plan,
+        plan: seed.plan || null,
         selectedOptionId: String(seed.selectedOptionId || ""),
       }
       : null;
