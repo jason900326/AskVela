@@ -1,9 +1,88 @@
 /* Scene-level motion for AskVela. Keep this separate from component micro-interactions. */
 
+/* ---------- Home ambience ---------- */
+.velaGuideHome.entry-landing .velaArtFrame {
+  animation: velaIdleBreathe 5.6s ease-in-out infinite;
+  transform-origin: 50% 82%;
+}
+
+.velaGuideHome.entry-landing .velaCrystalButton::before,
+.velaGuideHome.entry-landing .velaCrystalButton::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.86);
+  opacity: .34;
+  will-change: transform, opacity, filter;
+}
+
+.velaGuideHome.entry-landing .velaCrystalButton::before {
+  background: radial-gradient(circle, rgba(240, 211, 255, .35) 0 16%, rgba(203, 149, 255, .24) 36%, rgba(163, 92, 230, .08) 58%, transparent 74%);
+  filter: blur(7px);
+  animation: velaCrystalBreathOuter 3.25s ease-in-out infinite;
+}
+
+.velaGuideHome.entry-landing .velaCrystalButton::after {
+  width: 58%;
+  height: 58%;
+  background: radial-gradient(circle, rgba(255,255,255,.16), rgba(218,169,255,.16) 38%, transparent 70%);
+  filter: blur(4px);
+  animation: velaCrystalBreathInner 3.25s .18s ease-in-out infinite;
+}
+
+.velaGuideHome.entry-landing .velaCrystalAura {
+  opacity: .68;
+  transform-origin: 50% 50%;
+  animation: velaCrystalAuraBreath 3.25s ease-in-out infinite;
+}
+
+.velaGuideHome.entry-landing .velaCrystalArtwork {
+  animation: velaCrystalLuminance 3.25s ease-in-out infinite;
+}
+
+.velaGuideHome.entry-landing .velaCrystalButton:hover::before,
+.velaGuideHome.entry-landing .velaCrystalButton:focus-visible::before,
+.velaGuideHome.entry-landing .velaCrystalButton:hover::after,
+.velaGuideHome.entry-landing .velaCrystalButton:focus-visible::after {
+  animation-duration: 2.1s;
+}
+
+@keyframes velaIdleBreathe {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -2px, 0) scale(1.0025); }
+}
+
+@keyframes velaCrystalBreathOuter {
+  0%, 100% { opacity: .2; transform: translate(-50%, -50%) scale(.82); filter: blur(8px); }
+  50% { opacity: .72; transform: translate(-50%, -50%) scale(1.18); filter: blur(13px); }
+}
+
+@keyframes velaCrystalBreathInner {
+  0%, 100% { opacity: .24; transform: translate(-50%, -50%) scale(.92); }
+  50% { opacity: .72; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes velaCrystalAuraBreath {
+  0%, 100% { opacity: .45; transform: scale(.92); }
+  50% { opacity: .92; transform: scale(1.12); }
+}
+
+@keyframes velaCrystalLuminance {
+  0%, 100% { filter: brightness(.98) saturate(.98) drop-shadow(0 0 24px rgba(201,151,255,.48)); }
+  50% { filter: brightness(1.08) saturate(1.06) drop-shadow(0 0 38px rgba(221,176,255,.74)); }
+}
+
+/* ---------- Crystal wake-up ---------- */
 .velaCrystalTransition {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 110;
   pointer-events: none;
   visibility: hidden;
   opacity: 0;
@@ -30,18 +109,87 @@
   will-change: transform, opacity, filter;
 }
 
-/* Existing CSS entrance animations would fight the GSAP scene timeline. */
 .velaGuideHome.isCrystalTransitioning .velaDialogueBubble,
 .velaGuideHome.isCrystalTransitioning .velaJourneyPanel,
 .velaGuideHome.isCrystalTransitioning .velaJourneyChoice {
   animation: none !important;
 }
 
+/* ---------- Cross-experience transition ---------- */
+.velaExperienceFrame {
+  position: relative;
+  min-height: 100svh;
+}
+
+.velaSceneTransition {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.velaSceneCurtain,
+.velaSceneMist,
+.velaSceneGlint {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.velaSceneCurtain {
+  inset: -12vh -26vw;
+  background:
+    radial-gradient(circle at 38% 46%, rgba(183, 119, 231, .22), transparent 31%),
+    radial-gradient(circle at 64% 54%, rgba(105, 63, 139, .24), transparent 36%),
+    linear-gradient(116deg, #120a19 0%, #24102f 42%, #3b1d4a 68%, #170c20 100%);
+  box-shadow: inset 0 0 180px rgba(0,0,0,.42);
+  transform: translate3d(118%, 0, 0) skewX(-7deg);
+}
+
+.velaSceneMist {
+  inset: -6vh -18vw;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 28% 50%, rgba(228, 191, 255, .14), transparent 34%),
+    radial-gradient(ellipse at 62% 42%, rgba(164, 105, 217, .14), transparent 32%),
+    radial-gradient(ellipse at 80% 68%, rgba(236, 207, 255, .08), transparent 28%);
+  filter: blur(22px);
+  transform: translate3d(96%, 0, 0) scale(1.08);
+}
+
+.velaSceneGlint {
+  top: -8vh;
+  bottom: -8vh;
+  left: 54%;
+  width: 2px;
+  opacity: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(239, 207, 255, .16) 18%, rgba(255, 236, 203, .7) 50%, rgba(219, 184, 255, .18) 82%, transparent 100%);
+  box-shadow: 0 0 22px rgba(230, 196, 255, .36), 0 0 54px rgba(174, 112, 224, .2);
+  transform: translate3d(58vw, 0, 0) rotate(7deg);
+}
+
+.velaExperienceFrame.isSceneTransitioning {
+  cursor: progress;
+}
+
+@media (max-width: 640px) {
+  .velaSceneCurtain { inset-inline: -40vw; }
+  .velaSceneMist { inset-inline: -34vw; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .velaCrystalTransition {
+  .velaCrystalTransition,
+  .velaSceneTransition {
     display: none !important;
   }
 
+  .velaGuideHome.entry-landing .velaArtFrame,
+  .velaGuideHome.entry-landing .velaCrystalButton::before,
+  .velaGuideHome.entry-landing .velaCrystalButton::after,
+  .velaGuideHome.entry-landing .velaCrystalAura,
+  .velaGuideHome.entry-landing .velaCrystalArtwork,
   .velaGuideHome.isCrystalTransitioning .velaCrystalArtwork,
   .velaGuideHome.isCrystalTransitioning .velaCrystalAura,
   .velaGuideHome.isCrystalTransitioning .velaCharacterSlot,
