@@ -7,13 +7,15 @@ const accountPath = new URL("../components/VelaAccount.js", import.meta.url);
 const brandPath = new URL("../components/VelaBrandLink.js", import.meta.url);
 const polishPath = new URL("../app/phase8-polish.css", import.meta.url);
 
-test("Vela home choices stay on the same awakened stage instead of extending the page with a modal", async () => {
+test("Vela home opens a bounded Free question page with explicit secondary modes", async () => {
   const experience = await readFile(experiencePath, "utf8");
   assert.match(experience, /entryMode !== "landing"/u);
   assert.match(experience, /velaHomeEntry/u);
-  assert.match(experience, /velaJourneyPanel/u);
+  assert.match(experience, /VelaFlipPage/u);
+  assert.match(experience, /phase12SecondaryModes/u);
+  assert.match(experience, /星座運勢/u);
+  assert.match(experience, /解夢/u);
   assert.match(experience, /awakened=\{entryMode !== "landing"\}/u);
-  assert.doesNotMatch(experience, /aria-modal="true"/u);
   assert.doesNotMatch(experience, /guideRecommendationOverlay/u);
 });
 
