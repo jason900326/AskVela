@@ -73,7 +73,7 @@ test("Free and anonymous users cannot enter the full Deep prototype from plans",
   assert.match(experience, /function startDeepReading[\s\S]*if \(!isVelaPlus\)[\s\S]*setPlanOpen\(true\);[\s\S]*return;/u);
   assert.match(experience, /if \(next === "deep" && !isVelaPlus\)[\s\S]*setPlanOpen\(true\)/u);
   assert.match(plan, /isVelaPlus \? "已包含在 Vela\+" : "即將開放"/u);
-  assert.match(plan, /isVelaPlus \? \([\s\S]*開始深度解析[\s\S]*onClick=\{onStartDeep\}/u);
+  assert.match(plan, /\{isVelaPlus \? \([\s\S]*onClick=\{onStartDeep\}>開始深度解析<\/button>/u);
   assert.doesNotMatch(plan, /預覽完整 Deep Reading/u);
   assert.doesNotMatch(plan, /先體驗 Vela\+ Reading/u);
   assert.doesNotMatch(plan, /目前按鈕只開啟產品原型/u);
