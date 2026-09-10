@@ -1,0 +1,142 @@
+/* Phase 12A — Vela atmosphere + real card-stack page motion.
+   Imported after mobile stability so these rules intentionally win. */
+
+/* ---------- Home: keep Vela present behind the Free entry card ---------- */
+.phase12TarotHome.entry-quick .velaHomeStageLayout {
+  opacity: .88 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+  transform: scale(.96) !important;
+  filter: brightness(.72) saturate(.92);
+}
+
+.phase12TarotHome.entry-quick .velaHomeStageLayout .velaStage,
+.phase12TarotHome.entry-quick .velaHomeStageLayout .velaCrystalButton {
+  pointer-events: none !important;
+}
+
+.phase12TarotHome.entry-quick .velaRevealedArtwork.isVisible {
+  opacity: .9 !important;
+  filter: drop-shadow(0 22px 46px rgba(4, 2, 13, .42));
+}
+
+.phase12TarotHome.entry-quick .velaCrystalButton {
+  opacity: .34;
+}
+
+.phase12TarotHome.entry-quick .velaHomeEntry {
+  background:
+    radial-gradient(circle at 50% 14%, rgba(116, 78, 164, .08), transparent 28rem),
+    linear-gradient(180deg, rgba(19, 11, 37, .16), rgba(9, 5, 17, .7));
+}
+
+.phase12TarotHome.entry-quick .phase12HomeFlipPage {
+  background: linear-gradient(180deg, rgba(31, 18, 54, .78), rgba(14, 8, 29, .9));
+  border-color: rgba(229, 205, 251, .22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 28px 90px rgba(3, 1, 10, .44);
+}
+
+/* ---------- Draw bridge: no flash of a separate “preparing” message ---------- */
+.immersiveQuickTarot.stage-drawing .immersivePreparingLabel {
+  display: none !important;
+}
+
+.immersiveQuickTarot.stage-drawing .immersiveDrawingStage.isPreparingReveal {
+  gap: 0 !important;
+}
+
+/* ---------- Page stack motion ---------- */
+html.velaDeckMotionReady .velaFlipPage {
+  animation: none !important;
+}
+
+.velaFlipDeck {
+  overflow: visible;
+}
+
+.velaFlipOutgoingGhost {
+  position: absolute !important;
+  inset: 0 auto auto 0;
+  z-index: 4;
+  width: 100%;
+  margin: 0 !important;
+  pointer-events: none !important;
+  user-select: none;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, filter;
+  animation: velaTopPageToDeckBottom .72s cubic-bezier(.2, .72, .18, 1) both !important;
+}
+
+.velaFlipPage.velaFlipEntering {
+  position: relative;
+  z-index: 2;
+  animation: velaNextPageFadeIn .72s cubic-bezier(.2, .72, .18, 1) both !important;
+}
+
+@keyframes velaTopPageToDeckBottom {
+  0% {
+    z-index: 4;
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    filter: none;
+  }
+  46% {
+    z-index: 4;
+    opacity: 1;
+    transform: translate3d(38%, -8px, 0) rotate(2.8deg) scale(.988);
+    filter: drop-shadow(0 22px 28px rgba(0, 0, 0, .32));
+  }
+  54% {
+    z-index: 1;
+    opacity: .82;
+    transform: translate3d(42%, 5px, 0) rotate(2.2deg) scale(.98);
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .18));
+  }
+  100% {
+    z-index: 1;
+    opacity: 0;
+    transform: translate3d(0, 13px, 0) rotate(0deg) scale(.965);
+    filter: none;
+  }
+}
+
+@keyframes velaNextPageFadeIn {
+  0%, 42% {
+    opacity: .46;
+    filter: blur(1.2px) brightness(.84);
+  }
+  68% {
+    opacity: .84;
+    filter: blur(.3px) brightness(.96);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .phase12TarotHome.entry-quick .velaHomeStageLayout {
+    transform: scale(.91) translateY(-14px) !important;
+    transform-origin: 50% 0;
+  }
+
+  .phase12TarotHome.entry-quick .velaHomeEntry {
+    align-items: flex-end !important;
+    padding: max(150px, 18vh) 10px max(12px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .phase12TarotHome.entry-quick .phase12HomeFlipPage {
+    width: min(calc(100% - 8px), 560px);
+    max-height: calc(100svh - max(166px, 20vh) - max(14px, env(safe-area-inset-bottom))) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaFlipOutgoingGhost,
+  .velaFlipPage.velaFlipEntering {
+    animation: none !important;
+  }
+}
