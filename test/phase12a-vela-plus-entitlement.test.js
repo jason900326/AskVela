@@ -65,14 +65,14 @@ test("Vela+ uses the same intake result and then enters Deep Reading clarificati
   assert.match(deep, /useState\(\(\) => initialPlan \|\| null\)/u);
 });
 
-test("Free users get the dynamic clarification before the one-card flow", async () => {
+test("Free users get dynamic clarification before the one-card flow without extra explanation copy", async () => {
   const experience = await readFile(experiencePath, "utf8");
 
-  assert.match(experience, /homeSeed\.plan\.velaLine/u);
   assert.match(experience, /homeSeed\.plan\.clarifyingQuestion/u);
   assert.match(experience, /homeSeed\.plan\.options\.map/u);
   assert.match(experience, /startQuick\(option\.focusQuestion, seed\)/u);
-  assert.match(experience, /這一張會完整回答，不會做到一半才鎖結果/u);
+  assert.doesNotMatch(experience, /homeSeed\.plan\.velaLine/u);
+  assert.doesNotMatch(experience, /phase12HomeClarifyNote/u);
 });
 
 test("Vela+ home styles are loaded after the Phase 12A motion and reading layers", async () => {
