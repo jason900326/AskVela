@@ -23,10 +23,10 @@
 }
 
 .velaGuideHome.isCrystalTransitioning .velaCrystalArtwork,
+.velaGuideHome.isCrystalTransitioning .velaCharacterSlot,
 .velaGuideHome.isCrystalTransitioning .velaDialogueBubble,
 .velaGuideHome.isCrystalTransitioning .velaJourneyPanel,
-.velaGuideHome.isCrystalTransitioning .velaJourneyChoice,
-.velaGuideHome.isCrystalTransitioning .velaRevealedArtwork {
+.velaGuideHome.isCrystalTransitioning .velaJourneyChoice {
   will-change: transform, opacity, filter;
 }
 
@@ -44,10 +44,10 @@
 
   .velaGuideHome.isCrystalTransitioning .velaCrystalArtwork,
   .velaGuideHome.isCrystalTransitioning .velaCrystalAura,
+  .velaGuideHome.isCrystalTransitioning .velaCharacterSlot,
   .velaGuideHome.isCrystalTransitioning .velaDialogueBubble,
   .velaGuideHome.isCrystalTransitioning .velaJourneyPanel,
-  .velaGuideHome.isCrystalTransitioning .velaJourneyChoice,
-  .velaGuideHome.isCrystalTransitioning .velaRevealedArtwork {
+  .velaGuideHome.isCrystalTransitioning .velaJourneyChoice {
     animation: none !important;
     transition: none !important;
   }
