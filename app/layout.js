@@ -38,6 +38,7 @@ import "./phase12a-deck-motion.css";
 import "./phase12a-vela-plus-home.css";
 import "./phase12a-deep-reading-polish.css";
 import "./phase12a-ux-cleanup.css";
+import "./free-three-selection-scroll.css";
 
 export const metadata = {
   title: "Vela",
