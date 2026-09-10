@@ -143,7 +143,11 @@ export default function VelaExperience() {
 
   function startDeepReading(seed = null) {
     const nextSeed = seed?.question && seed?.plan
-      ? { question: String(seed.question), plan: seed.plan }
+      ? {
+        question: String(seed.question),
+        plan: seed.plan,
+        selectedOptionId: String(seed.selectedOptionId || ""),
+      }
       : null;
     setPlanOpen(false);
     setDeepSeed(nextSeed);
@@ -254,10 +258,12 @@ export default function VelaExperience() {
     );
   }
 
+  const planDeepSeed = experience === "quick-tarot" ? quickDeepSeed : null;
+
   return (
     <>
       {content}
-      <VelaPlanSheet open={planOpen} onClose={() => setPlanOpen(false)} onStartDeep={startDeepReading} />
+      <VelaPlanSheet open={planOpen} onClose={() => setPlanOpen(false)} onStartDeep={() => startDeepReading(planDeepSeed)} />
     </>
   );
 }
