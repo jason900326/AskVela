@@ -2,19 +2,46 @@
    Keep the ritual stages viewport-bound, but let the completed reading use
    normal document scrolling on iOS Safari. Imported last on purpose. */
 
-/* ---------- Home: stop the awakened Vela artwork bleeding through copy ---------- */
+/* ---------- Home: the Free question step is a real second page, not an overlay ---------- */
+.phase12TarotHome.entry-quick {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(112, 72, 158, .22), transparent 34rem),
+    linear-gradient(180deg, #130b25 0%, #090511 100%);
+}
+
 .phase12TarotHome.entry-quick .velaHomeStageLayout {
-  filter: brightness(.5) saturate(.78);
-  transform: scale(1.015);
-  transition: filter .3s ease, transform .35s ease;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: scale(.985);
+  transition: opacity .24s ease, transform .28s ease;
+}
+
+.phase12TarotHome.entry-quick .velaHomeEntry {
+  display: grid !important;
+  place-items: center !important;
+  padding: max(72px, calc(env(safe-area-inset-top) + 54px)) 10px max(12px, env(safe-area-inset-bottom)) !important;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(118, 79, 166, .18), transparent 26rem),
+    linear-gradient(180deg, rgba(19, 11, 37, .98), rgba(9, 5, 17, 1));
+  pointer-events: auto !important;
+  overflow: hidden !important;
 }
 
 .phase12TarotHome.entry-quick .phase12HomeFlipPage {
-  background: linear-gradient(180deg, rgba(31, 18, 54, .97), rgba(15, 8, 31, .985));
+  width: min(100%, 560px);
+  max-height: calc(100svh - max(86px, calc(env(safe-area-inset-top) + 68px)) - max(16px, env(safe-area-inset-bottom)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: linear-gradient(180deg, rgba(31, 18, 54, .985), rgba(14, 8, 29, .995));
   border-color: rgba(229, 205, 251, .19);
   box-shadow: 0 28px 90px rgba(3, 1, 10, .48);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+}
+
+.phase12TarotHome.entry-quick .phase12HomeBubble {
+  position: static !important;
+  transform: none !important;
 }
 
 /* ---------- Free wait: do not force an auth card into the ritual ---------- */
@@ -30,6 +57,80 @@
 
 .immersiveQuickTarot .immersiveDrawingStage.hasLoginInvite .immersiveChosenBack {
   width: min(42vw, 166px) !important;
+}
+
+/* ---------- Selection: first tap only selects; user explicitly confirms ---------- */
+.immersiveQuickTarot .immersiveCardBack.isPendingConfirm {
+  position: relative;
+  z-index: 5;
+  transform: translateY(-10px) scale(1.045) !important;
+  border-color: rgba(245, 214, 132, .98) !important;
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, .48),
+    0 0 0 2px rgba(229, 193, 107, .24),
+    0 0 30px rgba(201, 145, 255, .3) !important;
+}
+
+.freeTarotConfirmLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 12px max(16px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(7, 4, 14, .04), rgba(7, 4, 14, .74));
+  pointer-events: none;
+}
+
+.freeTarotConfirmCard {
+  width: min(100%, 420px);
+  padding: 16px;
+  border: 1px solid rgba(231, 204, 137, .28);
+  border-radius: 20px;
+  background: rgba(22, 12, 40, .97);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  pointer-events: auto;
+  animation: freeTarotConfirmIn .24s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.freeTarotConfirmEyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #e5c36d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+.freeTarotConfirmCard h2 {
+  margin: 0;
+  color: #faf2ff;
+  font-size: 1.2rem;
+}
+
+.freeTarotConfirmCard p {
+  margin: 7px 0 14px;
+  color: rgba(247, 239, 255, .68);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.freeTarotConfirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 9px;
+}
+
+.freeTarotConfirmActions button {
+  min-height: 46px;
+}
+
+@keyframes freeTarotConfirmIn {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ---------- Result: native page scrolling, no nested iOS scroll surface ---------- */
@@ -104,12 +205,14 @@ body:has(.immersiveQuickTarot.stage-result) .readingShell,
 
 @media (max-width: 600px) {
   .phase12TarotHome.entry-quick .phase12HomeFlipPage {
-    background: linear-gradient(180deg, rgba(31, 18, 54, .985), rgba(14, 8, 29, .995));
+    width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .phase12TarotHome.entry-quick .velaHomeStageLayout {
+  .phase12TarotHome.entry-quick .velaHomeStageLayout,
+  .freeTarotConfirmCard {
     transition: none !important;
+    animation: none !important;
   }
 }
