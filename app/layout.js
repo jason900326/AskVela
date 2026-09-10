@@ -1,4 +1,5 @@
 import PendingAuthResume from "../components/PendingAuthResume.js";
+import FreeTarotSelectionConfirm from "../components/FreeTarotSelectionConfirm.js";
 import VelaBrandLink from "../components/VelaBrandLink.js";
 import VelaHistoryNavigationGuard from "../components/VelaHistoryNavigationGuard.js";
 import "./globals.css";
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
           <VelaBrandLink />
         </div>
         {children}
+        <FreeTarotSelectionConfirm />
         <PendingAuthResume />
         <VelaHistoryNavigationGuard />
       </body>
