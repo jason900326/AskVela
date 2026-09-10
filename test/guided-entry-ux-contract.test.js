@@ -7,7 +7,6 @@ const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
-const flipCssPath = new URL("../app/phase12a-flip-pages.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
@@ -107,14 +106,21 @@ test("quick Tarot stays viewport-bound except for a Safari-safe whole-result scr
   assert.match(stabilityCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultScroll[\s\S]*overflow:\s*visible\s*!important/u);
 });
 
-test("Deep Reading starts with clarification rather than a card-count picker", async () => {
+test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, staged reveal, continuation, and optional clarifier", async () => {
   const deep = await readFile(deepPath, "utf8");
 
-  assert.match(deep, /這次不用急著決定要抽幾張牌/u);
-  assert.match(deep, /先告訴我，最近哪件事最讓你放不下？/u);
-  assert.match(deep, /FRICTIONS/u);
-  assert.match(deep, /我先不抽牌/u);
-  assert.match(deep, /先整理矛盾 → 決定閱讀結構/u);
+  assert.match(deep, /\/api\/deep-reading\/intake/u);
+  assert.match(deep, /plan\.clarifyingQuestion/u);
+  assert.match(deep, /plan\.options\.map/u);
+  assert.match(deep, /selectedOption\.lenses\.map/u);
+  assert.match(deep, /不用你先選牌陣/u);
+  assert.match(deep, /selectedIndexes\.length !== 3/u);
+  assert.match(deep, /\/api\/readings\/draw/u);
+  assert.match(deep, /\/api\/readings\/interpret/u);
+  assert.match(deep, /翻開第 \$\{revealedCount \+ 1\} 張/u);
+  assert.match(deep, /\/api\/readings\/follow-up/u);
+  assert.match(deep, /還卡著/u);
+  assert.match(deep, /\/api\/readings\/clarifier/u);
   assert.doesNotMatch(deep, /三張牌｜/u);
   assert.doesNotMatch(deep, /五張牌｜/u);
 });
