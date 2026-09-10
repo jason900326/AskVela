@@ -12,6 +12,7 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
   const introStartedRef = useRef(false);
   const introTimelineRef = useRef(null);
   const [loaded, setLoaded] = useState({ hooded: false, revealed: false, crystal: false });
+  const [introComplete, setIntroComplete] = useState(false);
 
   function markLoaded(key) {
     setLoaded((current) => (current[key] ? current : { ...current, [key]: true }));
@@ -19,51 +20,32 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
 
   useEffect(() => {
     const root = stageRef.current;
-    if (!root) return undefined;
-
-    if (awakened) {
-      root.dataset.introComplete = "true";
-      return undefined;
-    }
-
+    if (!root || awakened) return undefined;
     if (!loaded.hooded || !loaded.crystal || introStartedRef.current) return undefined;
 
-    root.dataset.introReady = "true";
     introStartedRef.current = true;
 
     if (prefersReducedMotion()) {
-      root.dataset.introComplete = "true";
+      setIntroComplete(true);
       return undefined;
     }
 
-    const mist = root.querySelector(".velaHomeIntroMist");
-    const shade = root.querySelector(".velaHomeIntroMistShade");
-    const cloudA = root.querySelector(".velaHomeIntroMistCloudA");
-    const cloudB = root.querySelector(".velaHomeIntroMistCloudB");
-    const cloudC = root.querySelector(".velaHomeIntroMistCloudC");
+    const artwork = root.querySelector(".velaHoodedArtwork");
     const crystal = root.querySelector(".velaCrystalButton");
     const aura = root.querySelector(".velaCrystalAura");
     const hint = root.querySelector(".velaCrystalHint");
+    const glows = root.querySelectorAll(".velaStageGlow");
+    const stars = root.querySelectorAll(".velaStageStars i");
 
-    // The mist overlay exists from the first render, so even cached artwork cannot
-    // finish its reveal before the browser has actually painted the cover once.
-    gsap.set(mist, { autoAlpha: 1 });
-    gsap.set(shade, { autoAlpha: 1 });
-    gsap.set(cloudA, { xPercent: -9, yPercent: 2, scale: 1.08, autoAlpha: 0.92, force3D: true });
-    gsap.set(cloudB, { xPercent: 10, yPercent: -2, scale: 1.1, autoAlpha: 0.78, force3D: true });
-    gsap.set(cloudC, { xPercent: 0, yPercent: 9, scale: 1.1, autoAlpha: 0.52, force3D: true });
-    gsap.set(crystal, { y: 8, scale: 0.965, force3D: true });
-    gsap.set(aura, { scale: 0.86, autoAlpha: 0.18, force3D: true });
-    gsap.set(hint, { y: 6, autoAlpha: 0, force3D: true });
-
-    // useEffect runs after the first paint. One extra animation frame guarantees
-    // the visitor sees the mist-covered room before it begins to clear.
+    // The intro begins after a real paint, but nothing blocks that paint. Visitors
+    // see Vela immediately in a dim, slightly distant state instead of watching a
+    // blank transition screen while assets settle.
     const frame = window.requestAnimationFrame(() => {
       const intro = gsap.timeline({
         defaults: { overwrite: "auto" },
         onComplete: () => {
-          root.dataset.introComplete = "true";
-          gsap.set([mist, shade, cloudA, cloudB, cloudC, crystal, aura, hint], {
+          setIntroComplete(true);
+          gsap.set([artwork, crystal, aura, hint, ...glows, ...stars], {
             clearProps: "transform,opacity,visibility,willChange",
           });
           introTimelineRef.current = null;
@@ -72,58 +54,43 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
       introTimelineRef.current = intro;
 
       intro
-        .to(cloudA, {
-          xPercent: 54,
-          yPercent: -3,
-          scale: 1.03,
-          autoAlpha: 0,
-          duration: 1.08,
-          ease: "power2.inOut",
+        .to(glows, {
+          autoAlpha: 1,
+          duration: 0.95,
+          ease: "power1.out",
+        }, 0)
+        .to(stars, {
+          autoAlpha: 0.78,
+          duration: 0.82,
+          stagger: 0.055,
+          ease: "power1.out",
         }, 0.06)
-        .to(cloudB, {
-          xPercent: -50,
-          yPercent: 4,
-          scale: 1.02,
-          autoAlpha: 0,
-          duration: 1.18,
-          ease: "power2.inOut",
-        }, 0.1)
-        .to(cloudC, {
-          xPercent: 16,
-          yPercent: -16,
-          scale: 1.06,
-          autoAlpha: 0,
-          duration: 1.05,
-          ease: "power1.inOut",
-        }, 0.18)
-        .to(shade, {
-          autoAlpha: 0,
+        .to(artwork, {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
           duration: 1.02,
-          ease: "power1.out",
-        }, 0.16)
-        .to(crystal, {
-          y: 0,
-          scale: 1,
-          duration: 0.72,
           ease: "power2.out",
-        }, 0.48)
-        .to(aura, {
-          scale: 1,
+        }, 0.04)
+        .to(crystal, {
           autoAlpha: 1,
-          duration: 0.78,
-          ease: "power1.out",
-        }, 0.52)
-        .to(hint, {
           y: 0,
+          scale: 1,
+          duration: 0.76,
+          ease: "power2.out",
+        }, 0.34)
+        .to(aura, {
           autoAlpha: 1,
+          scale: 1,
+          duration: 0.8,
+          ease: "power1.out",
+        }, 0.38)
+        .to(hint, {
+          autoAlpha: 1,
+          y: 0,
           duration: 0.46,
           ease: "power2.out",
-        }, 0.92)
-        .to(mist, {
-          autoAlpha: 0,
-          duration: 0.3,
-          ease: "power1.out",
-        }, 1.02);
+        }, 0.76);
     });
 
     return () => {
@@ -133,8 +100,10 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
     };
   }, [awakened, loaded.crystal, loaded.hooded]);
 
+  const introPending = !awakened && !introComplete;
+
   return (
-    <div ref={stageRef} className={`velaStage ${awakened ? "isAwake" : ""}`} aria-label="Vela 占卜舞台">
+    <div ref={stageRef} className={`velaStage ${awakened ? "isAwake" : ""} ${introPending ? "isIntroPending" : ""}`.trim()} aria-label="Vela 占卜舞台">
       <div className="velaStageGlow velaStageGlowLeft" aria-hidden="true" />
       <div className="velaStageGlow velaStageGlowRight" aria-hidden="true" />
       <div className="velaStageStars" aria-hidden="true"><i /><i /><i /><i /><i /></div>
@@ -156,15 +125,6 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
           {!awakened && <span className="velaCrystalHint">觸碰水晶球開始</span>}
         </button>
       </div>
-
-      {!awakened && (
-        <div className="velaHomeIntroMist" aria-hidden="true">
-          <span className="velaHomeIntroMistShade" />
-          <span className="velaHomeIntroMistCloud velaHomeIntroMistCloudA" />
-          <span className="velaHomeIntroMistCloud velaHomeIntroMistCloudB" />
-          <span className="velaHomeIntroMistCloud velaHomeIntroMistCloudC" />
-        </div>
-      )}
     </div>
   );
 }
