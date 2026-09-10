@@ -5,7 +5,6 @@ import test from "node:test";
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
 const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
-const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const entryPath = new URL("../components/VelaPlusQuestionEntry.js", import.meta.url);
 const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
@@ -17,7 +16,7 @@ const layoutPath = new URL("../app/layout.js", import.meta.url);
 const readingPromptsPath = new URL("../lib/reading-prompts.js", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
 
-test("home keeps the first question page focused on typing plus one help CTA", async () => {
+test("home keeps the first question page focused on typing plus one help CTA and accepts any non-empty question", async () => {
   const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
@@ -29,13 +28,17 @@ test("home keeps the first question page focused on typing plus one help CTA", a
   assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
   assert.match(entry, /最近有什麼事一直放在心上？/u);
   assert.match(entry, /我不知道怎麼說/u);
+  assert.match(entry, /if \(!text\)/u);
+  assert.match(entry, /question\.trim\(\)\.length === 0/u);
+  assert.doesNotMatch(entry, /text\.length < 8/u);
+  assert.doesNotMatch(entry, /question\.trim\(\)\.length < 8/u);
   assert.doesNotMatch(entry, /不用先把問題想得很完整/u);
   assert.doesNotMatch(entry, /suggestions\.map/u);
   assert.doesNotMatch(entry, /NT\$29/u);
   assert.doesNotMatch(entry, /VELA\+/u);
 });
 
-test("guided choices live on the next page, animate silently, and start intake directly", async () => {
+test("guided choices live on the next page and go straight to one-card Tarot without an AI intake call", async () => {
   const [experience, help] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(helpPath, "utf8"),
@@ -43,13 +46,13 @@ test("guided choices live on the next page, animate silently, and start intake d
 
   assert.match(experience, /pageKey="home-help"/u);
   assert.match(experience, /<VelaQuestionHelp/u);
+  assert.match(experience, /onChooseQuestion=\{\(question\) => startQuick\(question\)\}/u);
   assert.match(help, /GUIDED_CHOICES/u);
-  assert.match(help, /onClick=\{\(\) => choose\(item\.question\)\}/u);
-  assert.match(help, /\/api\/deep-reading\/intake/u);
-  assert.match(help, /onReady\?\.\(\{ question, plan \}\)/u);
-  assert.match(help, /velaChoiceLoader/u);
-  assert.match(help, /aria-busy=\{isLoading\}/u);
-  assert.doesNotMatch(help, /不用再回去打字/u);
+  assert.match(help, /onChooseQuestion\?\.\(item\.question\)/u);
+  assert.doesNotMatch(help, /\/api\/deep-reading\/intake/u);
+  assert.doesNotMatch(help, /fetch\(/u);
+  assert.doesNotMatch(help, /velaChoiceLoader/u);
+  assert.doesNotMatch(help, /aria-busy/u);
   assert.doesNotMatch(help, /Vela 正在整理/u);
   assert.doesNotMatch(help, /setQuestion/u);
   assert.doesNotMatch(help, /<textarea/u);
@@ -70,7 +73,7 @@ test("Astrology and Dream move off the first entry page and remain available fro
   assert.match(experience, /onDream=\{\(\) => beginDream\(""\)\}/u);
 });
 
-test("Free gets the AI clarification before entering its one-card reading without redundant helper copy", async () => {
+test("typed Free questions get AI clarification before entering the one-card reading", async () => {
   const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
@@ -90,7 +93,6 @@ test("free quick Tarot accepts the focused custom question and has no free-form 
   assert.match(quick, /const SPREAD_ID = "single-guidance"/u);
   assert.match(quick, /const DAILY_LIMIT = 3/u);
   assert.match(quick, /const ANONYMOUS_LIMIT = 1/u);
-  assert.match(quick, /text\.length < 8 \|\| text\.length > 500/u);
   assert.match(quick, /selectedCardIndexes: \[index\]/u);
   assert.doesNotMatch(quick, /FREE_QUESTION_PRESETS\.includes\(text\)/u);
   assert.doesNotMatch(quick, /followUpMessage/u);
@@ -142,7 +144,7 @@ test("quick Tarot stays viewport-bound except for a Safari-safe whole-result scr
   assert.match(stabilityCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultScroll[\s\S]*overflow:\s*visible\s*!important/u);
 });
 
-test("latest Phase 12A cleanup stabilizes home width, strengthens result headline, and centers plans", async () => {
+test("latest Phase 12A cleanup stabilizes home width, strengthens result headline, centers plans, and distinguishes Free from Vela+", async () => {
   const [cleanupCss, layout] = await Promise.all([
     readFile(cleanupCssPath, "utf8"),
     readFile(layoutPath, "utf8"),
@@ -153,7 +155,9 @@ test("latest Phase 12A cleanup stabilizes home width, strengthens result headlin
   assert.match(cleanupCss, /\.immersiveQuickTarot\.stage-result \.quickResultReading h2[\s\S]*font-size:\s*clamp\(24px, 6\.4vw, 31px\)\s*!important/u);
   assert.match(cleanupCss, /\.velaPlanOverlay[\s\S]*align-items:\s*center\s*!important/u);
   assert.match(cleanupCss, /\.velaPlanSheet[\s\S]*border-radius:\s*24px\s*!important/u);
-  assert.match(cleanupCss, /@keyframes velaChoicePulse/u);
+  assert.match(cleanupCss, /\.velaPlusStoreButton\.isPlanEntry/u);
+  assert.match(cleanupCss, /\.velaPlusStoreButton\.isActivePlan/u);
+  assert.doesNotMatch(cleanupCss, /velaChoicePulse/u);
 });
 
 test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, continuation, and optional clarifier", async () => {
