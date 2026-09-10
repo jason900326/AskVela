@@ -6,6 +6,7 @@ const experiencePath = new URL("../components/VelaExperience.js", import.meta.ur
 const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
+const entryPath = new URL("../components/VelaPlusQuestionEntry.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
@@ -13,23 +14,22 @@ const deepPolishCssPath = new URL("../app/phase12a-deep-reading-polish.css", imp
 const readingPromptsPath = new URL("../lib/reading-prompts.js", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
 
-test("Free entry uses preset questions without inline upgrade advertising", async () => {
-  const [experience, quick, plan] = await Promise.all([
+test("home gives everyone one free-form question entry without inline paid advertising", async () => {
+  const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
-    readFile(quickPath, "utf8"),
-    readFile(planPath, "utf8"),
+    readFile(entryPath, "utf8"),
   ]);
 
   assert.match(experience, /FREE_QUESTION_PRESETS/u);
-  assert.match(quick, /今天的我最需要注意什麼？/u);
-  assert.match(quick, /最近的感情有什麼提醒？/u);
-  assert.match(quick, /工作／學業現在最值得留意什麼？/u);
-  assert.doesNotMatch(experience, /phase12FreePlusHint/u);
-  assert.doesNotMatch(experience, /<strong>Deep Reading<\/strong>/u);
-  assert.match(plan, /自由輸入自己的問題，不受預設題目限制/u);
+  assert.match(experience, /<VelaPlusQuestionEntry onReady=\{handleHomeQuestionReady\} suggestions=\{FREE_QUESTION_PRESETS\} \/>/u);
+  assert.match(entry, /<textarea/u);
+  assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
+  assert.match(entry, /最近有什麼事一直放在心上？/u);
+  assert.doesNotMatch(entry, /NT\$29/u);
+  assert.doesNotMatch(entry, /VELA\+/u);
 });
 
-test("Free home makes Astrology and Dream explicit secondary destinations without a carousel", async () => {
+test("home keeps Astrology and Dream as explicit secondary destinations without a carousel", async () => {
   const [experience, css] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(stabilityCssPath, "utf8"),
@@ -43,22 +43,29 @@ test("Free home makes Astrology and Dream explicit secondary destinations withou
   assert.doesNotMatch(css, /\.phase12SecondaryModes > div[\s\S]*overflow-x:\s*(auto|scroll)/u);
 });
 
-test("home preset questions advance directly into the one-card flow", async () => {
-  const experience = await readFile(experiencePath, "utf8");
+test("Free gets the AI clarification before entering its one-card reading", async () => {
+  const [experience, entry] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(entryPath, "utf8"),
+  ]);
 
-  assert.match(experience, /onClick=\{\(\) => startQuick\(item\)\}/u);
-  assert.match(experience, /step=\{1\} total=\{5\}/u);
-  assert.doesNotMatch(experience, /<form className="phase12QuickForm"/u);
+  assert.match(entry, /\/api\/deep-reading\/intake/u);
+  assert.match(experience, /homeSeed\.plan\.velaLine/u);
+  assert.match(experience, /homeSeed\.plan\.clarifyingQuestion/u);
+  assert.match(experience, /homeSeed\.plan\.options\.map/u);
+  assert.match(experience, /startQuick\(option\.focusQuestion, seed\)/u);
+  assert.match(experience, /這一張會完整回答，不會做到一半才鎖結果/u);
 });
 
-test("free quick Tarot is a preset one-card product with no free-form follow-up loop", async () => {
+test("free quick Tarot accepts the focused custom question and has no free-form follow-up loop", async () => {
   const quick = await readFile(quickPath, "utf8");
 
   assert.match(quick, /const SPREAD_ID = "single-guidance"/u);
   assert.match(quick, /const DAILY_LIMIT = 3/u);
   assert.match(quick, /const ANONYMOUS_LIMIT = 1/u);
-  assert.match(quick, /FREE_QUESTION_PRESETS\.includes\(text\)/u);
+  assert.match(quick, /text\.length < 8 \|\| text\.length > 500/u);
   assert.match(quick, /selectedCardIndexes: \[index\]/u);
+  assert.doesNotMatch(quick, /FREE_QUESTION_PRESETS\.includes\(text\)/u);
   assert.doesNotMatch(quick, /followUpMessage/u);
   assert.doesNotMatch(quick, /MAX_FOLLOW_UPS/u);
 });
@@ -196,10 +203,13 @@ test("Deep synthesis pays off with a conclusion first and hides the longer reaso
 });
 
 test("Phase 12A entry surfaces are mobile-first", async () => {
-  const css = await readFile(cssPath, "utf8");
+  const [css, sharedCss] = await Promise.all([
+    readFile(cssPath, "utf8"),
+    readFile(new URL("../app/phase12a-vela-plus-home.css", import.meta.url), "utf8"),
+  ]);
 
   assert.match(css, /\.quickCardPool\s*\{[^}]*grid-template-columns:\s*repeat\(4/su);
   assert.match(css, /\.velaPlanGrid\s*\{[^}]*grid-template-columns:\s*1fr;/su);
-  assert.match(css, /@media \(min-width: 720px\)[\s\S]*\.velaPlanGrid\s*\{\s*grid-template-columns:\s*1fr 1fr;/u);
+  assert.match(sharedCss, /\.velaPlanGridThree[\s\S]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/u);
   assert.match(css, /@media \(max-width: 420px\)/u);
 });
