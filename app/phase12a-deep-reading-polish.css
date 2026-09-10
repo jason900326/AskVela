@@ -1,0 +1,169 @@
+/* Phase 12A — Deep Reading interaction polish. Loaded after the base Deep styles. */
+
+.deepRevealTap {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.deepRevealFlip {
+  width: 100%;
+  aspect-ratio: 2 / 3.45;
+  perspective: 900px;
+}
+
+.deepRevealFlipInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .56s cubic-bezier(.22, .75, .22, 1);
+}
+
+.deepRevealTap.isRevealed .deepRevealFlipInner {
+  transform: rotateY(180deg);
+}
+
+.deepRevealFace {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .34);
+}
+
+.deepRevealFace img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.deepRevealFront {
+  transform: rotateY(180deg);
+}
+
+.deepRevealFront.isReversed img {
+  transform: rotate(180deg);
+}
+
+.deepRevealTap:not(.isRevealed):active .deepRevealFlipInner {
+  transform: translateY(-4px) scale(1.015);
+}
+
+.deepRevealContinue {
+  width: min(100%, 360px);
+  margin-inline: auto;
+}
+
+.deepWaitingCard {
+  gap: 0;
+}
+
+.deepWaitingOrb {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  margin-bottom: 28px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(244, 233, 255, .94) 0 5%, rgba(194, 155, 230, .48) 18%, rgba(104, 65, 145, .34) 46%, rgba(40, 20, 65, .12) 69%, transparent 72%);
+  box-shadow: 0 0 32px rgba(164, 111, 214, .2), inset 0 0 20px rgba(238, 220, 255, .12);
+  animation: deepWaitingFloat 2.5s ease-in-out infinite;
+}
+
+.deepWaitingOrb::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border: 1px solid rgba(226, 201, 247, .12);
+  border-radius: 50%;
+  animation: deepWaitingHalo 2.5s ease-in-out infinite;
+}
+
+.deepWaitingOrb i {
+  position: absolute;
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(239, 220, 255, .76);
+  box-shadow: 0 0 10px rgba(224, 191, 255, .55);
+}
+
+.deepWaitingOrb i:nth-child(1) {
+  top: 13px;
+  left: -2px;
+  animation: deepWaitingDriftA 2.1s ease-in-out infinite alternate;
+}
+
+.deepWaitingOrb i:nth-child(2) {
+  right: 4px;
+  top: 31px;
+  animation: deepWaitingDriftB 2.7s ease-in-out infinite alternate;
+}
+
+.deepWaitingOrb i:nth-child(3) {
+  left: 22px;
+  bottom: -3px;
+  animation: deepWaitingDriftC 2.35s ease-in-out infinite alternate;
+}
+
+.deepWaitingLine {
+  width: min(100%, 380px);
+  min-height: 3.4em;
+  margin: 0;
+  color: rgba(248, 242, 255, .78);
+  font-size: clamp(16px, 4.5vw, 20px);
+  line-height: 1.7;
+  text-wrap: balance;
+  animation: deepWaitingLineIn .36s ease both;
+}
+
+@keyframes deepWaitingFloat {
+  0%, 100% { transform: translateY(3px) scale(.96); opacity: .72; }
+  50% { transform: translateY(-5px) scale(1.035); opacity: 1; }
+}
+
+@keyframes deepWaitingHalo {
+  0%, 100% { transform: scale(.9); opacity: .12; }
+  50% { transform: scale(1.08); opacity: .42; }
+}
+
+@keyframes deepWaitingDriftA {
+  from { transform: translate3d(0, 8px, 0); opacity: .25; }
+  to { transform: translate3d(11px, -5px, 0); opacity: .9; }
+}
+
+@keyframes deepWaitingDriftB {
+  from { transform: translate3d(-6px, 8px, 0); opacity: .35; }
+  to { transform: translate3d(5px, -9px, 0); opacity: 1; }
+}
+
+@keyframes deepWaitingDriftC {
+  from { transform: translate3d(7px, 0, 0); opacity: .25; }
+  to { transform: translate3d(-8px, -12px, 0); opacity: .85; }
+}
+
+@keyframes deepWaitingLineIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deepRevealFlipInner { transition: none; }
+  .deepRevealTap:not(.isRevealed):active .deepRevealFlipInner { transform: none; }
+  .deepWaitingOrb,
+  .deepWaitingOrb::after,
+  .deepWaitingOrb i,
+  .deepWaitingLine { animation: none !important; }
+}
