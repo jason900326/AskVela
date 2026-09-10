@@ -2,24 +2,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const confirmPath = new URL("../components/FreeTarotSelectionConfirm.js", import.meta.url);
-const layoutPath = new URL("../app/layout.js", import.meta.url);
+const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
 
-test("Free Tarot requires explicit confirmation before the original card click proceeds", async () => {
-  const [confirm, layout] = await Promise.all([
-    readFile(confirmPath, "utf8"),
-    readFile(layoutPath, "utf8"),
-  ]);
+test("Free Tarot requires explicit confirmation before draw begins", async () => {
+  const quick = await readFile(quickPath, "utf8");
 
-  assert.match(confirm, /CARD_SELECTOR/u);
-  assert.match(confirm, /event\.preventDefault\(\)/u);
-  assert.match(confirm, /event\.stopPropagation\(\)/u);
-  assert.match(confirm, /確定選這張嗎？/u);
-  assert.match(confirm, />換一張</u);
-  assert.match(confirm, />就是這張</u);
-  assert.match(confirm, /requestAnimationFrame\(\(\) => card\.click\(\)\)/u);
-  assert.match(layout, /FreeTarotSelectionConfirm/u);
+  assert.match(quick, /const \[pendingIndex, setPendingIndex\]/u);
+  assert.match(quick, /onClick=\{\(\) => selectCard\(index\)\}/u);
+  assert.match(quick, /確定選這張嗎？/u);
+  assert.match(quick, />換一張</u);
+  assert.match(quick, />就是這張</u);
+  assert.match(quick, /async function confirmCardSelection\(\)[\s\S]*await chooseCard\(index\)/u);
 });
 
 test("Free question entry is visually separated from the Vela landing artwork", async () => {
