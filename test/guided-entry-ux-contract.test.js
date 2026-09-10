@@ -87,7 +87,7 @@ test("Free result sharing generates a PNG file instead of copying plain text", a
 
   assert.match(quick, /buildTarotSharePng/u);
   assert.match(quick, /shareTarotPng/u);
-  assert.match(quick, />分享 PNG</u);
+  assert.match(quick, /分享 PNG/u);
   assert.doesNotMatch(quick, /clipboard\.writeText/u);
   assert.match(share, /canvas\.toBlob/u);
   assert.match(share, /type: "image\/png"/u);
