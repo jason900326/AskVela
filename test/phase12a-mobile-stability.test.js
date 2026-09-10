@@ -14,11 +14,13 @@ test("Phase 12A mobile stability overrides load after the earlier quick-Tarot st
   assert.ok(stability > earlier);
 });
 
-test("awakened Free home gets an opaque readable surface instead of artwork bleeding through copy", async () => {
+test("Free question entry becomes a separate page instead of covering the Vela landing artwork", async () => {
   const css = await readFile(stabilityCssPath, "utf8");
 
-  assert.match(css, /\.phase12TarotHome\.entry-quick \.velaHomeStageLayout[\s\S]*brightness\(\.5\)/u);
-  assert.match(css, /\.phase12TarotHome\.entry-quick \.phase12HomeFlipPage[\s\S]*rgba\(31, 18, 54, \.97\)/u);
+  assert.match(css, /\.phase12TarotHome\.entry-quick \.velaHomeStageLayout[\s\S]*opacity:\s*0\s*!important/u);
+  assert.match(css, /visibility:\s*hidden\s*!important/u);
+  assert.match(css, /\.phase12TarotHome\.entry-quick \.velaHomeEntry[\s\S]*linear-gradient\(180deg, rgba\(19, 11, 37, \.98\), rgba\(9, 5, 17, 1\)\)/u);
+  assert.match(css, /\.phase12TarotHome\.entry-quick \.phase12HomeBubble[\s\S]*position:\s*static\s*!important/u);
 });
 
 test("Free wait no longer forces a login invitation card into the Tarot ritual", async () => {
