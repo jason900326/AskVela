@@ -95,11 +95,15 @@ export default function VelaExperience() {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         return;
       }
+      if (next === "deep" && !isVelaPlus) {
+        setPlanOpen(true);
+        return;
+      }
       changeExperience(next);
     }
     window.addEventListener("vela:experience", handleExperience);
     return () => window.removeEventListener("vela:experience", handleExperience);
-  }, [changeExperience]);
+  }, [changeExperience, isVelaPlus]);
 
   useEffect(() => {
     function handlePopState(event) {
@@ -135,7 +139,7 @@ export default function VelaExperience() {
 
   function startQuick(nextQuestion, seed = null) {
     const text = String(nextQuestion || "").trim();
-    if (text.length < 8 || text.length > 500) return;
+    if (!text || text.length > 500) return;
 
     setQuickQuestion(text);
     setQuickDeepSeed(seed);
@@ -151,6 +155,11 @@ export default function VelaExperience() {
   }
 
   function startDeepReading(seed = null) {
+    if (!isVelaPlus) {
+      setPlanOpen(true);
+      return;
+    }
+
     const nextSeed = seed?.question && seed?.plan
       ? {
         question: String(seed.question),
@@ -188,9 +197,15 @@ export default function VelaExperience() {
 
   if (experience === "home") {
     content = (
-      <section className={`velaExperienceHub velaGuideHome phase12TarotHome entry-${entryMode}${isVelaPlus ? " is-vela-plus" : ""}`}>
+      <section className={`velaExperienceHub velaGuideHome phase12TarotHome entry-${entryMode}${isVelaPlus ? " is-vela-plus" : " is-free"}`}>
         <VelaAccount experience="home" onExperienceChange={changeExperience} />
-        <button className="velaPlusStoreButton" type="button" onClick={() => setPlanOpen(true)}>✦ Vela+</button>
+        <button
+          className={`velaPlusStoreButton ${isVelaPlus ? "isActivePlan" : "isPlanEntry"}`}
+          type="button"
+          onClick={() => setPlanOpen(true)}
+        >
+          {isVelaPlus ? "✦ Vela+" : "方案"}
+        </button>
 
         <div className="velaHomeStageLayout">
           <VelaStage onCrystalClick={revealQuickEntry} awakened={entryMode !== "landing"} />
@@ -210,7 +225,7 @@ export default function VelaExperience() {
             {!homeSeed && homeHelpOpen && (
               <VelaFlipPage pageKey="home-help" step={2} total={5} label="選一個方向" className="phase12HomeFlipPage">
                 <VelaQuestionHelp
-                  onReady={handleHomeQuestionReady}
+                  onChooseQuestion={(question) => startQuick(question)}
                   onBack={() => setHomeHelpOpen(false)}
                   onAstrology={() => changeExperience("astrology")}
                   onDream={() => beginDream("")}
@@ -268,7 +283,12 @@ export default function VelaExperience() {
   return (
     <>
       {content}
-      <VelaPlanSheet open={planOpen} onClose={() => setPlanOpen(false)} onStartDeep={() => startDeepReading(planDeepSeed)} />
+      <VelaPlanSheet
+        open={planOpen}
+        isVelaPlus={isVelaPlus}
+        onClose={() => setPlanOpen(false)}
+        onStartDeep={() => startDeepReading(planDeepSeed)}
+      />
     </>
   );
 }
