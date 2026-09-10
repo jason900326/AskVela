@@ -8,10 +8,13 @@ import {
 
 test("the three prompt layers keep source, context, and synthesis responsibilities separate", () => {
   const safety = { isHighStakes: false, categories: [] };
+  const layerC = buildLayerCInstructions(safety);
+
   assert.match(buildLayerAInstructions(), /Do not apply the card to the user's question/u);
   assert.match(buildLayerBInstructions(safety), /spread position/u);
-  assert.match(buildLayerCInstructions(safety), /connect them into one overall movement/u);
-  assert.match(buildLayerCInstructions(safety), /card-by-card walk-through/u);
+  assert.match(layerC, /Synthesize relationships among the cards/u);
+  assert.match(layerC, /Do NOT repeat those explanations card by card/u);
+  assert.match(layerC, /crossCardPattern is the reveal or turning point/u);
 });
 
 test("high-stakes context is explicitly passed into context and synthesis layers", () => {
@@ -29,7 +32,7 @@ test("all interpretation layers prohibit converting difficult source themes into
   assert.match(buildLayerCInstructions(safety), /declare another person bad/u);
 });
 
-test("Vela interpretation instructions prefer grounded, card-visible prose over report-like or slogan-like output", () => {
+test("Vela synthesis is grounded, concise, conclusion-first, and avoids repeating the card walkthrough", () => {
   const safety = { isHighStakes: false, categories: [] };
   const layerB = buildLayerBInstructions(safety);
   const layerC = buildLayerCInstructions(safety);
@@ -38,11 +41,15 @@ test("Vela interpretation instructions prefer grounded, card-visible prose over 
   assert.match(layerB, /Do not add fillers, fake hesitation/u);
   assert.match(layerB, /Do not make every card paragraph end with a polished conclusion/u);
   assert.match(layerC, /voice users experience as Vela/u);
-  assert.match(layerC, /14-42 Traditional Chinese characters/u);
-  assert.match(layerC, /polished slogan/u);
-  assert.match(layerC, /220-420 Traditional Chinese characters/u);
-  assert.match(layerC, /Shorter is better/u);
-  assert.match(layerC, /up to 3 focused items/u);
+  assert.match(layerC, /overview is the conclusion/u);
+  assert.match(layerC, /16-38 Traditional Chinese characters/u);
+  assert.match(layerC, /crossCardPattern is the reveal or turning point/u);
+  assert.match(layerC, /only 2-4 sentences/u);
+  assert.match(layerC, /80-180 Traditional Chinese characters/u);
+  assert.match(layerC, /1-3 short items/u);
+  assert.match(layerC, /clearer, shorter, and more decisive/u);
   assert.match(layerC, /exactly 1 focused question/u);
   assert.match(layerC, /這組牌顯示/u);
+  assert.doesNotMatch(layerC, /220-420 Traditional Chinese characters/u);
+  assert.doesNotMatch(layerC, /connect them into one overall movement/u);
 });
