@@ -143,11 +143,7 @@ export default function VelaExperience() {
 
   function startDeepReading(seed = null) {
     const nextSeed = seed?.question && seed?.plan
-      ? {
-        question: String(seed.question),
-        plan: seed.plan,
-        selectedOptionId: String(seed.selectedOptionId || ""),
-      }
+      ? { question: String(seed.question), plan: seed.plan }
       : null;
     setPlanOpen(false);
     setDeepSeed(nextSeed);
@@ -156,7 +152,12 @@ export default function VelaExperience() {
 
   function handleHomeQuestionReady(seed) {
     if (!seed?.question || !seed?.plan) return;
-    setHomeSeed({ question: String(seed.question), plan: seed.plan });
+    const normalizedSeed = { question: String(seed.question), plan: seed.plan };
+    if (isVelaPlus && planReady) {
+      startDeepReading(normalizedSeed);
+      return;
+    }
+    setHomeSeed(normalizedSeed);
   }
 
   function chooseHomeDirection(option) {
@@ -166,12 +167,6 @@ export default function VelaExperience() {
       plan: homeSeed.plan,
       selectedOptionId: option.id,
     };
-
-    if (isVelaPlus) {
-      startDeepReading(seed);
-      return;
-    }
-
     startQuick(option.focusQuestion, seed);
   }
 
@@ -224,9 +219,7 @@ export default function VelaExperience() {
                   <p className="phase12HomeClarifyNote">
                     {!planReady
                       ? "正在確認你的方案…"
-                      : isVelaPlus
-                        ? "你的 Vela+ 會從這個方向直接展開完整 Deep Reading。"
-                        : "選完方向後，先免費抽一張。這一張會完整回答，不會做到一半才鎖結果。"}
+                      : "選完方向後，先免費抽一張。這一張會完整回答，不會做到一半才鎖結果。"}
                   </p>
                   <button className="deepTextBack" type="button" onClick={() => setHomeSeed(null)}>我想補充原本的描述</button>
                 </div>
@@ -245,7 +238,6 @@ export default function VelaExperience() {
       <VelaDeepReadingIntro
         initialQuestion={deepSeed?.question || ""}
         initialPlan={deepSeed?.plan || null}
-        initialSelectedOptionId={deepSeed?.selectedOptionId || ""}
         onBack={() => changeExperience("home")}
       />
     );
