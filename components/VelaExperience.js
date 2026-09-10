@@ -98,8 +98,8 @@ export default function VelaExperience() {
           <div className="velaHomeEntry mode-quick" id="vela-home-entry">
             <VelaFlipPage pageKey="home-question" step={1} total={5} label="選一個問題" className="phase12HomeFlipPage">
               <div className="velaDialogueBubble phase12HomeBubble">
-                <h1>先讓 Vela 看一個小問題。</h1>
-                <p>Free 體驗不用打字；選一題、抽一張牌，就能看看 Vela 怎麼解讀。</p>
+                <h1>今天想看什麼？</h1>
+                <p>選一題，抽一張牌。</p>
               </div>
 
               <div className="phase12PresetGrid" aria-label="Free 預設問題">
@@ -108,19 +108,16 @@ export default function VelaExperience() {
                 ))}
               </div>
 
-              <aside className="phase12FreePlusHint">
+              <section className="phase12SecondaryModes" aria-label="其他占卜方式">
+                <span>也可以直接前往</span>
                 <div>
-                  <span>✦ VELA+</span>
-                  <strong>想問自己的問題？</strong>
-                  <p>升級後可以自由描述真正困擾你的事情，Vela 會先理解問題，再決定怎麼看。</p>
+                  <button type="button" onClick={() => changeExperience("astrology")}>
+                    <b>◎</b><strong>星座運勢</strong><small>今天／本週運勢</small>
+                  </button>
+                  <button type="button" onClick={() => beginDream("")}>
+                    <b>☾</b><strong>解夢</strong><small>說說你記得的夢</small>
+                  </button>
                 </div>
-                <button className="ghostButton" type="button" onClick={() => setPlanOpen(true)}>看看 Vela+</button>
-              </aside>
-
-              <section className="velaJourneyPanel phase12SecondaryJourneys" aria-label="其他 Vela 功能">
-                <button type="button" onClick={() => changeExperience("astrology")}><span>◎</span><strong>星象</strong><small>看看最近的運勢</small></button>
-                <button type="button" onClick={() => beginDream("")}><span>☾</span><strong>解夢</strong><small>解析昨晚的夢</small></button>
-                <button type="button" className="isDeep" onClick={() => setPlanOpen(true)}><span>✦</span><strong>Deep Reading</strong><small>有一件事真的想看深</small></button>
               </section>
             </VelaFlipPage>
           </div>
