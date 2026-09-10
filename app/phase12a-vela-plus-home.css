@@ -125,6 +125,21 @@
   border-color: rgba(230, 196, 111, .2);
 }
 
+.velaPlanCard.isDeep {
+  border-color: rgba(202, 166, 238, .34);
+  background: linear-gradient(145deg, rgba(83, 51, 118, .24), rgba(255,255,255,.025));
+}
+
+@media (min-width: 900px) {
+  .velaPlanSheet:has(.velaPlanGridThree) {
+    width: min(100%, 980px);
+  }
+
+  .velaPlanGridThree {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 560px) {
   .velaPlusHomeForm textarea {
     min-height: 142px;
