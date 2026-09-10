@@ -1,0 +1,149 @@
+/* Phase 12A — Vela atmosphere + seamless optical dissolve.
+   Imported after mobile stability so these rules intentionally win. */
+
+/* ---------- Home: keep Vela present behind the Free entry card ---------- */
+.phase12TarotHome.entry-quick .velaHomeStageLayout {
+  opacity: .88 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+  transform: scale(.96) !important;
+  filter: brightness(.72) saturate(.92);
+}
+
+.phase12TarotHome.entry-quick .velaHomeStageLayout .velaStage,
+.phase12TarotHome.entry-quick .velaHomeStageLayout .velaCrystalButton {
+  pointer-events: none !important;
+}
+
+.phase12TarotHome.entry-quick .velaRevealedArtwork.isVisible {
+  opacity: .9 !important;
+  filter: drop-shadow(0 22px 46px rgba(4, 2, 13, .42));
+}
+
+.phase12TarotHome.entry-quick .velaCrystalButton {
+  opacity: .34;
+}
+
+.phase12TarotHome.entry-quick .velaHomeEntry {
+  background:
+    radial-gradient(circle at 50% 14%, rgba(116, 78, 164, .08), transparent 28rem),
+    linear-gradient(180deg, rgba(19, 11, 37, .16), rgba(9, 5, 17, .7));
+}
+
+.phase12TarotHome.entry-quick .phase12HomeFlipPage {
+  background: linear-gradient(180deg, rgba(31, 18, 54, .78), rgba(14, 8, 29, .9));
+  border-color: rgba(229, 205, 251, .22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 28px 90px rgba(3, 1, 10, .44);
+}
+
+/* ---------- Draw bridge: no flash of a separate preparing message ---------- */
+.immersiveQuickTarot.stage-drawing .immersivePreparingLabel {
+  display: none !important;
+}
+
+.immersiveQuickTarot.stage-drawing .immersiveDrawingStage.isPreparingReveal {
+  gap: 0 !important;
+}
+
+/* ---------- Optical dissolve page transition ---------- */
+html.velaDeckMotionReady .velaFlipPage {
+  animation: none !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.velaDissolveTransition {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  pointer-events: none;
+  overflow: hidden;
+  background: transparent;
+  contain: layout paint style;
+}
+
+.velaDissolveOutgoing {
+  pointer-events: none !important;
+  user-select: none !important;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ---------- Home opening: visible from frame one, then gently resolves ---------- */
+.velaStage.isIntroPending .velaHoodedArtwork {
+  opacity: .58;
+  transform: translateY(12px) scale(.985);
+}
+
+.velaStage.isIntroPending .velaCrystalArtwork {
+  opacity: .34;
+  transform: translateY(8px) scale(.96);
+}
+
+.velaStage.isIntroPending .velaCrystalAura {
+  opacity: .2;
+  transform: scale(.86);
+}
+
+.velaStage.isIntroPending .velaCrystalHint {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.velaStage.isIntroPending .velaStageGlow {
+  opacity: .28;
+}
+
+.velaStage.isIntroPending .velaStageStars i {
+  opacity: .18;
+}
+
+.velaStage:not(.isIntroPending):not(.isAwake) .velaCrystalAura {
+  animation: velaCoverAuraBreath 3.8s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes velaCoverAuraBreath {
+  0%, 100% { transform: scale(.985); opacity: .76; }
+  50% { transform: scale(1.035); opacity: 1; }
+}
+
+@media (max-width: 600px) {
+  .phase12TarotHome.entry-quick .velaHomeStageLayout {
+    transform: scale(.91) translateY(-14px) !important;
+    transform-origin: 50% 0;
+  }
+
+  .phase12TarotHome.entry-quick .velaHomeEntry {
+    align-items: flex-end !important;
+    padding: max(150px, 18vh) 10px max(12px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .phase12TarotHome.entry-quick .phase12HomeFlipPage {
+    width: min(calc(100% - 8px), 560px);
+    max-height: calc(100svh - max(166px, 20vh) - max(14px, env(safe-area-inset-bottom))) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaDissolveOutgoing {
+    display: none !important;
+  }
+
+  .velaStage.isIntroPending .velaHoodedArtwork,
+  .velaStage.isIntroPending .velaCrystalArtwork,
+  .velaStage.isIntroPending .velaCrystalAura,
+  .velaStage.isIntroPending .velaCrystalHint,
+  .velaStage.isIntroPending .velaStageGlow,
+  .velaStage.isIntroPending .velaStageStars i {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .velaStage:not(.isIntroPending):not(.isAwake) .velaCrystalAura {
+    animation: none !important;
+  }
+}

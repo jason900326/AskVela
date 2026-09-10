@@ -1,0 +1,681 @@
+/* Phase 12A — immersive mobile Tarot. Imported last so it owns the quick-reading stage. */
+
+body:has(.immersiveQuickTarot) {
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #0a0613;
+}
+
+body:has(.immersiveQuickTarot) .brandBar {
+  position: fixed;
+  z-index: 118;
+  pointer-events: none;
+}
+
+body:has(.immersiveQuickTarot) .brandBar .brandMark {
+  pointer-events: auto;
+}
+
+.quickTarotExperience.immersiveQuickTarot {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: max(64px, calc(env(safe-area-inset-top) + 48px)) 10px max(10px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 22%, rgba(117, 77, 163, .22), transparent 40%),
+    radial-gradient(circle at 50% 82%, rgba(83, 44, 119, .16), transparent 44%),
+    linear-gradient(180deg, #130b25 0%, #090511 100%);
+}
+
+.immersiveQuickTarot .quickTarotShell {
+  width: min(100%, 620px);
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: 26px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.immersiveQuickTarot .quickTarotEyebrow {
+  align-self: center;
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: .18em;
+  opacity: .72;
+}
+
+.immersiveQuickTarot .velaFlipDeck,
+.immersiveQuickTarot .velaFlipPage {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.immersiveQuickTarot .velaFlipDeck {
+  display: grid;
+  perspective: 1400px;
+}
+
+.immersiveQuickTarot .velaFlipDeck::before,
+.immersiveQuickTarot .velaFlipDeck::after {
+  inset: 39px 9px 4px;
+  border-radius: 24px;
+  opacity: .55;
+}
+
+.immersiveQuickTarot .velaFlipPage {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 36px minmax(0, 1fr);
+  overflow: hidden;
+  transform-origin: 4% 50%;
+  animation: immersivePageEnter .46s cubic-bezier(.22, .8, .22, 1) both;
+}
+
+.immersiveQuickTarot .velaFlipProgress {
+  min-height: 0;
+  height: 36px;
+  padding: 0 8px 8px;
+}
+
+.immersiveQuickTarot .velaFlipContentCard,
+.immersiveQuestionCard,
+.immersiveSelectionStage,
+.immersiveDrawingStage,
+.immersiveRevealStage,
+.immersiveInterpretStage,
+.immersiveResultCard {
+  min-height: 0 !important;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.immersiveQuickTarot .quickQuestionCard,
+.immersiveSelectionStage,
+.immersiveDrawingStage,
+.immersiveRevealStage,
+.immersiveInterpretStage,
+.immersiveResultCard {
+  border: 1px solid rgba(226, 205, 250, .13);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(130, 88, 174, .12), transparent 43%),
+    rgba(21, 12, 39, .82);
+  box-shadow: 0 24px 70px rgba(3, 1, 10, .34), inset 0 1px rgba(255,255,255,.025);
+}
+
+.immersiveQuestionCard {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: clamp(18px, 5vw, 26px) !important;
+  overflow: hidden;
+}
+
+.immersiveQuestionCard h1 {
+  font-size: clamp(1.55rem, 7vw, 2.35rem) !important;
+}
+
+.immersiveQuestionCard textarea {
+  resize: none;
+  min-height: 116px;
+  max-height: 22svh;
+}
+
+.immersiveQuestionCard .quickDrawButton {
+  min-height: 48px;
+}
+
+/* ---------- Selection: actual AskVela card back ---------- */
+.immersiveSelectionStage {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: clamp(13px, 3.8vw, 18px) !important;
+}
+
+.immersiveStageCopy {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.immersiveStageCopy h1 {
+  margin: 0 0 4px;
+  font-size: clamp(1.34rem, 6vw, 2rem) !important;
+  line-height: 1.12;
+}
+
+.immersiveStageCopy p {
+  margin: 0;
+  color: rgba(246, 237, 255, .61);
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.immersiveQuickTarot .immersiveCardPool {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(100%, 450px);
+  margin: 12px auto 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px 7px;
+  perspective: 1200px;
+}
+
+.immersiveQuickTarot .immersiveCardBack {
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 84px);
+  max-height: 100%;
+  aspect-ratio: 2 / 3.45;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(232, 202, 125, .38);
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: 0 8px 18px rgba(0,0,0,.28), 0 0 0 1px rgba(61,37,78,.55);
+  transform: translateY(0) rotate(0);
+  opacity: 0;
+  animation: immersiveCardDeal .38s cubic-bezier(.2,.82,.24,1) both;
+  animation-delay: calc(var(--card-index) * 22ms);
+  touch-action: manipulation;
+}
+
+.immersiveQuickTarot .immersiveCardBack img,
+.immersiveChosenBack img,
+.immersiveCardFace img,
+.immersiveInterpretCard img,
+.immersiveResultCardImage img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.immersiveQuickTarot .immersiveCardBack:active,
+.immersiveQuickTarot .immersiveCardBack:focus-visible {
+  transform: translateY(-8px) scale(1.035);
+  border-color: rgba(244, 213, 133, .92);
+  box-shadow: 0 16px 30px rgba(0,0,0,.4), 0 0 26px rgba(202,154,255,.24);
+}
+
+/* ---------- Chosen card comes out of the deck ---------- */
+.immersiveDrawingStage {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  padding: 22px;
+  overflow: hidden;
+}
+
+.immersiveChosenBack {
+  align-self: end;
+  width: min(42vw, 166px);
+  aspect-ratio: 2 / 3.45;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 55px rgba(0,0,0,.46), 0 0 42px rgba(183,126,240,.22);
+  animation: immersiveChosenLift .72s cubic-bezier(.18,.83,.21,1) both;
+}
+
+.immersiveDrawingCopy {
+  display: grid;
+  gap: 5px;
+  text-align: center;
+}
+
+.immersiveDrawingCopy strong {
+  font-size: 1.02rem;
+}
+
+.immersiveDrawingCopy span {
+  color: rgba(247, 239, 255, .58);
+  font-size: .75rem;
+}
+
+.immersiveThinProgress {
+  position: relative;
+  width: min(72%, 270px);
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(239, 221, 255, .09);
+}
+
+.immersiveThinProgress span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(235,200,112,.95), rgba(211,168,255,.84));
+  animation: immersiveProgressSweep 1.2s ease-in-out infinite;
+}
+
+/* ---------- Reveal: the real ritual ---------- */
+.immersiveRevealStage {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: clamp(16px, 4vw, 22px);
+  overflow: hidden;
+}
+
+.immersiveRevealCard {
+  align-self: center;
+  width: min(48vw, 190px);
+  aspect-ratio: 2 / 3.45;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  perspective: 1500px;
+  cursor: pointer;
+  touch-action: manipulation;
+  filter: drop-shadow(0 22px 34px rgba(0,0,0,.45));
+}
+
+.immersiveRevealCard:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.immersiveCardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform-style: preserve-3d;
+  transition: transform .82s cubic-bezier(.18,.74,.18,1);
+}
+
+.immersiveRevealCard.isFlipped .immersiveCardInner {
+  transform: rotateY(180deg);
+}
+
+.immersiveCardFace {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: block;
+  border: 1px solid rgba(238, 211, 142, .52);
+  border-radius: 12px;
+  background: #160d22;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.immersiveCardFrontFace {
+  transform: rotateY(180deg);
+}
+
+.immersiveCardFrontFace.isReversed img,
+.immersiveInterpretCard.isReversed img,
+.immersiveResultCardImage.isReversed img {
+  transform: rotate(180deg);
+}
+
+.immersiveRevealButton {
+  min-width: 150px;
+  min-height: 44px;
+}
+
+.immersiveRevealName {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  animation: immersiveNameIn .4s .42s both;
+}
+
+.immersiveRevealName strong {
+  font-size: 1.15rem;
+}
+
+.immersiveRevealName span {
+  color: #e5c36d;
+  font-size: .72rem;
+  letter-spacing: .08em;
+}
+
+/* ---------- Interpretation: keep the revealed card on stage ---------- */
+.immersiveInterpretStage {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 18px 20px 20px;
+  overflow: hidden;
+}
+
+.immersiveInterpretCardWrap {
+  position: relative;
+  align-self: center;
+  display: grid;
+  place-items: center;
+}
+
+.immersiveInterpretCard {
+  position: relative;
+  z-index: 2;
+  width: min(39vw, 155px);
+  aspect-ratio: 2 / 3.45;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 22px 48px rgba(0,0,0,.42);
+  animation: immersiveCardBreathe 3.2s ease-in-out infinite;
+}
+
+.immersiveCardHalo {
+  position: absolute;
+  z-index: 1;
+  width: 190%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(194,137,246,.26), rgba(114,71,163,.09) 38%, transparent 67%);
+  filter: blur(9px);
+  animation: immersiveHalo 3.6s ease-in-out infinite;
+}
+
+.immersiveInterpretCopy {
+  min-height: 78px;
+  display: grid;
+  align-content: center;
+  text-align: center;
+}
+
+.immersiveInterpretCopy > span {
+  color: #e5c36d;
+  font-size: .67rem;
+  letter-spacing: .1em;
+}
+
+.immersiveInterpretCopy p {
+  margin: 8px auto 0;
+  max-width: 340px;
+  color: rgba(249,242,255,.86);
+  font-size: .94rem;
+  line-height: 1.55;
+  animation: immersiveLineIn .42s both;
+}
+
+.immersiveSaveHint {
+  max-width: 340px;
+  color: rgba(246,237,255,.43);
+  font-size: .62rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.immersiveThinProgress.isReading span {
+  width: 34%;
+  animation-duration: 1.65s;
+}
+
+/* ---------- Result: only the reading body scrolls ---------- */
+.immersiveResultCard {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.immersiveResultHeader {
+  flex: 0 0 auto;
+  min-height: 112px;
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(224,204,246,.09);
+  background: linear-gradient(180deg, rgba(65,38,88,.3), rgba(25,14,45,.06));
+}
+
+.immersiveResultCardImage {
+  width: 64px;
+  aspect-ratio: 2 / 3.45;
+  overflow: hidden;
+  border-radius: 7px;
+  box-shadow: 0 10px 22px rgba(0,0,0,.36);
+}
+
+.immersiveResultIdentity span {
+  color: rgba(247,239,255,.48);
+  font-size: .63rem;
+  letter-spacing: .1em;
+}
+
+.immersiveResultIdentity h1 {
+  margin: 4px 0 2px;
+  font-size: clamp(1.35rem, 6vw, 2rem);
+  line-height: 1.1;
+}
+
+.immersiveResultIdentity p {
+  margin: 0;
+  color: #e5c36d;
+  font-size: .73rem;
+}
+
+.immersiveResultScroll {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 14px 17px 20px;
+  scrollbar-width: thin;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 18px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 18px), transparent 100%);
+}
+
+.immersiveResultScroll .quickResultQuestion {
+  margin: 3px 0 12px;
+}
+
+.immersiveResultScroll .quickResultReading {
+  margin-top: 0;
+}
+
+.immersiveResultScroll .quickResultReading h2 {
+  margin-top: 0;
+  font-size: 1.03rem;
+}
+
+.immersiveUpgradeCard {
+  margin-top: 18px;
+}
+
+.immersiveResultActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  padding: 10px 14px max(11px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(224,204,246,.1);
+  background: rgba(14,8,27,.94);
+  box-shadow: 0 -12px 30px rgba(8,4,15,.18);
+}
+
+.immersiveResultActions button {
+  min-width: 0;
+  min-height: 43px;
+  padding: 10px 12px;
+}
+
+.immersiveResultCard > .quickShareNotice {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(11px, env(safe-area-inset-bottom)) + 55px);
+  z-index: 3;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(11,6,21,.88);
+  white-space: nowrap;
+}
+
+.immersiveError {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, calc(env(safe-area-inset-bottom) + 10px));
+  z-index: 125;
+  width: min(calc(100% - 28px), 520px);
+  transform: translateX(-50%);
+  margin: 0;
+}
+
+/* No duplicate top-left back button in the immersive flow. VELA is home. */
+body:has(.immersiveQuickTarot) .quickBackButton {
+  display: none !important;
+}
+
+@keyframes immersivePageEnter {
+  from { opacity: .2; transform: translate3d(7%,0,0) rotateY(-20deg) scale(.988); }
+  to { opacity: 1; transform: translate3d(0,0,0) rotateY(0) scale(1); }
+}
+
+@keyframes immersiveCardDeal {
+  from { opacity: 0; transform: translateY(18px) rotate(-2deg) scale(.95); }
+  to { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
+@keyframes immersiveChosenLift {
+  0% { opacity: 0; transform: translateY(70px) scale(.75) rotate(-4deg); }
+  68% { opacity: 1; transform: translateY(-5px) scale(1.03) rotate(.8deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes immersiveProgressSweep {
+  0% { transform: translateX(-120%); opacity: .25; }
+  50% { opacity: 1; }
+  100% { transform: translateX(340%); opacity: .2; }
+}
+
+@keyframes immersiveNameIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes immersiveCardBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.012); }
+}
+
+@keyframes immersiveHalo {
+  0%, 100% { opacity: .5; transform: scale(.96); }
+  50% { opacity: .9; transform: scale(1.05); }
+}
+
+@keyframes immersiveLineIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 420px) {
+  .quickTarotExperience.immersiveQuickTarot {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .immersiveQuickTarot .velaFlipProgress {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  .immersiveSelectionStage {
+    padding: 11px !important;
+  }
+
+  .immersiveQuickTarot .immersiveCardPool {
+    gap: 6px 5px;
+    margin-top: 9px;
+  }
+
+  .immersiveResultHeader {
+    min-height: 102px;
+    grid-template-columns: 58px minmax(0, 1fr);
+    padding: 9px 13px 8px;
+  }
+
+  .immersiveResultCardImage {
+    width: 56px;
+  }
+
+  .immersiveResultScroll {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@media (max-height: 700px) {
+  .immersiveQuickTarot .quickTarotShell {
+    grid-template-rows: 20px minmax(0, 1fr);
+  }
+
+  .immersiveQuickTarot .quickTarotEyebrow {
+    font-size: 8px;
+  }
+
+  .immersiveQuickTarot .velaFlipPage {
+    grid-template-rows: 30px minmax(0, 1fr);
+  }
+
+  .immersiveQuickTarot .velaFlipProgress {
+    height: 30px;
+    padding-bottom: 5px;
+  }
+
+  .immersiveStageCopy p {
+    display: none;
+  }
+
+  .immersiveInterpretCard {
+    width: min(30vw, 125px);
+  }
+
+  .immersiveInterpretCopy {
+    min-height: 58px;
+  }
+
+  .immersiveResultHeader {
+    min-height: 88px;
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .immersiveResultCardImage {
+    width: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .immersiveQuickTarot .velaFlipPage,
+  .immersiveQuickTarot .immersiveCardBack,
+  .immersiveChosenBack,
+  .immersiveRevealName,
+  .immersiveInterpretCard,
+  .immersiveCardHalo,
+  .immersiveInterpretCopy p,
+  .immersiveThinProgress span {
+    animation: none !important;
+  }
+
+  .immersiveCardInner {
+    transition-duration: .01ms !important;
+  }
+}

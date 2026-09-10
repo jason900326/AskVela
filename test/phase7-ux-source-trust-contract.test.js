@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
+const entryPath = new URL("../components/VelaPlusQuestionEntry.js", import.meta.url);
+const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const velaStagePath = new URL("../components/VelaStage.js", import.meta.url);
 const astrologyFlowPath = new URL("../components/AstrologyReadingFlowV2.js", import.meta.url);
 const astrologyRoutePath = new URL("../app/api/astrology/reading/route.js", import.meta.url);
@@ -11,9 +13,11 @@ const accountCssPath = new URL("../app/account.css", import.meta.url);
 const sourceStatusPath = new URL("../lib/astrology-source-status.js", import.meta.url);
 const evidencePath = new URL("../lib/astrology-evidence.js", import.meta.url);
 
-test("AskVela home is conversation-first instead of three equal mode tabs", async () => {
-  const [experience, velaStage] = await Promise.all([
+test("AskVela home keeps one clean free-form entry and moves optional routes to question help", async () => {
+  const [experience, entry, help, velaStage] = await Promise.all([
     readFile(experiencePath, "utf8"),
+    readFile(entryPath, "utf8"),
+    readFile(helpPath, "utf8"),
     readFile(velaStagePath, "utf8"),
   ]);
 
@@ -21,10 +25,19 @@ test("AskVela home is conversation-first instead of three equal mode tabs", asyn
   assert.match(experience, /velaHomeStageLayout/u);
   assert.match(velaStage, /velaCrystalButton/u);
   assert.match(velaStage, /onCrystalClick/u);
-  assert.match(experience, /今天，你帶了什麼來？/u);
-  assert.match(experience, /velaJourneyPanel/u);
-  assert.match(experience, /有件事想問/u);
-  assert.match(experience, /我也說不上來/u);
+  assert.match(experience, /VelaPlusQuestionEntry/u);
+  assert.match(entry, /最近有什麼事一直放在心上？/u);
+  assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
+  assert.match(entry, /我不知道怎麼說/u);
+  assert.doesNotMatch(entry, /星座運勢/u);
+  assert.doesNotMatch(entry, /解夢/u);
+  assert.doesNotMatch(entry, /NT\$29/u);
+  assert.match(experience, /pageKey="home-help"/u);
+  assert.match(experience, /VelaQuestionHelp/u);
+  assert.match(help, /星座運勢/u);
+  assert.match(help, /解夢/u);
+  assert.doesNotMatch(help, /<textarea/u);
+  assert.doesNotMatch(experience, /<strong>Deep Reading<\/strong>/u);
   assert.doesNotMatch(experience, /className="experienceTabs"/u);
 });
 

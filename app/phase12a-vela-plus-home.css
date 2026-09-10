@@ -1,0 +1,249 @@
+/* Phase 12A — shared Free / Vela+ question entry. */
+
+.velaPlusHomeQuestion {
+  display: grid;
+  gap: 14px;
+}
+
+.velaPlusHomeBubble {
+  text-align: left;
+}
+
+.velaSharedTrust {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 8px;
+  color: rgba(244, 224, 166, .88);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.velaPlusHomeForm {
+  display: grid;
+  gap: 10px;
+}
+
+.velaPlusHomeForm textarea {
+  width: 100%;
+  min-height: 128px;
+  resize: vertical;
+  border: 1px solid rgba(227, 204, 251, .18);
+  border-radius: 18px;
+  background: rgba(10, 5, 24, .62);
+  color: #f8f2ff;
+  padding: 14px 15px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.65;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.velaPlusHomeForm textarea::placeholder {
+  color: rgba(248, 242, 255, .42);
+}
+
+.velaPlusHomeForm textarea:focus {
+  border-color: rgba(230, 196, 111, .52);
+  box-shadow: 0 0 0 3px rgba(230, 196, 111, .07);
+}
+
+.velaPlusHomeFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.velaPlusHomeFormFooter > span {
+  color: rgba(248, 242, 255, .46);
+  font-size: 11px;
+}
+
+.velaPlusHomeFormFooter .primaryButton {
+  min-width: 156px;
+}
+
+.velaQuestionHelpButton {
+  width: 100%;
+  min-height: 46px;
+}
+
+.velaQuestionHelp {
+  display: grid;
+  gap: 14px;
+}
+
+.velaQuestionHelpBubble {
+  text-align: left;
+}
+
+.velaQuestionHelpBubble h1 {
+  margin-bottom: 7px;
+}
+
+.velaQuestionHelpBubble p {
+  margin: 0;
+  color: rgba(248, 242, 255, .58);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.velaQuestionHelpGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.velaQuestionHelpGrid button,
+.velaQuestionHelpOther button {
+  border: 1px solid rgba(227, 204, 251, .17);
+  border-radius: 16px;
+  background: rgba(24, 13, 47, .62);
+  color: #f8f2ff;
+  padding: 13px 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .18s ease, transform .18s ease, background .18s ease;
+}
+
+.velaQuestionHelpGrid button {
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  text-align: left;
+}
+
+.velaQuestionHelpGrid button:hover,
+.velaQuestionHelpGrid button:focus-visible,
+.velaQuestionHelpOther button:hover,
+.velaQuestionHelpOther button:focus-visible {
+  border-color: rgba(230, 196, 111, .5);
+  background: rgba(49, 28, 76, .76);
+  transform: translateY(-1px);
+}
+
+.velaQuestionHelpGrid button:disabled,
+.velaQuestionHelpOther button:disabled {
+  cursor: wait;
+  opacity: .58;
+  transform: none;
+}
+
+.velaQuestionHelpGrid strong {
+  font-size: 13px;
+}
+
+.velaQuestionHelpGrid span {
+  color: rgba(244, 224, 166, .72);
+  font-size: 10px;
+}
+
+.velaQuestionHelpOther {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(227, 204, 251, .1);
+}
+
+.velaQuestionHelpOther > span {
+  color: rgba(248, 242, 255, .45);
+  font-size: 11px;
+}
+
+.velaQuestionHelpOther > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.velaQuestionHelpOther button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+}
+
+.velaQuestionHelpOther b {
+  color: #e6c46f;
+  font-size: 18px;
+}
+
+.velaQuestionHelpOther strong {
+  font-size: 12px;
+}
+
+.velaQuestionHelpBack {
+  justify-self: center;
+}
+
+.phase12HomeClarify {
+  display: grid;
+  gap: 14px;
+}
+
+.phase12HomeClarify h1 {
+  margin: 0;
+  font-size: clamp(23px, 6vw, 34px);
+  line-height: 1.25;
+}
+
+.phase12HomeClarify .deepDynamicChoices {
+  display: grid;
+  gap: 9px;
+}
+
+.phase12HomeClarify .deepDynamicChoices button {
+  width: 100%;
+  text-align: left;
+}
+
+.phase12HomeClarifyNote {
+  margin: 0;
+  color: rgba(248, 242, 255, .58);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.phase12TarotHome.is-vela-plus .phase12HomeFlipPage {
+  border-color: rgba(230, 196, 111, .2);
+}
+
+.velaPlanCard.isDeep {
+  border-color: rgba(202, 166, 238, .34);
+  background: linear-gradient(145deg, rgba(83, 51, 118, .24), rgba(255,255,255,.025));
+}
+
+@media (min-width: 900px) {
+  .velaPlanSheet:has(.velaPlanGridThree) {
+    width: min(100%, 980px);
+  }
+
+  .velaPlanGridThree {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .velaPlusHomeForm textarea {
+    min-height: 142px;
+    font-size: 16px;
+  }
+
+  .velaPlusHomeFormFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .velaPlusHomeFormFooter .primaryButton {
+    width: 100%;
+  }
+
+  .velaQuestionHelpGrid button {
+    min-height: 60px;
+    padding: 11px 12px;
+  }
+}

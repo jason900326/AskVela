@@ -1,6 +1,7 @@
 import PendingAuthResume from "../components/PendingAuthResume.js";
 import VelaBrandLink from "../components/VelaBrandLink.js";
 import VelaHistoryNavigationGuard from "../components/VelaHistoryNavigationGuard.js";
+import VelaPageStackMotion from "../components/VelaPageStackMotion.js";
 import "./globals.css";
 import "./reading.css";
 import "./follow-up.css";
@@ -27,6 +28,16 @@ import "./phase10-final-fixes.css";
 import "./phase10-auth-waiting.css";
 import "./phase10-retention-v1.css";
 import "./phase10-history-exit.css";
+import "./phase12a-monetization-ui.css";
+import "./phase12a-flip-pages.css";
+import "./phase12a-immersive-tarot.css";
+import "./phase12a-free-flow-fixes.css";
+import "./phase12a-mobile-stability.css";
+import "./phase12a-deep-reading.css";
+import "./phase12a-deck-motion.css";
+import "./phase12a-vela-plus-home.css";
+import "./phase12a-deep-reading-polish.css";
+import "./phase12a-ux-cleanup.css";
 
 export const metadata = {
   title: "Vela",
@@ -41,6 +52,7 @@ export default function RootLayout({ children }) {
           <VelaBrandLink />
         </div>
         {children}
+        <VelaPageStackMotion />
         <PendingAuthResume />
         <VelaHistoryNavigationGuard />
       </body>
