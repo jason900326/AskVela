@@ -6,6 +6,7 @@ const experiencePath = new URL("../components/VelaExperience.js", import.meta.ur
 const entryPath = new URL("../components/VelaPlusQuestionEntry.js", import.meta.url);
 const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
+const planPath = new URL("../components/VelaPlanSheet.js", import.meta.url);
 const layoutPath = new URL("../app/layout.js", import.meta.url);
 
 test("signed-in Vela+ entitlement still comes only from app_metadata", async () => {
@@ -18,7 +19,7 @@ test("signed-in Vela+ entitlement still comes only from app_metadata", async () 
   assert.doesNotMatch(experience, /user_metadata/u);
 });
 
-test("Free and Vela+ share the same free-form home question entry", async () => {
+test("Free and Vela+ share the same free-form home question entry without an eight-character minimum", async () => {
   const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
@@ -33,9 +34,11 @@ test("Free and Vela+ share the same free-form home question entry", async () => 
   assert.match(entry, /body: JSON\.stringify\(\{ question: text \}\)/u);
   assert.match(entry, /onReady\?\.\(\{ question: text, plan \}\)/u);
   assert.match(entry, /讓 Vela 先聽懂/u);
+  assert.match(entry, /if \(!text\)/u);
+  assert.doesNotMatch(entry, /length < 8/u);
 });
 
-test("the help route is a separate page and guided buttons skip textarea refill", async () => {
+test("the help route is a separate instant preset page and never spends an intake call", async () => {
   const [experience, entry, help] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
@@ -44,13 +47,15 @@ test("the help route is a separate page and guided buttons skip textarea refill"
 
   assert.match(entry, /我不知道怎麼說/u);
   assert.match(experience, /pageKey="home-help"/u);
-  assert.match(help, /onClick=\{\(\) => choose\(item\.question\)\}/u);
-  assert.match(help, /body: JSON\.stringify\(\{ question \}\)/u);
+  assert.match(experience, /onChooseQuestion=\{\(question\) => startQuick\(question\)\}/u);
+  assert.match(help, /onChooseQuestion\?\.\(item\.question\)/u);
+  assert.doesNotMatch(help, /fetch\(/u);
+  assert.doesNotMatch(help, /\/api\/deep-reading\/intake/u);
   assert.doesNotMatch(help, /setQuestion/u);
   assert.doesNotMatch(help, /<textarea/u);
 });
 
-test("Vela+ uses the same intake result and then enters Deep Reading clarification", async () => {
+test("Vela+ uses the shared typed intake result and then enters Deep Reading clarification", async () => {
   const [experience, deep] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(deepPath, "utf8"),
@@ -65,14 +70,28 @@ test("Vela+ uses the same intake result and then enters Deep Reading clarificati
   assert.match(deep, /useState\(\(\) => initialPlan \|\| null\)/u);
 });
 
-test("Free users get dynamic clarification before the one-card flow without extra explanation copy", async () => {
+test("Free typed questions get dynamic clarification before the one-card flow", async () => {
   const experience = await readFile(experiencePath, "utf8");
 
   assert.match(experience, /homeSeed\.plan\.clarifyingQuestion/u);
   assert.match(experience, /homeSeed\.plan\.options\.map/u);
   assert.match(experience, /startQuick\(option\.focusQuestion, seed\)/u);
   assert.doesNotMatch(experience, /homeSeed\.plan\.velaLine/u);
-  assert.doesNotMatch(experience, /phase12HomeClarifyNote/u);
+});
+
+test("only an active Vela+ entitlement can enter the full Deep Reading prototype", async () => {
+  const [experience, plan] = await Promise.all([
+    readFile(experiencePath, "utf8"),
+    readFile(planPath, "utf8"),
+  ]);
+
+  assert.match(experience, /function startDeepReading[\s\S]*if \(!isVelaPlus\)[\s\S]*setPlanOpen\(true\);[\s\S]*return;/u);
+  assert.match(experience, /if \(next === "deep" && !isVelaPlus\)/u);
+  assert.match(experience, /isVelaPlus \? "✦ Vela\+" : "方案"/u);
+  assert.match(experience, /isVelaPlus=\{isVelaPlus\}/u);
+  assert.match(plan, /isVelaPlus \? \([\s\S]*onClick=\{onStartDeep\}>開始深度解析/u);
+  assert.doesNotMatch(plan, /預覽完整 Deep Reading/u);
+  assert.doesNotMatch(plan, /先體驗 Vela\+ Reading/u);
 });
 
 test("Vela+ home styles are loaded after the Phase 12A motion and reading layers", async () => {
