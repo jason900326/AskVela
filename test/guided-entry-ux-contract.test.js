@@ -113,7 +113,7 @@ test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, stage
   assert.match(deep, /plan\.clarifyingQuestion/u);
   assert.match(deep, /plan\.options\.map/u);
   assert.match(deep, /selectedOption\.lenses\.map/u);
-  assert.match(deep, /不用你先選牌陣/u);
+  assert.match(deep, /不需要你先選牌陣/u);
   assert.match(deep, /selectedIndexes\.length !== 3/u);
   assert.match(deep, /\/api\/readings\/draw/u);
   assert.match(deep, /\/api\/readings\/interpret/u);
