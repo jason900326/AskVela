@@ -1,0 +1,96 @@
+/* Phase 12A — signed-in Vela+ home entry. */
+
+.velaPlusHomeQuestion {
+  display: grid;
+  gap: 14px;
+}
+
+.velaPlusHomeBubble {
+  text-align: left;
+}
+
+.velaPlusHomeBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 8px;
+  color: #e6c46f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+
+.velaPlusHomeForm {
+  display: grid;
+  gap: 10px;
+}
+
+.velaPlusHomeForm textarea {
+  width: 100%;
+  min-height: 128px;
+  resize: vertical;
+  border: 1px solid rgba(227, 204, 251, .18);
+  border-radius: 18px;
+  background: rgba(10, 5, 24, .62);
+  color: #f8f2ff;
+  padding: 14px 15px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.65;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.velaPlusHomeForm textarea::placeholder {
+  color: rgba(248, 242, 255, .42);
+}
+
+.velaPlusHomeForm textarea:focus {
+  border-color: rgba(230, 196, 111, .52);
+  box-shadow: 0 0 0 3px rgba(230, 196, 111, .07);
+}
+
+.velaPlusHomeFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.velaPlusHomeFormFooter > span {
+  color: rgba(248, 242, 255, .46);
+  font-size: 11px;
+}
+
+.velaPlusHomeFormFooter .primaryButton {
+  min-width: 156px;
+}
+
+.phase12PlanChecking {
+  min-height: 210px;
+  display: grid;
+  place-items: center;
+  color: rgba(248, 242, 255, .62);
+  font-size: 13px;
+  letter-spacing: .02em;
+}
+
+.phase12TarotHome.is-vela-plus .phase12HomeFlipPage {
+  border-color: rgba(230, 196, 111, .2);
+}
+
+@media (max-width: 560px) {
+  .velaPlusHomeForm textarea {
+    min-height: 142px;
+    font-size: 16px;
+  }
+
+  .velaPlusHomeFormFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .velaPlusHomeFormFooter .primaryButton {
+    width: 100%;
+  }
+}
