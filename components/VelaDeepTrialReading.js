@@ -78,7 +78,12 @@ export default function VelaDeepTrialReading({ seed, onBack, onOpenPlans }) {
   const waitingStartedAtRef = useRef(0);
   const [stage, setStage] = useState("reveal");
   const [result, setResult] = useState(null);
-  const [revealedIndexes, setRevealedIndexes] = useState([0]);
+  const [revealedIndexes, setRevealedIndexes] = useState(() => {
+    const persisted = Array.isArray(seed?.revealedIndexes)
+      ? seed.revealedIndexes.filter((index) => Number.isInteger(index) && index >= 0 && index < 3)
+      : [];
+    return persisted.length > 0 ? Array.from(new Set(persisted)).sort((a, b) => a - b) : [0];
+  });
   const [waitingIndex, setWaitingIndex] = useState(0);
   const [walkthroughCount, setWalkthroughCount] = useState(2);
   const [showSynthesis, setShowSynthesis] = useState(false);
@@ -99,6 +104,7 @@ export default function VelaDeepTrialReading({ seed, onBack, onOpenPlans }) {
     [plan, seed?.selectedOptionId],
   );
   const readingQuestion = seed?.readingQuestion || selectedOption?.readingQuestion || seed?.question || "";
+  const allCardsAlreadyRevealed = Boolean(draw?.cards?.length) && revealedIndexes.length === draw.cards.length;
 
   const activeReading = useMemo(() => {
     if (!draw || !result || !requestId || !selectedOption || !plan?.spreadId) return null;
@@ -262,9 +268,13 @@ export default function VelaDeepTrialReading({ seed, onBack, onOpenPlans }) {
         <div className="deepReadingEyebrow">✦ 免費體驗 · DEEP READING</div>
 
         {stage === "reveal" && (
-          <VelaFlipPage pageKey="deep-trial-reveal" step={5} total={7} label="接著看另外兩張">
+          <VelaFlipPage pageKey="deep-trial-reveal" step={5} total={7} label="開始深度解析">
             <div className="deepReadingStep velaFlipContentCard deepRevealCard">
-              <div className="deepVelaLine">第一張剛才已經看過了。現在把另外兩張翻開，不需要重新抽牌。</div>
+              <div className="deepVelaLine">
+                {allCardsAlreadyRevealed
+                  ? "三張牌剛才都已經翻開了。牌面不變，現在直接把三個位置放在一起看。"
+                  : "第一張剛才已經看過了。把還沒翻開的牌補完，不需要重新抽牌。"}
+              </div>
               <div className="deepRevealRow">
                 {draw.cards.map((card, index) => {
                   const revealed = revealedIndexes.includes(index);
@@ -293,7 +303,7 @@ export default function VelaDeepTrialReading({ seed, onBack, onOpenPlans }) {
                         </div>
                       </button>
                       <strong>{revealed ? card.nameZhTw : "點牌翻開"}</strong>
-                      {revealed && <small>{ORIENTATION_LABELS[card.orientation] || card.orientation}{index === 0 ? " · 剛才已看" : ""}</small>}
+                      {revealed && <small>{ORIENTATION_LABELS[card.orientation] || card.orientation}{index === 0 ? " · 免費解析已看" : ""}</small>}
                     </article>
                   );
                 })}
