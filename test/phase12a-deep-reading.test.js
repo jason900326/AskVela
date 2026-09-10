@@ -11,6 +11,7 @@ const routePath = new URL("../app/api/deep-reading/intake/route.js", import.meta
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const layoutPath = new URL("../app/layout.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-deep-reading.css", import.meta.url);
+const polishCssPath = new URL("../app/phase12a-deep-reading-polish.css", import.meta.url);
 
 const MOCK_PLAN = {
   readingTitle: "關係是否值得繼續投入",
@@ -78,26 +79,31 @@ test("Deep Reading keeps the deterministic draw question within the existing 500
   assert.match(question, /位置3/u);
 });
 
-test("Deep Reading API and UI wire intake, three selected cards, staged reveal, follow-up, and one clarifier", async () => {
-  const [route, deep, layout, css] = await Promise.all([
+test("Deep Reading API and UI wire intake, three selected cards, card-driven reveal, follow-up, and one clarifier", async () => {
+  const [route, deep, layout, css, polishCss] = await Promise.all([
     readFile(routePath, "utf8"),
     readFile(deepPath, "utf8"),
     readFile(layoutPath, "utf8"),
     readFile(cssPath, "utf8"),
+    readFile(polishCssPath, "utf8"),
   ]);
 
   assert.match(route, /planDeepReading/u);
   assert.match(deep, /\/api\/deep-reading\/intake/u);
   assert.match(deep, /selectedIndexes\.length !== 3/u);
   assert.match(deep, /selectedCardIndexes: selectedIndexes/u);
-  assert.match(deep, /setRevealedCount/u);
+  assert.match(deep, /setRevealedIndexes/u);
+  assert.match(deep, /function revealCard\(index\)/u);
+  assert.match(deep, /revealedIndexes\.length === draw\.cards\.length/u);
   assert.match(deep, /\/api\/readings\/follow-up/u);
   assert.match(deep, /followUpResolution/u);
   assert.match(deep, /\/api\/readings\/clarifier/u);
   assert.match(layout, /phase12a-deep-reading\.css/u);
+  assert.match(layout, /phase12a-deep-reading-polish\.css/u);
   assert.match(css, /\.deepDynamicChoices/u);
   assert.match(css, /\.deepCardWalkthrough/u);
   assert.match(css, /\.deepClarifierPool/u);
+  assert.match(polishCss, /\.deepRevealTap/u);
 });
 
 test("Deep Reading reveals interpretation one position at a time before synthesis and continuation", async () => {
