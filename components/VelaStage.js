@@ -26,8 +26,8 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
     introStartedRef.current = true;
 
     if (prefersReducedMotion()) {
-      setIntroComplete(true);
-      return undefined;
+      const reducedFrame = window.requestAnimationFrame(() => setIntroComplete(true));
+      return () => window.cancelAnimationFrame(reducedFrame);
     }
 
     const artwork = root.querySelector(".velaHoodedArtwork");
