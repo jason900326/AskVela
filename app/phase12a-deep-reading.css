@@ -304,6 +304,15 @@
   align-items: start;
 }
 
+.deepWalkthroughCard {
+  animation: deepWalkthroughIn .38s ease both;
+}
+
+@keyframes deepWalkthroughIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .deepCardWalkthrough h2,
 .deepClarifierResult h3 {
   margin: 2px 0 8px;
@@ -328,11 +337,39 @@
   line-height: 1.55;
 }
 
+.deepWalkthroughAdvance {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(223,202,250,.1);
+}
+
+.deepWalkthroughAdvance > span {
+  font-size: 11px;
+  color: rgba(248,242,255,.48);
+  text-align: center;
+}
+
+.deepWalkthroughAdvance .primaryButton {
+  width: min(100%, 360px);
+  justify-self: center;
+}
+
 .deepSynthesis,
 .deepContinuation {
   margin-top: 30px;
   padding-top: 24px;
   border-top: 1px solid rgba(223,202,250,.12);
+}
+
+.deepSynthesisReveal {
+  animation: deepSynthesisIn .44s ease both;
+}
+
+@keyframes deepSynthesisIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .deepSynthesis blockquote {
@@ -495,6 +532,8 @@ body:has(.deepReadingPrototype.deep-stage-result) .velaFlipPage {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .deepWaitingOrb { animation: none; }
+  .deepWaitingOrb,
+  .deepWalkthroughCard,
+  .deepSynthesisReveal { animation: none; }
   .deepCardPool img { transition: none; }
 }
