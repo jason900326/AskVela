@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabaseBrowser } from "../lib/supabase-browser.js";
 import AstrologyReadingFlowV2 from "./AstrologyReadingFlowV2.js";
 import DreamReadingFlowV2 from "./DreamReadingFlowV2.js";
-import FreeQuickTarot, { FREE_QUESTION_PRESETS } from "./FreeQuickTarot.js";
+import FreeQuickTarot from "./FreeQuickTarot.js";
 import VelaAccount from "./VelaAccount.js";
 import VelaDeepReadingIntro from "./VelaDeepReadingIntro.js";
 import VelaFlipPage from "./VelaFlipPage.js";
 import VelaPlanSheet from "./VelaPlanSheet.js";
 import VelaPlusQuestionEntry from "./VelaPlusQuestionEntry.js";
+import VelaQuestionHelp from "./VelaQuestionHelp.js";
 import VelaStage from "./VelaStage.js";
 
 const DREAM_SESSION_KEY = "askvela.current-dream.v1";
@@ -26,6 +27,7 @@ export default function VelaExperience() {
   const [quickQuestion, setQuickQuestion] = useState("");
   const [quickDeepSeed, setQuickDeepSeed] = useState(null);
   const [homeSeed, setHomeSeed] = useState(null);
+  const [homeHelpOpen, setHomeHelpOpen] = useState(false);
   const [dreamHandoffText, setDreamHandoffText] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
   const [planReady, setPlanReady] = useState(false);
@@ -41,6 +43,7 @@ export default function VelaExperience() {
       setQuickQuestion("");
       setQuickDeepSeed(null);
       setHomeSeed(null);
+      setHomeHelpOpen(false);
       setDreamHandoffText("");
       setDeepSeed(null);
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -88,6 +91,7 @@ export default function VelaExperience() {
         setExperience("home");
         setEntryMode("quick");
         setHomeSeed(null);
+        setHomeHelpOpen(false);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         return;
       }
@@ -102,7 +106,10 @@ export default function VelaExperience() {
       if (experience !== "home") return;
       const entry = event.state?.askVelaEntry;
       setEntryMode(entry?.mode === "quick" ? "quick" : "landing");
-      if (entry?.mode !== "quick") setHomeSeed(null);
+      if (entry?.mode !== "quick") {
+        setHomeSeed(null);
+        setHomeHelpOpen(false);
+      }
     }
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -110,6 +117,7 @@ export default function VelaExperience() {
 
   function revealQuickEntry() {
     setHomeSeed(null);
+    setHomeHelpOpen(false);
     setEntryMode("quick");
     const current = window.history.state || {};
     window.history.pushState({ ...current, askVelaEntry: { mode: "quick" } }, "");
@@ -121,6 +129,7 @@ export default function VelaExperience() {
     setQuickQuestion("");
     setQuickDeepSeed(null);
     setHomeSeed(null);
+    setHomeHelpOpen(false);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
@@ -157,6 +166,7 @@ export default function VelaExperience() {
   function handleHomeQuestionReady(seed) {
     if (!seed?.question || !seed?.plan) return;
     const normalizedSeed = { question: String(seed.question), plan: seed.plan };
+    setHomeHelpOpen(false);
     if (isVelaPlus && planReady) {
       startDeepReading(normalizedSeed);
       return;
@@ -174,20 +184,6 @@ export default function VelaExperience() {
     startQuick(option.focusQuestion, seed);
   }
 
-  const secondaryModes = (
-    <section className="phase12SecondaryModes" aria-label="其他占卜方式">
-      <span>也可以直接前往</span>
-      <div>
-        <button type="button" onClick={() => changeExperience("astrology")}>
-          <b>◎</b><strong>星座運勢</strong><small>今天／本週運勢</small>
-        </button>
-        <button type="button" onClick={() => beginDream("")}>
-          <b>☾</b><strong>解夢</strong><small>說說你記得的夢</small>
-        </button>
-      </div>
-    </section>
-  );
-
   let content;
 
   if (experience === "home") {
@@ -202,12 +198,27 @@ export default function VelaExperience() {
 
         {entryMode !== "landing" && (
           <div className="velaHomeEntry mode-quick" id="vela-home-entry">
-            {!homeSeed ? (
+            {!homeSeed && !homeHelpOpen && (
               <VelaFlipPage pageKey="home-question" step={1} total={5} label="說說你的問題" className="phase12HomeFlipPage">
-                <VelaPlusQuestionEntry onReady={handleHomeQuestionReady} suggestions={FREE_QUESTION_PRESETS} />
-                {secondaryModes}
+                <VelaPlusQuestionEntry
+                  onReady={handleHomeQuestionReady}
+                  onNeedHelp={() => setHomeHelpOpen(true)}
+                />
               </VelaFlipPage>
-            ) : (
+            )}
+
+            {!homeSeed && homeHelpOpen && (
+              <VelaFlipPage pageKey="home-help" step={2} total={5} label="選一個方向" className="phase12HomeFlipPage">
+                <VelaQuestionHelp
+                  onReady={handleHomeQuestionReady}
+                  onBack={() => setHomeHelpOpen(false)}
+                  onAstrology={() => changeExperience("astrology")}
+                  onDream={() => beginDream("")}
+                />
+              </VelaFlipPage>
+            )}
+
+            {homeSeed && (
               <VelaFlipPage pageKey="home-clarify" step={2} total={5} label="先釐清你真正想看的地方" className="phase12HomeFlipPage">
                 <div className="phase12HomeClarify">
                   <div className="deepVelaLine">{homeSeed.plan.velaLine}</div>
