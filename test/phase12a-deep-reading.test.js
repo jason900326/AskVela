@@ -68,7 +68,7 @@ test("Deep Reading intake makes one structured model call and returns dynamic cl
 test("Deep Reading keeps the deterministic draw question within the existing 500-character contract", () => {
   const question = buildDeepReadingQuestion({
     originalQuestion: "很長的背景".repeat(100),
-    focusQuestion: "我現在真正需要判斷的是什麼？".repeat(20),
+    focusQuestion: "我現在真正需要判斷的是：這段關係是否值得繼續投入，以及接下來要觀察哪些實際互動？",
     lenses: MOCK_PLAN.options[0].lenses,
   });
 
