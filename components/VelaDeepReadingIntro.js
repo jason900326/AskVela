@@ -56,11 +56,11 @@ function initialReadingPayload(result) {
   };
 }
 
-export default function VelaDeepReadingIntro({ onBack }) {
+export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", initialPlan = null }) {
   const interpretationPromiseRef = useRef(null);
-  const [stage, setStage] = useState("intake");
-  const [question, setQuestion] = useState("");
-  const [plan, setPlan] = useState(null);
+  const [stage, setStage] = useState(() => initialPlan ? "clarify" : "intake");
+  const [question, setQuestion] = useState(() => String(initialQuestion || "").slice(0, 700));
+  const [plan, setPlan] = useState(() => initialPlan || null);
   const [selectedOptionId, setSelectedOptionId] = useState("");
   const [selectedIndexes, setSelectedIndexes] = useState([]);
   const [requestId, setRequestId] = useState("");
