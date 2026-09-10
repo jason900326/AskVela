@@ -1,0 +1,143 @@
+/* Phase 12A — final mobile cleanup after user preview validation.
+   Keep the home card width stable, replace helper copy with visual feedback,
+   strengthen the Free result conclusion, and present plans as a centered modal. */
+
+/* ---------- Home question pages: keep one stable centered width ---------- */
+.phase12TarotHome.entry-quick .velaHomeEntry {
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  box-sizing: border-box !important;
+}
+
+.phase12TarotHome.entry-quick .velaHomeEntry > .velaFlipDeck {
+  width: min(calc(100vw - 20px), 560px) !important;
+  max-width: 560px !important;
+  flex: 0 0 auto !important;
+  margin-inline: auto !important;
+}
+
+.phase12TarotHome.entry-quick .phase12HomeFlipPage {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+/* ---------- Guided entry: animation instead of loading helper text ---------- */
+.velaQuestionHelpBubble h1 {
+  margin-bottom: 0 !important;
+}
+
+.velaQuestionHelpGrid button.isLoading {
+  border-color: rgba(230, 196, 111, .58) !important;
+  background: rgba(58, 36, 83, .82) !important;
+  opacity: 1 !important;
+}
+
+.velaChoiceLoader {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  min-height: 8px;
+  margin-top: 5px;
+  color: inherit !important;
+}
+
+.velaChoiceLoader i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(236, 205, 121, .92);
+  box-shadow: 0 0 10px rgba(215, 175, 244, .34);
+  animation: velaChoicePulse .82s ease-in-out infinite alternate;
+}
+
+.velaChoiceLoader i:nth-child(2) { animation-delay: .12s; }
+.velaChoiceLoader i:nth-child(3) { animation-delay: .24s; }
+
+@keyframes velaChoicePulse {
+  from { opacity: .26; transform: translateY(2px) scale(.78); }
+  to { opacity: 1; transform: translateY(-2px) scale(1.08); }
+}
+
+/* ---------- Free result: the one-line conclusion should read like the headline ---------- */
+.immersiveQuickTarot.stage-result .quickResultReading h2 {
+  margin: 0 0 16px !important;
+  font-size: clamp(24px, 6.4vw, 31px) !important;
+  line-height: 1.42 !important;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+
+/* ---------- Plans: centered popup modal instead of a bottom sheet ---------- */
+html:has(.velaPlanOverlay),
+body:has(.velaPlanOverlay) {
+  overflow: hidden !important;
+}
+
+.velaPlanOverlay {
+  align-items: center !important;
+  justify-content: center !important;
+  padding:
+    max(14px, env(safe-area-inset-top))
+    12px
+    max(14px, env(safe-area-inset-bottom)) !important;
+  box-sizing: border-box;
+  background: rgba(5, 2, 12, .78) !important;
+  animation: velaPlanBackdropIn .18s ease both;
+}
+
+.velaPlanSheet {
+  width: min(calc(100vw - 24px), 760px) !important;
+  max-width: 760px !important;
+  max-height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(28px, env(safe-area-inset-bottom))) !important;
+  border-radius: 24px !important;
+  padding: 28px 16px max(24px, env(safe-area-inset-bottom)) !important;
+  box-shadow: 0 28px 100px rgba(0, 0, 0, .58) !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  animation: velaPlanPopupIn .22s cubic-bezier(.2, .82, .2, 1) both;
+}
+
+@keyframes velaPlanBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes velaPlanPopupIn {
+  from { opacity: 0; transform: translateY(14px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 600px) {
+  .phase12TarotHome.entry-quick .velaHomeEntry {
+    align-items: center !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .phase12TarotHome.entry-quick .velaHomeEntry > .velaFlipDeck {
+    width: calc(100vw - 20px) !important;
+  }
+
+  .velaPlanSheet {
+    width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 22px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velaChoiceLoader i,
+  .velaPlanOverlay,
+  .velaPlanSheet {
+    animation: none !important;
+  }
+}
