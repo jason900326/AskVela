@@ -1,4 +1,4 @@
-/* Phase 12A — Vela atmosphere + real card-stack page motion.
+/* Phase 12A — Vela atmosphere + lightweight eclipse transition.
    Imported after mobile stability so these rules intentionally win. */
 
 /* ---------- Home: keep Vela present behind the Free entry card ---------- */
@@ -38,7 +38,7 @@
   box-shadow: 0 28px 90px rgba(3, 1, 10, .44);
 }
 
-/* ---------- Draw bridge: no flash of a separate “preparing” message ---------- */
+/* ---------- Draw bridge: no flash of a separate preparing message ---------- */
 .immersiveQuickTarot.stage-drawing .immersivePreparingLabel {
   display: none !important;
 }
@@ -47,38 +47,110 @@
   gap: 0 !important;
 }
 
-/* ---------- Page stack motion ----------
-   GSAP owns motion. CSS only establishes layers; no animated filters/blur here. */
+/* ---------- Vela Eclipse page transition ---------- */
 html.velaDeckMotionReady .velaFlipPage {
   animation: none !important;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.velaFlipDeck {
-  overflow: visible;
+.velaEclipseTransition {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  contain: layout paint style;
+  visibility: hidden;
+}
+
+.velaEclipseVeil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(89, 57, 135, .34), transparent 36%),
+    linear-gradient(90deg, #130b24 0%, #241237 48%, #130b24 100%);
+  transform: translateZ(0) scaleX(0);
+  will-change: transform;
+}
+
+.velaEclipseSeal {
+  position: relative;
+  z-index: 2;
+  width: clamp(96px, 27vw, 148px);
+  aspect-ratio: 2 / 3;
+  display: grid;
+  place-items: center;
   transform-style: preserve-3d;
+  will-change: transform, opacity;
 }
 
-.velaFlipOutgoingGhost {
-  position: absolute !important;
-  inset: 0 auto auto 0;
-  z-index: 4;
+.velaEclipseCard {
+  position: relative;
+  z-index: 3;
+  display: block;
   width: 100%;
-  margin: 0 !important;
-  pointer-events: none !important;
-  user-select: none;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, .42),
+    0 0 0 1px rgba(235, 208, 126, .2);
   backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform-origin: 50% 50%;
-  box-shadow: 0 20px 32px rgba(0, 0, 0, .22);
+  will-change: transform;
 }
 
-/* A moving backdrop-filter layer is expensive on iOS. The outgoing page is a
-   temporary visual card, so freeze it as an opaque composite during the move. */
-.velaFlipOutgoingGhost.phase12HomeFlipPage {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+.velaEclipseOrbit,
+.velaEclipseOrbitSecondary {
+  position: absolute;
+  z-index: 1;
+  width: 165%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(231, 199, 116, .62);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 18px rgba(231, 199, 116, .08),
+    0 0 26px rgba(163, 115, 220, .13);
+  will-change: transform, opacity;
+}
+
+.velaEclipseOrbit::before,
+.velaEclipseOrbitSecondary::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(244, 218, 147, .94);
+  box-shadow: 0 0 16px rgba(244, 218, 147, .48);
+  transform: translateX(-50%);
+}
+
+.velaEclipseOrbitSecondary {
+  width: 205%;
+  border-color: rgba(196, 163, 230, .27);
+}
+
+.velaEclipseOrbitSecondary::before {
+  width: 4px;
+  height: 4px;
+  background: rgba(213, 190, 241, .78);
+}
+
+.velaEclipseGleam {
+  position: absolute;
+  z-index: 4;
+  inset: 8% 46% 8% -22%;
+  width: 22%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 239, 196, .56), transparent);
+  transform: skewX(-11deg) translateZ(0);
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 @media (max-width: 600px) {
@@ -96,10 +168,14 @@ html.velaDeckMotionReady .velaFlipPage {
     width: min(calc(100% - 8px), 560px);
     max-height: calc(100svh - max(166px, 20vh) - max(14px, env(safe-area-inset-bottom))) !important;
   }
+
+  .velaEclipseSeal {
+    width: clamp(92px, 30vw, 126px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .velaFlipOutgoingGhost {
+  .velaEclipseTransition {
     display: none !important;
   }
 }
