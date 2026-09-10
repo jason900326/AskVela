@@ -230,11 +230,6 @@ export default function VelaExperience() {
                       </button>
                     ))}
                   </div>
-                  <p className="phase12HomeClarifyNote">
-                    {!planReady
-                      ? "正在確認你的方案…"
-                      : "選完方向後，先免費抽一張。這一張會完整回答，不會做到一半才鎖結果。"}
-                  </p>
                   <button className="deepTextBack" type="button" onClick={() => setHomeSeed(null)}>我想補充原本的描述</button>
                 </div>
               </VelaFlipPage>
