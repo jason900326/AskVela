@@ -27,7 +27,7 @@ const RANK_NUMBER = { ace: "01", two: "02", three: "03", four: "04", five: "05",
 
 const WAITING_LINES = [
   "我先看看，這張牌最先想提醒你什麼。",
-  "我把這張牌放回你剛剛選的題目裡。",
+  "我把這張牌放回你剛剛的問題裡。",
   "有個地方比單看牌義更值得注意。",
   "再一下，我把最重要的地方講清楚。",
 ];
@@ -89,7 +89,12 @@ function tarotImagePath(card) {
   return `/images/tarot/${card.suit}/${RANK_NUMBER[rank]}-${rank === "ace" ? "ace" : rank}-of-${card.suit}.webp`;
 }
 
-export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQuotaExhausted }) {
+export default function FreeQuickTarot({
+  initialQuestion = "",
+  onOpenPlans,
+  onQuotaExhausted,
+  onReturnHome,
+}) {
   const client = useMemo(() => getSupabaseBrowser(), []);
   const interpretationPromiseRef = useRef(null);
   const usageAtStartRef = useRef(0);
@@ -206,8 +211,8 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
   function beginQuestion(nextQuestion = question) {
     if (remaining <= 0) return;
     const text = String(nextQuestion || "").trim();
-    if (!FREE_QUESTION_PRESETS.includes(text)) {
-      setError("Free 體驗請先從 Vela 準備的題目裡選一個。");
+    if (text.length < 8 || text.length > 500) {
+      setError("再多說一點點，Vela 才能看清楚你真正想問的地方。");
       return;
     }
     setQuestion(text);
@@ -287,8 +292,6 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
       setDraw(data);
       setRevealed(false);
 
-      // Start analysis as soon as the server fixes the card, while the user still
-      // gets to flip and see it before the interpretation result appears.
       createInterpretationPromise(data, nextRequestId, index);
       setStage("reveal");
     } catch (err) {
@@ -335,6 +338,10 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
       onQuotaExhausted?.();
       return;
     }
+    if (onReturnHome) {
+      onReturnHome();
+      return;
+    }
     setQuestion("");
     clearReadingState();
     setError("");
@@ -369,7 +376,7 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
   const quotaLine = !authReady
     ? "正在確認今天的體驗次數…"
     : user
-      ? `Vela 今天還能回答你 ${remaining} 個預設問題 ✦`
+      ? `Vela 今天還能回答你 ${remaining} 個問題 ✦`
       : usage === 0
         ? "第一次來？這一題不用登入。"
         : "這次試問已完成；登入後今天還能繼續體驗。";
@@ -386,19 +393,14 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
         <div className="quickTarotEyebrow">FREE · ONE CARD</div>
 
         {stage === "question" && (
-          <VelaFlipPage pageKey="quick-question" step={1} total={5} label="選一個問題">
-            <div className="quickQuestionCard velaFlipContentCard immersiveQuestionCard immersivePresetQuestionCard">
-              <h1>{remaining > 0 ? "今天想看什麼？" : "今天先看到這裡。"}</h1>
+          <VelaFlipPage pageKey="quick-question" step={1} total={5} label="說說你的問題">
+            <div className="quickQuestionCard velaFlipContentCard immersiveQuestionCard">
+              <h1>{remaining > 0 ? "先把問題說給 Vela 聽。" : "今天先看到這裡。"}</h1>
               <p>{quotaLine}</p>
-
               {remaining > 0 ? (
-                <div className="freePresetGrid" aria-label="Free 預設問題">
-                  {FREE_QUESTION_PRESETS.map((item) => (
-                    <button type="button" key={item} onClick={() => beginQuestion(item)}>{item}</button>
-                  ))}
-                </div>
+                <button className="primaryButton" type="button" onClick={onReturnHome}>回到提問</button>
               ) : (
-                <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Free 與 Vela+ 的差別</button>
+                <button className="ghostButton" type="button" onClick={onOpenPlans}>查看方案</button>
               )}
             </div>
           </VelaFlipPage>
@@ -526,14 +528,14 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
               </header>
 
               <div className="immersiveResultScroll">
-                <div className="quickResultQuestion">你選：{question.trim()}</div>
+                <div className="quickResultQuestion">你問：{question.trim()}</div>
                 <section className="quickResultReading">
                   <h2>{result.synthesis?.overview || "這張牌先提醒你一件事。"}</h2>
                   {result.synthesis?.narrative && <p>{result.synthesis.narrative}</p>}
                   {card.contextInterpretation && <p>{card.contextInterpretation}</p>}
                   {card.practicalFocus && (
                     <div className="quickPracticalFocus">
-                      <strong>今天可以先留意</strong>
+                      <strong>接下來先留意</strong>
                       <span>{card.practicalFocus}</span>
                     </div>
                   )}
@@ -541,19 +543,19 @@ export default function FreeQuickTarot({ initialQuestion = "", onOpenPlans, onQu
                 </section>
 
                 <aside className="quickUpgradeCard immersiveUpgradeCard">
-                  <span>✦ VELA+ DEEP READING</span>
-                  <h3>有一件事情，不是一張牌能說完的嗎？</h3>
-                  <p>Vela+ 可以直接問自己的問題；Vela 會先理解你的情況，再決定怎麼看。</p>
-                  <button className="ghostButton" type="button" onClick={onOpenPlans}>看看 Deep Reading</button>
+                  <span>DEEP READING · NT$29 / 次</span>
+                  <h3>想把這件事完整看完嗎？</h3>
+                  <p>剛才這一張已經完整回答。Deep Reading 會另外從三個位置拆開來看，逐張解析，最後給你一個整體結論；開始前會清楚標價，不會把已經做完的答案鎖起來。</p>
+                  <button className="ghostButton" type="button" onClick={onOpenPlans}>完整 Deep Reading · NT$29</button>
                 </aside>
               </div>
 
               <footer className="immersiveResultActions">
                 <button className="ghostButton" type="button" onClick={shareResult} disabled={shareLoading}>{shareLoading ? "正在產生圖片…" : "分享 PNG"}</button>
                 {remaining > 0 ? (
-                  <button className="primaryButton" type="button" onClick={askAnother}>再選一題</button>
+                  <button className="primaryButton" type="button" onClick={askAnother}>再問一件事</button>
                 ) : (
-                  <button className="primaryButton" type="button" onClick={() => onQuotaExhausted?.()}>看看 Vela+</button>
+                  <button className="primaryButton" type="button" onClick={() => onQuotaExhausted?.()}>查看方案</button>
                 )}
               </footer>
               {shareNotice && <p className="quickShareNotice" role="status">{shareNotice}</p>}
