@@ -35,6 +35,7 @@ export async function POST(request) {
       requestId,
       readingId: body?.readingId,
       selectedCardIndexes: body?.selectedCardIndexes,
+      previewCardCount: body?.previewCardCount,
     };
     const result = await interpretWithOneRetry(input);
 
