@@ -23,10 +23,11 @@ test("Free question entry becomes a separate page instead of covering the Vela l
   assert.match(css, /\.phase12TarotHome\.entry-quick \.phase12HomeBubble[\s\S]*position:\s*static\s*!important/u);
 });
 
-test("Free wait no longer forces a login invitation card into the Tarot ritual", async () => {
+test("confirmed card rests on the table while the draw request resolves", async () => {
   const css = await readFile(stabilityCssPath, "utf8");
 
-  assert.match(css, /\.immersiveQuickTarot \.immersiveLoginVela[\s\S]*display:\s*none\s*!important/u);
+  assert.match(css, /\.immersiveDrawingStage\.isPreparingReveal[\s\S]*place-items:\s*center/u);
+  assert.match(css, /\.immersiveChosenBack\.isResting[\s\S]*animation:\s*none\s*!important/u);
 });
 
 test("completed Free reading uses native document scrolling instead of an iOS nested scroll box", async () => {
