@@ -141,16 +141,17 @@ test("Deep reveal is card-driven and never auto-leaves after the third flip", as
   assert.match(polishCss, /rotateY\(180deg\)/u);
 });
 
-test("Deep waiting gives every line breathing room and has enough varied copy", async () => {
+test("Deep waiting gives every visible line three seconds without forcing a long artificial wait", async () => {
   const [deep, polishCss] = await Promise.all([
     readFile(deepPath, "utf8"),
     readFile(deepPolishCssPath, "utf8"),
   ]);
 
   assert.match(deep, /DEEP_WAITING_LINES/u);
-  assert.match(deep, /WAITING_MIN_MS = 9500/u);
+  assert.match(deep, /WAITING_MIN_MS = 3000/u);
   assert.match(deep, /WAITING_LINE_MS = 3200/u);
   assert.match(deep, /WAITING_LINE_MIN_VISIBLE_MS = 3000/u);
+  assert.match(deep, /currentLineNeeds/u);
   assert.match(deep, /Math\.floor\(Math\.random\(\) \* DEEP_WAITING_LINES\.length\)/u);
   assert.match(deep, /三張牌有一個地方，比單看其中任何一張都更明顯/u);
   assert.match(deep, /有沒有哪張牌其實在反駁第一眼的直覺/u);
