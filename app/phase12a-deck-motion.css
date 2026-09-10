@@ -1,4 +1,4 @@
-/* Phase 12A — Vela atmosphere + restrained cinematic page motion.
+/* Phase 12A — Vela atmosphere + layered mist motion.
    Imported after mobile stability so these rules intentionally win. */
 
 /* ---------- Home: keep Vela present behind the Free entry card ---------- */
@@ -47,14 +47,14 @@
   gap: 0 !important;
 }
 
-/* ---------- Cinematic page transition ---------- */
+/* ---------- Mist page transition ---------- */
 html.velaDeckMotionReady .velaFlipPage {
   animation: none !important;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.velaCinematicTransition {
+.velaMistTransition {
   position: fixed;
   inset: 0;
   z-index: 999;
@@ -64,57 +64,113 @@ html.velaDeckMotionReady .velaFlipPage {
   visibility: hidden;
 }
 
-.velaCinematicVeil,
-.velaCinematicLight,
-.velaCinematicVignette {
+.velaMistDim,
+.velaMistCloud {
   position: absolute;
-  inset: 0;
   pointer-events: none;
 }
 
-.velaCinematicVeil {
+.velaMistDim {
+  inset: 0;
   background:
-    radial-gradient(circle at 50% 42%, rgba(67, 42, 91, .14), transparent 44%),
-    linear-gradient(180deg, rgba(15, 8, 26, .92), rgba(8, 4, 15, .97));
-  transform: translateZ(0) scale(1.035);
-  will-change: transform, opacity;
-}
-
-.velaCinematicVignette {
-  background:
-    radial-gradient(circle at 50% 46%, transparent 30%, rgba(5, 2, 10, .36) 72%, rgba(3, 1, 7, .72) 100%);
+    radial-gradient(circle at 50% 44%, rgba(83, 61, 102, .16), transparent 45%),
+    rgba(8, 5, 14, .82);
   will-change: opacity;
 }
 
-.velaCinematicLight {
-  left: -45%;
-  width: 42%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(188, 148, 221, .02) 18%,
-    rgba(227, 207, 244, .12) 48%,
-    rgba(179, 139, 210, .025) 78%,
-    transparent 100%
-  );
-  transform: skewX(-12deg) translateZ(0);
+.velaMistCloud {
+  inset: -28% -38%;
+  transform: translateZ(0);
   will-change: transform, opacity;
 }
 
-/* ---------- Home opening sequence support ---------- */
-.velaStage[data-intro-ready="true"] .velaCharacterSlot,
+.velaMistCloudA {
+  background:
+    radial-gradient(ellipse at 18% 42%, rgba(210, 198, 221, .38) 0%, rgba(170, 149, 188, .19) 24%, transparent 56%),
+    radial-gradient(ellipse at 56% 62%, rgba(145, 120, 164, .28) 0%, rgba(123, 98, 143, .12) 26%, transparent 60%),
+    radial-gradient(ellipse at 82% 34%, rgba(224, 212, 231, .18) 0%, transparent 52%);
+}
+
+.velaMistCloudB {
+  background:
+    radial-gradient(ellipse at 76% 44%, rgba(193, 179, 207, .34) 0%, rgba(150, 129, 167, .17) 27%, transparent 58%),
+    radial-gradient(ellipse at 38% 68%, rgba(126, 103, 145, .26) 0%, rgba(105, 84, 124, .1) 30%, transparent 62%),
+    radial-gradient(ellipse at 20% 28%, rgba(218, 207, 225, .14) 0%, transparent 50%);
+}
+
+.velaMistCloudC {
+  inset: -18% -22%;
+  background:
+    radial-gradient(ellipse at 50% 52%, rgba(170, 151, 187, .28) 0%, rgba(128, 106, 147, .12) 31%, transparent 65%),
+    radial-gradient(ellipse at 24% 76%, rgba(212, 198, 220, .13) 0%, transparent 48%),
+    radial-gradient(ellipse at 80% 20%, rgba(193, 178, 207, .12) 0%, transparent 44%);
+}
+
+/* ---------- Home opening: mist is visible before the first meaningful paint ---------- */
+.velaHomeIntroMist {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 1;
+  visibility: visible;
+  background: #09060f;
+}
+
+.velaHomeIntroMistShade,
+.velaHomeIntroMistCloud {
+  position: absolute;
+  pointer-events: none;
+}
+
+.velaHomeIntroMistShade {
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 55%, rgba(51, 34, 65, .22), transparent 38%),
+    linear-gradient(180deg, rgba(8, 5, 13, .96), rgba(10, 6, 16, .88));
+  will-change: opacity;
+}
+
+.velaHomeIntroMistCloud {
+  inset: -28% -36%;
+  z-index: 2;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.velaHomeIntroMistCloudA {
+  background:
+    radial-gradient(ellipse at 24% 46%, rgba(210, 197, 219, .42) 0%, rgba(157, 137, 174, .2) 27%, transparent 59%),
+    radial-gradient(ellipse at 66% 62%, rgba(136, 112, 154, .28) 0%, rgba(111, 88, 130, .1) 30%, transparent 63%);
+}
+
+.velaHomeIntroMistCloudB {
+  background:
+    radial-gradient(ellipse at 74% 42%, rgba(195, 181, 207, .36) 0%, rgba(145, 125, 160, .17) 28%, transparent 60%),
+    radial-gradient(ellipse at 34% 72%, rgba(119, 96, 138, .24) 0%, rgba(96, 76, 115, .09) 31%, transparent 63%);
+}
+
+.velaHomeIntroMistCloudC {
+  inset: -14% -20%;
+  background:
+    radial-gradient(ellipse at 50% 55%, rgba(171, 151, 186, .29) 0%, rgba(127, 105, 144, .11) 32%, transparent 66%);
+}
+
+.velaStage[data-intro-complete="true"] .velaHomeIntroMist {
+  visibility: hidden;
+}
+
 .velaStage[data-intro-ready="true"] .velaCrystalButton,
 .velaStage[data-intro-ready="true"] .velaCrystalHint,
-.velaStage[data-intro-ready="true"] .velaStageGlow,
-.velaStage[data-intro-ready="true"] .velaStageStars i {
+.velaStage[data-intro-ready="true"] .velaCrystalAura {
   will-change: transform, opacity;
 }
 
-.velaStage[data-intro-complete="true"] .velaCharacterSlot,
 .velaStage[data-intro-complete="true"] .velaCrystalButton,
 .velaStage[data-intro-complete="true"] .velaCrystalHint,
-.velaStage[data-intro-complete="true"] .velaStageGlow,
-.velaStage[data-intro-complete="true"] .velaStageStars i {
+.velaStage[data-intro-complete="true"] .velaCrystalAura {
   will-change: auto;
 }
 
@@ -134,14 +190,26 @@ html.velaDeckMotionReady .velaFlipPage {
     max-height: calc(100svh - max(166px, 20vh) - max(14px, env(safe-area-inset-bottom))) !important;
   }
 
-  .velaCinematicLight {
-    left: -58%;
-    width: 54%;
+  .velaMistCloud {
+    inset: -22% -62%;
+  }
+
+  .velaMistCloudC {
+    inset: -16% -42%;
+  }
+
+  .velaHomeIntroMistCloud {
+    inset: -24% -58%;
+  }
+
+  .velaHomeIntroMistCloudC {
+    inset: -14% -38%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .velaCinematicTransition {
+  .velaMistTransition,
+  .velaHomeIntroMist {
     display: none !important;
   }
 }
