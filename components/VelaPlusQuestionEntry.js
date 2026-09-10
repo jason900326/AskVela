@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 
-export default function VelaPlusQuestionEntry({ onReady }) {
+export default function VelaPlusQuestionEntry({ onReady, suggestions = [] }) {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function applySuggestion(text) {
+    setQuestion(String(text || "").slice(0, 700));
+    setError("");
+  }
 
   async function submit(event) {
     event.preventDefault();
@@ -34,11 +39,11 @@ export default function VelaPlusQuestionEntry({ onReady }) {
   }
 
   return (
-    <div className="velaPlusHomeQuestion">
+    <div className="velaPlusHomeQuestion velaSharedQuestionEntry">
       <div className="velaDialogueBubble phase12HomeBubble velaPlusHomeBubble">
-        <span className="velaPlusHomeBadge">✦ VELA+</span>
-        <h1>最近有哪件事，你一直放不下？</h1>
-        <p>直接說給 Vela 聽。她會先幫你釐清，再決定這次要怎麼看。</p>
+        <span className="velaSharedTrust">免費一張 · 約 60 秒 · 不需註冊</span>
+        <h1>最近有什麼事一直放在心上？</h1>
+        <p>不用先把問題想得很完整。說給 Vela 聽，她會先抓到你真正卡住的地方。</p>
       </div>
 
       <form className="velaPlusHomeForm" onSubmit={submit}>
@@ -50,8 +55,8 @@ export default function VelaPlusQuestionEntry({ onReady }) {
             setQuestion(event.target.value);
             if (error) setError("");
           }}
-          placeholder="不用整理成漂亮的問題。把你現在知道的、在意的、猶豫的都說出來就好。"
-          aria-label="告訴 Vela 你想深入看的事情"
+          placeholder="例如：我們最近越來越少說話，我不知道是自己想太多，還是這段關係真的變了。"
+          aria-label="告訴 Vela 你想看的事情"
         />
         <div className="velaPlusHomeFormFooter">
           <span>{question.length}/700</span>
@@ -61,6 +66,17 @@ export default function VelaPlusQuestionEntry({ onReady }) {
         </div>
         {error && <div className="phase12EntryError" role="alert">{error}</div>}
       </form>
+
+      {suggestions.length > 0 && (
+        <div className="velaHomeSuggestions" aria-label="不知道怎麼問時可以從這裡開始">
+          <span>不知道怎麼問？可以先從這些方向開始</span>
+          <div>
+            {suggestions.map((item) => (
+              <button type="button" key={item} onClick={() => applySuggestion(item)}>{item}</button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
