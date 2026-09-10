@@ -1,0 +1,63 @@
+/* Free three-card selection must use native document scrolling on mobile.
+   The immersive quick flow normally locks itself to 100svh, but the new
+   12-card picker is taller than a phone viewport. Keep only this stage in
+   normal page flow so the final row and confirmation action stay reachable. */
+
+@media (max-width: 760px) {
+  html:has(.immersiveQuickTarot.stage-select),
+  body:has(.immersiveQuickTarot.stage-select) {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quickTarotExperience.immersiveQuickTarot.stage-select {
+    height: auto !important;
+    min-height: 100svh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: max(96px, calc(env(safe-area-inset-bottom) + 76px)) !important;
+  }
+
+  .immersiveQuickTarot.stage-select .quickTarotShell {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    grid-template-rows: 26px auto !important;
+  }
+
+  .immersiveQuickTarot.stage-select .velaFlipDeck,
+  .immersiveQuickTarot.stage-select .velaFlipPage {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .immersiveQuickTarot.stage-select .velaFlipPage {
+    grid-template-rows: 36px auto !important;
+  }
+
+  .immersiveQuickTarot.stage-select .velaFlipContentCard,
+  .immersiveQuickTarot.stage-select .deepSelectCard {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    touch-action: pan-y !important;
+  }
+
+  .immersiveQuickTarot.stage-select .deepCardPool {
+    margin-bottom: 18px;
+    touch-action: pan-y;
+  }
+
+  .immersiveQuickTarot.stage-select .deepReadingActions {
+    margin-top: 14px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}

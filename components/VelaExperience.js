@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabaseBrowser } from "../lib/supabase-browser.js";
 import AstrologyReadingFlowV2 from "./AstrologyReadingFlowV2.js";
 import DreamReadingFlowV2 from "./DreamReadingFlowV2.js";
-import FreeQuickTarot from "./FreeQuickTarot.js";
+import FreeQuickTarot from "./FreeThreeCardTarot.js";
 import VelaAccount from "./VelaAccount.js";
 import VelaDeepReadingIntro from "./VelaDeepReadingIntro.js";
+import VelaDeepTrialReading from "./VelaDeepTrialReading.js";
 import VelaFlipPage from "./VelaFlipPage.js";
 import VelaPlanSheet from "./VelaPlanSheet.js";
 import VelaPlusQuestionEntry from "./VelaPlusQuestionEntry.js";
@@ -14,11 +15,39 @@ import VelaQuestionHelp from "./VelaQuestionHelp.js";
 import VelaStage from "./VelaStage.js";
 
 const DREAM_SESSION_KEY = "askvela.current-dream.v1";
+const PENDING_DEEP_TRIAL_KEY = "askvela.pending-deep-trial.v1";
 
 function hasActiveVelaPlus(user) {
   const metadata = user?.app_metadata || {};
   return metadata.askvela_plan === "vela_plus"
     && metadata.askvela_plan_status === "active";
+}
+
+async function deepTrialRequest(client, { method = "GET", body = null } = {}) {
+  const { data, error } = await client.auth.getSession();
+  const token = data?.session?.access_token;
+  if (error || !token) throw new Error("登入狀態已失效，請重新登入。");
+
+  const response = await fetch("/api/deep-trial", {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body ? { "Content-Type": "application/json" } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+    cache: "no-store",
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
+function validDeepTrialSeed(seed) {
+  return Boolean(
+    seed?.draw?.readingId
+    && seed?.requestId
+    && Array.isArray(seed?.selectedIndexes)
+    && seed.selectedIndexes.length === 3,
+  );
 }
 
 export default function VelaExperience() {
@@ -31,11 +60,16 @@ export default function VelaExperience() {
   const [dreamHandoffText, setDreamHandoffText] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
   const [planReady, setPlanReady] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isVelaPlus, setIsVelaPlus] = useState(false);
+  const [trialUsed, setTrialUsed] = useState(false);
+  const [trialReady, setTrialReady] = useState(false);
+  const [trialError, setTrialError] = useState("");
   const [deepSeed, setDeepSeed] = useState(null);
+  const [deepTrialSeed, setDeepTrialSeed] = useState(null);
 
   const changeExperience = useCallback((next) => {
-    if (!["home", "quick-tarot", "astrology", "dream", "deep"].includes(next)) return;
+    if (!["home", "quick-tarot", "astrology", "dream", "deep", "deep-trial"].includes(next)) return;
 
     if (next === "home") {
       setExperience("home");
@@ -46,6 +80,8 @@ export default function VelaExperience() {
       setHomeHelpOpen(false);
       setDreamHandoffText("");
       setDeepSeed(null);
+      setDeepTrialSeed(null);
+      setTrialError("");
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       return;
     }
@@ -57,21 +93,31 @@ export default function VelaExperience() {
   useEffect(() => {
     const client = getSupabaseBrowser();
     if (!client) {
-      const timer = window.setTimeout(() => setPlanReady(true), 0);
+      const timer = window.setTimeout(() => {
+        setPlanReady(true);
+        setTrialReady(true);
+      }, 0);
       return () => window.clearTimeout(timer);
     }
 
     let mounted = true;
     const applyUser = (user) => {
       if (!mounted) return;
-      setIsVelaPlus(hasActiveVelaPlus(user));
+      const plus = hasActiveVelaPlus(user);
+      setCurrentUser(user || null);
+      setIsVelaPlus(plus);
+      setTrialUsed(false);
+      setTrialReady(!user?.id || plus);
       setPlanReady(true);
     };
 
     client.auth.getUser().then(({ data }) => {
       applyUser(data?.user || null);
     }).catch(() => {
-      if (mounted) setPlanReady(true);
+      if (mounted) {
+        setPlanReady(true);
+        setTrialReady(true);
+      }
     });
 
     const { data: subscription } = client.auth.onAuthStateChange((_event, session) => {
@@ -83,6 +129,103 @@ export default function VelaExperience() {
       subscription.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!currentUser?.id || isVelaPlus) return undefined;
+    const client = getSupabaseBrowser();
+    if (!client) return undefined;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { response, payload } = await deepTrialRequest(client);
+        if (cancelled) return;
+        if (!response.ok) throw new Error(payload?.error || "目前無法確認免費深度解析資格。");
+        setTrialUsed(!payload.eligible);
+        setTrialError("");
+      } catch (error) {
+        if (!cancelled) setTrialError(error.message || "目前無法確認免費深度解析資格。");
+      } finally {
+        if (!cancelled) setTrialReady(true);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [currentUser?.id, isVelaPlus]);
+
+  const enterDeepTrial = useCallback((seed) => {
+    if (!validDeepTrialSeed(seed)) return;
+    try { window.sessionStorage.removeItem(PENDING_DEEP_TRIAL_KEY); } catch { /* ignore */ }
+    setPlanOpen(false);
+    setDeepSeed(null);
+    setDeepTrialSeed(seed);
+    setTrialError("");
+    setExperience("deep-trial");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
+  const claimAndEnterDeepTrial = useCallback(async (seed, userOverride = null) => {
+    if (!validDeepTrialSeed(seed)) return false;
+    const user = userOverride || currentUser;
+    if (!user?.id) return false;
+
+    if (hasActiveVelaPlus(user)) {
+      enterDeepTrial(seed);
+      return true;
+    }
+
+    const client = getSupabaseBrowser();
+    if (!client) return false;
+
+    try {
+      const { response, payload } = await deepTrialRequest(client, {
+        method: "POST",
+        body: {
+          action: "claim",
+          readingId: seed.draw.readingId,
+          requestId: seed.requestId,
+        },
+      });
+
+      if (response.ok && payload.allowed) {
+        setTrialUsed(true);
+        setTrialReady(true);
+        enterDeepTrial(seed);
+        return true;
+      }
+
+      if (response.status === 409 && payload?.reason === "TRIAL_ALREADY_USED") {
+        setTrialUsed(true);
+        setTrialReady(true);
+        try { window.sessionStorage.removeItem(PENDING_DEEP_TRIAL_KEY); } catch { /* ignore */ }
+        setPlanOpen(true);
+        return false;
+      }
+
+      throw new Error(payload?.error || "目前無法開始免費深度解析。");
+    } catch (error) {
+      setTrialError(error.message || "目前無法開始免費深度解析。");
+      return false;
+    }
+  }, [currentUser, enterDeepTrial]);
+
+  useEffect(() => {
+    if (!currentUser?.id || typeof window === "undefined") return;
+    let raw = "";
+    try { raw = window.sessionStorage.getItem(PENDING_DEEP_TRIAL_KEY) || ""; } catch { return; }
+    if (!raw) return;
+
+    try {
+      const seed = JSON.parse(raw);
+      if (!validDeepTrialSeed(seed)) {
+        window.sessionStorage.removeItem(PENDING_DEEP_TRIAL_KEY);
+        return;
+      }
+      void claimAndEnterDeepTrial(seed, currentUser);
+    } catch {
+      try { window.sessionStorage.removeItem(PENDING_DEEP_TRIAL_KEY); } catch { /* ignore */ }
+    }
+  }, [claimAndEnterDeepTrial, currentUser]);
 
   useEffect(() => {
     function handleExperience(event) {
@@ -134,15 +277,26 @@ export default function VelaExperience() {
     setQuickDeepSeed(null);
     setHomeSeed(null);
     setHomeHelpOpen(false);
+    setDeepTrialSeed(null);
+    setTrialError("");
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
   function startQuick(nextQuestion, seed = null) {
     const text = String(nextQuestion || "").trim();
-    if (!text || text.length > 500) return;
+    if (!text || text.length > 500 || !planReady) return;
+
+    if (isVelaPlus) {
+      const plusSeed = seed?.question
+        ? seed
+        : { question: text };
+      startDeepReading(plusSeed);
+      return;
+    }
 
     setQuickQuestion(text);
     setQuickDeepSeed(seed);
+    setTrialError("");
     setExperience("quick-tarot");
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
@@ -160,16 +314,55 @@ export default function VelaExperience() {
       return;
     }
 
-    const nextSeed = seed?.question && seed?.plan
+    const nextSeed = seed?.question
       ? {
         question: String(seed.question),
-        plan: seed.plan,
+        plan: seed.plan || null,
         selectedOptionId: String(seed.selectedOptionId || ""),
       }
       : null;
     setPlanOpen(false);
     setDeepSeed(nextSeed);
+    setDeepTrialSeed(null);
     changeExperience("deep");
+  }
+
+  async function startDeepTrial(seed) {
+    if (!validDeepTrialSeed(seed)) return false;
+    setTrialError("");
+
+    if (!currentUser?.id) {
+      try { window.sessionStorage.setItem(PENDING_DEEP_TRIAL_KEY, JSON.stringify(seed)); } catch { /* ignore */ }
+      return false;
+    }
+
+    if (!isVelaPlus && trialReady && trialUsed) {
+      setPlanOpen(true);
+      return false;
+    }
+
+    return claimAndEnterDeepTrial(seed, currentUser);
+  }
+
+  async function completeDeepTrial(seed) {
+    if (!validDeepTrialSeed(seed) || isVelaPlus) return;
+    const client = getSupabaseBrowser();
+    if (!client) return;
+    try {
+      await deepTrialRequest(client, {
+        method: "POST",
+        body: {
+          action: "complete",
+          readingId: seed.draw.readingId,
+          requestId: seed.requestId,
+        },
+      });
+      setTrialUsed(true);
+      setTrialReady(true);
+    } catch {
+      // The claim already reserves the one-time trial. Completion is analytics/state polish,
+      // so a transient failure must not interrupt the user's reading.
+    }
   }
 
   function handleHomeQuestionReady(seed) {
@@ -265,12 +458,22 @@ export default function VelaExperience() {
         onBack={() => changeExperience("home")}
       />
     );
+  } else if (experience === "deep-trial") {
+    content = (
+      <VelaDeepTrialReading
+        seed={deepTrialSeed}
+        onBack={() => changeExperience("home")}
+        onOpenPlans={() => setPlanOpen(true)}
+        onTrialComplete={() => completeDeepTrial(deepTrialSeed)}
+      />
+    );
   } else {
     content = (
       <FreeQuickTarot
         initialQuestion={quickQuestion}
         deepSeed={quickDeepSeed}
-        onStartDeep={startDeepReading}
+        trialUsed={trialReady && trialUsed}
+        onStartDeepTrial={startDeepTrial}
         onReturnHome={returnToQuestionEntry}
         onOpenPlans={() => setPlanOpen(true)}
         onQuotaExhausted={() => setPlanOpen(true)}
@@ -283,6 +486,7 @@ export default function VelaExperience() {
   return (
     <>
       {content}
+      {trialError && <div className="phase12EntryError deepReadingError" role="alert">{trialError}</div>}
       <VelaPlanSheet
         open={planOpen}
         isVelaPlus={isVelaPlus}

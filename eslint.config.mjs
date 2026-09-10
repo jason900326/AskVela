@@ -15,6 +15,7 @@ export default defineConfig([
       "components/TarotReadingFlow.js",
       "components/TarotReadingFlowV4.js",
       "components/VelaAccount.js",
+      "components/VelaExperience.js",
       "components/VelaWaitingStage.js",
     ],
     rules: {

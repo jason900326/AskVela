@@ -16,6 +16,8 @@ export default function VelaFlipPage({
   const showProgress = Number.isInteger(step) && Number.isInteger(total) && total > 1;
 
   useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
     const node = pageRef.current;
     if (!node) return;
 
