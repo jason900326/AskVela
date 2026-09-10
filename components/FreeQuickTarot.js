@@ -543,15 +543,15 @@ export default function FreeQuickTarot({
                 </section>
 
                 <aside className="quickUpgradeCard immersiveUpgradeCard">
-                  <span>DEEP READING · NT$29 / 次</span>
-                  <h3>想把這件事完整看完嗎？</h3>
-                  <p>剛才這一張已經完整回答。Deep Reading 會另外從三個位置拆開來看，逐張解析，最後給你一個整體結論；開始前會清楚標價，不會把已經做完的答案鎖起來。</p>
-                  <button className="ghostButton" type="button" onClick={onOpenPlans}>完整 Deep Reading · NT$29</button>
+                  <span>深度解析</span>
+                  <h3>想把這件事看得更完整嗎？</h3>
+                  <p>剛才這一張已經完整回答。深度解析會再從三個位置拆開來看，逐張解析，最後整理成一個整體結論。</p>
+                  <button className="ghostButton" type="button" onClick={onOpenPlans}>深度解析</button>
                 </aside>
               </div>
 
               <footer className="immersiveResultActions">
-                <button className="ghostButton" type="button" onClick={shareResult} disabled={shareLoading}>{shareLoading ? "正在產生圖片…" : "分享 PNG"}</button>
+                <button className="ghostButton" type="button" onClick={shareResult} disabled={shareLoading}>{shareLoading ? "準備分享中…" : "分享"}</button>
                 {remaining > 0 ? (
                   <button className="primaryButton" type="button" onClick={askAnother}>再問一件事</button>
                 ) : (
