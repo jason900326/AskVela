@@ -35,7 +35,9 @@ test("Free remains full-quality while product depth and free-form questions are 
   assert.match(quick, /card\.practicalFocus/u);
   assert.match(quick, /FREE_QUESTION_PRESETS/u);
   assert.doesNotMatch(quick, /<textarea/u);
-  assert.match(deep, /決定閱讀結構/u);
+  assert.match(deep, /不用你先選牌陣/u);
+  assert.match(deep, /繼續聊這件事/u);
+  assert.match(deep, /補一張/u);
 });
 
 test("the product has both a persistent plan entry and contextual upgrade entry", async () => {
@@ -85,8 +87,9 @@ test("Free and Deep Reading share bounded flip-page language with their own stag
   assert.match(experience, /step=\{1\} total=\{5\}/u);
   assert.match(quick, /step=\{1\} total=\{5\}/u);
   assert.match(quick, /step=\{5\} total=\{5\}/u);
-  assert.match(deep, /step=\{1\} total=\{3\}/u);
-  assert.match(deep, /step=\{3\} total=\{3\}/u);
+  assert.match(deep, /const total = 7/u);
+  assert.match(deep, /step=\{1\} total=\{total\}/u);
+  assert.match(deep, /step=\{7\} total=\{total\}/u);
   assert.match(flip, /velaFlipProgress/u);
   assert.match(css, /@keyframes velaPageTurnIn/u);
   assert.match(css, /perspective:\s*1200px/u);
