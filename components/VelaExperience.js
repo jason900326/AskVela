@@ -50,6 +50,8 @@ function buildGuidedQuestion({ area, feeling, goal }) {
 
 export default function VelaExperience() {
   const rootRef = useRef(null);
+  const sceneTimelineRef = useRef(null);
+  const sceneTransitionRef = useRef(false);
   const [experience, setExperience] = useState("home");
   const [entryMode, setEntryMode] = useState("landing");
   const [guideInput, setGuideInput] = useState("");
@@ -58,15 +60,14 @@ export default function VelaExperience() {
   const [tarotHandoffQuestion, setTarotHandoffQuestion] = useState("");
   const [dreamHandoffText, setDreamHandoffText] = useState("");
   const [crystalAnimating, setCrystalAnimating] = useState(false);
+  const [sceneTransitioning, setSceneTransitioning] = useState(false);
 
   const guidedQuestion = useMemo(() => {
     if (!guidedAnswers.area || !guidedAnswers.feeling || !guidedAnswers.goal) return "";
     return buildGuidedQuestion(guidedAnswers);
   }, [guidedAnswers]);
 
-  const changeExperience = useCallback((next) => {
-    if (!["home", "tarot", "astrology", "dream"].includes(next)) return;
-
+  const applyExperience = useCallback((next) => {
     if (next === "home") {
       setExperience("home");
       setEntryMode("landing");
@@ -76,11 +77,79 @@ export default function VelaExperience() {
       setTarotHandoffQuestion("");
       setDreamHandoffText("");
       setCrystalAnimating(false);
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } else {
+      setExperience(next);
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
+  const changeExperience = useCallback((next) => {
+    if (!["home", "tarot", "astrology", "dream"].includes(next)) return;
+    if (next === experience || sceneTransitionRef.current) return;
+
+    const root = rootRef.current;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!root || prefersReducedMotion) {
+      applyExperience(next);
       return;
     }
 
-    setExperience(next);
+    const overlay = root.querySelector(".velaSceneTransition");
+    const curtain = root.querySelector(".velaSceneCurtain");
+    const mist = root.querySelector(".velaSceneMist");
+    const glint = root.querySelector(".velaSceneGlint");
+
+    if (!overlay || !curtain || !mist || !glint) {
+      applyExperience(next);
+      return;
+    }
+
+    sceneTimelineRef.current?.kill();
+    sceneTransitionRef.current = true;
+    setSceneTransitioning(true);
+
+    gsap.set(overlay, { autoAlpha: 1 });
+    gsap.set(curtain, { xPercent: 118, skewX: -7 });
+    gsap.set(mist, { xPercent: 96, autoAlpha: 0, scale: 1.08 });
+    gsap.set(glint, { x: "58vw", autoAlpha: 0, rotation: 7 });
+
+    const timeline = gsap.timeline({
+      defaults: { overwrite: "auto" },
+      onComplete: () => {
+        gsap.set(overlay, { autoAlpha: 0 });
+        sceneTimelineRef.current = null;
+        sceneTransitionRef.current = false;
+        setSceneTransitioning(false);
+      },
+      onInterrupt: () => {
+        sceneTimelineRef.current = null;
+        sceneTransitionRef.current = false;
+        setSceneTransitioning(false);
+      },
+    });
+
+    sceneTimelineRef.current = timeline;
+
+    timeline
+      .to(curtain, { xPercent: 0, duration: 0.44, ease: "power4.inOut" })
+      .to(mist, { xPercent: 0, autoAlpha: 0.92, duration: 0.4, ease: "power3.out" }, "-=0.33")
+      .to(glint, { x: "0vw", autoAlpha: 0.72, duration: 0.36, ease: "power2.out" }, "-=0.34")
+      .add(() => {
+        timeline.pause();
+        applyExperience(next);
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => timeline.resume());
+        });
+      })
+      .to(glint, { x: "-58vw", autoAlpha: 0, duration: 0.3, ease: "power2.in" }, "+=0.02")
+      .to(mist, { xPercent: -80, autoAlpha: 0, duration: 0.42, ease: "power3.in" }, "<")
+      .to(curtain, { xPercent: -118, duration: 0.48, ease: "power4.inOut" }, "<0.02");
+  }, [applyExperience, experience]);
+
+  useEffect(() => {
+    return () => sceneTimelineRef.current?.kill();
   }, []);
 
   useEffect(() => {
@@ -245,133 +314,139 @@ export default function VelaExperience() {
       ? "有件事想問？"
       : "不知道怎麼說也沒關係。";
 
-  if (experience === "home") {
-    return (
-      <section ref={rootRef} className={`velaExperienceHub velaGuideHome entry-${entryMode} ${crystalAnimating ? "isCrystalTransitioning" : ""}`}>
-        <div className="velaCrystalTransition" aria-hidden="true" />
-        <VelaAccount experience="home" onExperienceChange={changeExperience} />
-
-        <div className="velaHomeStageLayout">
-          <VelaStage onCrystalClick={revealHomeEntry} awakened={entryMode !== "landing"} />
-        </div>
-
-        {entryMode !== "landing" && (
-          <div className={`velaHomeEntry mode-${entryMode}`} id="vela-home-entry">
-            <div className="velaDialogueBubble">
-              <h1>{dialogueTitle}</h1>
-              {entryMode === "choice" && <p>塔羅・星座・解夢</p>}
-            </div>
-
-            {entryMode === "choice" && (
-              <section className="velaJourneyPanel" aria-label="選擇你的旅程">
-                <div className="velaJourneyHeading"><span>✦</span><strong>選擇你的旅程</strong><span>✦</span></div>
-                <div className="velaJourneyGrid">
-                  <button className="velaJourneyChoice journeyTarot" type="button" onClick={openFreeform}>
-                    <span className="journeyIcon" aria-hidden="true">✦</span>
-                    <span className="journeyCopy"><strong>有件事想問</strong><small>塔羅指引・看見答案</small></span>
-                    <span className="journeyArrow" aria-hidden="true">›</span>
-                  </button>
-
-                  <button className="velaJourneyChoice journeyAstrology" type="button" onClick={() => changeExperience("astrology")}>
-                    <span className="journeyIcon" aria-hidden="true">◎</span>
-                    <span className="journeyCopy"><strong>想看看最近的運勢</strong><small>星座運勢・掌握節奏</small></span>
-                    <span className="journeyArrow" aria-hidden="true">›</span>
-                  </button>
-
-                  <button className="velaJourneyChoice journeyDream" type="button" onClick={() => beginDream("")}>
-                    <span className="journeyIcon" aria-hidden="true">☾</span>
-                    <span className="journeyCopy"><strong>我做了一個夢</strong><small>夢境解析・探索潛意識</small></span>
-                    <span className="journeyArrow" aria-hidden="true">›</span>
-                  </button>
-
-                  <button className="velaJourneyChoice journeyGuided" type="button" onClick={startGuidedEntry}>
-                    <span className="journeyIcon" aria-hidden="true">✧</span>
-                    <span className="journeyCopy"><strong>我也說不上來</strong><small>讓 Vela 陪你慢慢整理</small></span>
-                    <span className="journeyArrow" aria-hidden="true">›</span>
-                  </button>
-                </div>
-              </section>
-            )}
-
-            {entryMode === "freeform" && (
-              <form className="velaGuideForm" onSubmit={submitTarotQuestion}>
-                <h2>最近哪件事最佔你的心思？</h2>
-                <textarea
-                  id="vela-guide"
-                  rows={3}
-                  maxLength={500}
-                  value={guideInput}
-                  onChange={(event) => setGuideInput(event.target.value)}
-                  placeholder="例如：我最近一直在想要不要換工作，但又怕自己只是因為累了才想離開。"
-                  autoFocus
-                />
-                <div className="velaGuideActions">
-                  <span>{guideInput.length}/500</span>
-                  <button className="primaryButton" type="submit" disabled={!guideInput.trim()}>開始塔羅</button>
-                </div>
-              </form>
-            )}
-
-            {entryMode === "guided" && (
-              <section className="guidedEntryPanel" aria-live="polite">
-                {guidedStep === "area" && (
-                  <div className="guidedStep">
-                    <p>最近哪一部分最讓你有感覺？</p>
-                    <div className="guidedChoiceGrid">
-                      {GUIDED_AREAS.map((item) => (
-                        <button type="button" key={item} onClick={() => chooseGuidedAnswer("area", item)}>{item}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {guidedStep === "feeling" && (
-                  <div className="guidedStep">
-                    <p>比較接近哪一種感覺？</p>
-                    <div className="guidedChoiceGrid">
-                      {GUIDED_FEELINGS.map((item) => (
-                        <button type="button" key={item} onClick={() => chooseGuidedAnswer("feeling", item)}>{item}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {guidedStep === "goal" && (
-                  <div className="guidedStep">
-                    <p>今天比較希望我先幫你做什麼？</p>
-                    <div className="guidedChoiceGrid">
-                      {GUIDED_GOALS.map((item) => (
-                        <button type="button" key={item} onClick={() => chooseGuidedAnswer("goal", item)}>{item}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {guidedStep === "result" && guidedQuestion && (
-                  <div className="guidedResult">
-                    <p>我想先從這句開始：</p>
-                    <blockquote>{guidedQuestion}</blockquote>
-                    <div className="guideRecommendationActions">
-                      <button className="primaryButton" type="button" onClick={() => beginTarot(guidedQuestion)}>好，就從這裡看看</button>
-                    </div>
-                  </div>
-                )}
-              </section>
-            )}
-          </div>
-        )}
-      </section>
-    );
-  }
-
   return (
-    <section className="velaExperienceHub">
-      {experience === "astrology" ? (
-        <AstrologyReadingFlowV2 onExperienceChange={changeExperience} />
-      ) : experience === "dream" ? (
-        <DreamReadingFlowV2 initialDream={dreamHandoffText} onExperienceChange={changeExperience} />
+    <section ref={rootRef} className={`velaExperienceFrame ${sceneTransitioning ? "isSceneTransitioning" : ""}`}>
+      <div className="velaSceneTransition" aria-hidden="true">
+        <div className="velaSceneCurtain" />
+        <div className="velaSceneMist" />
+        <div className="velaSceneGlint" />
+      </div>
+
+      {experience === "home" ? (
+        <section className={`velaExperienceHub velaGuideHome entry-${entryMode} ${crystalAnimating ? "isCrystalTransitioning" : ""}`}>
+          <div className="velaCrystalTransition" aria-hidden="true" />
+          <VelaAccount experience="home" onExperienceChange={changeExperience} />
+
+          <div className="velaHomeStageLayout">
+            <VelaStage onCrystalClick={revealHomeEntry} awakened={entryMode !== "landing"} />
+          </div>
+
+          {entryMode !== "landing" && (
+            <div className={`velaHomeEntry mode-${entryMode}`} id="vela-home-entry">
+              <div className="velaDialogueBubble">
+                <h1>{dialogueTitle}</h1>
+                {entryMode === "choice" && <p>塔羅・星座・解夢</p>}
+              </div>
+
+              {entryMode === "choice" && (
+                <section className="velaJourneyPanel" aria-label="選擇你的旅程">
+                  <div className="velaJourneyHeading"><span>✦</span><strong>選擇你的旅程</strong><span>✦</span></div>
+                  <div className="velaJourneyGrid">
+                    <button className="velaJourneyChoice journeyTarot" type="button" onClick={openFreeform}>
+                      <span className="journeyIcon" aria-hidden="true">✦</span>
+                      <span className="journeyCopy"><strong>有件事想問</strong><small>塔羅指引・看見答案</small></span>
+                      <span className="journeyArrow" aria-hidden="true">›</span>
+                    </button>
+
+                    <button className="velaJourneyChoice journeyAstrology" type="button" onClick={() => changeExperience("astrology")}>
+                      <span className="journeyIcon" aria-hidden="true">◎</span>
+                      <span className="journeyCopy"><strong>想看看最近的運勢</strong><small>星座運勢・掌握節奏</small></span>
+                      <span className="journeyArrow" aria-hidden="true">›</span>
+                    </button>
+
+                    <button className="velaJourneyChoice journeyDream" type="button" onClick={() => beginDream("")}>
+                      <span className="journeyIcon" aria-hidden="true">☾</span>
+                      <span className="journeyCopy"><strong>我做了一個夢</strong><small>夢境解析・探索潛意識</small></span>
+                      <span className="journeyArrow" aria-hidden="true">›</span>
+                    </button>
+
+                    <button className="velaJourneyChoice journeyGuided" type="button" onClick={startGuidedEntry}>
+                      <span className="journeyIcon" aria-hidden="true">✧</span>
+                      <span className="journeyCopy"><strong>我也說不上來</strong><small>讓 Vela 陪你慢慢整理</small></span>
+                      <span className="journeyArrow" aria-hidden="true">›</span>
+                    </button>
+                  </div>
+                </section>
+              )}
+
+              {entryMode === "freeform" && (
+                <form className="velaGuideForm" onSubmit={submitTarotQuestion}>
+                  <h2>最近哪件事最佔你的心思？</h2>
+                  <textarea
+                    id="vela-guide"
+                    rows={3}
+                    maxLength={500}
+                    value={guideInput}
+                    onChange={(event) => setGuideInput(event.target.value)}
+                    placeholder="例如：我最近一直在想要不要換工作，但又怕自己只是因為累了才想離開。"
+                    autoFocus
+                  />
+                  <div className="velaGuideActions">
+                    <span>{guideInput.length}/500</span>
+                    <button className="primaryButton" type="submit" disabled={!guideInput.trim()}>開始塔羅</button>
+                  </div>
+                </form>
+              )}
+
+              {entryMode === "guided" && (
+                <section className="guidedEntryPanel" aria-live="polite">
+                  {guidedStep === "area" && (
+                    <div className="guidedStep">
+                      <p>最近哪一部分最讓你有感覺？</p>
+                      <div className="guidedChoiceGrid">
+                        {GUIDED_AREAS.map((item) => (
+                          <button type="button" key={item} onClick={() => chooseGuidedAnswer("area", item)}>{item}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {guidedStep === "feeling" && (
+                    <div className="guidedStep">
+                      <p>比較接近哪一種感覺？</p>
+                      <div className="guidedChoiceGrid">
+                        {GUIDED_FEELINGS.map((item) => (
+                          <button type="button" key={item} onClick={() => chooseGuidedAnswer("feeling", item)}>{item}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {guidedStep === "goal" && (
+                    <div className="guidedStep">
+                      <p>今天比較希望我先幫你做什麼？</p>
+                      <div className="guidedChoiceGrid">
+                        {GUIDED_GOALS.map((item) => (
+                          <button type="button" key={item} onClick={() => chooseGuidedAnswer("goal", item)}>{item}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {guidedStep === "result" && guidedQuestion && (
+                    <div className="guidedResult">
+                      <p>我想先從這句開始：</p>
+                      <blockquote>{guidedQuestion}</blockquote>
+                      <div className="guideRecommendationActions">
+                        <button className="primaryButton" type="button" onClick={() => beginTarot(guidedQuestion)}>好，就從這裡看看</button>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          )}
+        </section>
       ) : (
-        <TarotReadingFlowV4 initialQuestion={tarotHandoffQuestion} onExperienceChange={changeExperience} />
+        <section className="velaExperienceHub">
+          {experience === "astrology" ? (
+            <AstrologyReadingFlowV2 onExperienceChange={changeExperience} />
+          ) : experience === "dream" ? (
+            <DreamReadingFlowV2 initialDream={dreamHandoffText} onExperienceChange={changeExperience} />
+          ) : (
+            <TarotReadingFlowV4 initialQuestion={tarotHandoffQuestion} onExperienceChange={changeExperience} />
+          )}
+        </section>
       )}
     </section>
   );
