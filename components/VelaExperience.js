@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { gsap } from "gsap";
 import AstrologyReadingFlowV2 from "./AstrologyReadingFlowV2.js";
 import DreamReadingFlowV2 from "./DreamReadingFlowV2.js";
 import TarotReadingFlowV4 from "./TarotReadingFlowV4.js";
@@ -48,6 +49,7 @@ function buildGuidedQuestion({ area, feeling, goal }) {
 }
 
 export default function VelaExperience() {
+  const rootRef = useRef(null);
   const [experience, setExperience] = useState("home");
   const [entryMode, setEntryMode] = useState("landing");
   const [guideInput, setGuideInput] = useState("");
@@ -55,6 +57,7 @@ export default function VelaExperience() {
   const [guidedAnswers, setGuidedAnswers] = useState({ area: "", feeling: "", goal: "" });
   const [tarotHandoffQuestion, setTarotHandoffQuestion] = useState("");
   const [dreamHandoffText, setDreamHandoffText] = useState("");
+  const [crystalAnimating, setCrystalAnimating] = useState(false);
 
   const guidedQuestion = useMemo(() => {
     if (!guidedAnswers.area || !guidedAnswers.feeling || !guidedAnswers.goal) return "";
@@ -72,6 +75,7 @@ export default function VelaExperience() {
       setGuidedAnswers({ area: "", feeling: "", goal: "" });
       setTarotHandoffQuestion("");
       setDreamHandoffText("");
+      setCrystalAnimating(false);
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       return;
     }
@@ -94,15 +98,55 @@ export default function VelaExperience() {
       if (!entry) {
         setEntryMode("landing");
         setGuidedStep("area");
+        setCrystalAnimating(false);
         return;
       }
       setEntryMode(entry.mode || "choice");
       setGuidedStep(entry.step || "area");
+      setCrystalAnimating(false);
     }
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [experience]);
+
+  useLayoutEffect(() => {
+    if (experience !== "home" || entryMode !== "choice" || !crystalAnimating || !rootRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setCrystalAnimating(false);
+      return;
+    }
+
+    const context = gsap.context(() => {
+      const choices = gsap.utils.toArray(".velaJourneyChoice");
+
+      gsap.set(".velaDialogueBubble", { autoAlpha: 0, y: 18, scale: 0.97 });
+      gsap.set(".velaJourneyPanel", { autoAlpha: 0, y: 28, scale: 0.97 });
+      gsap.set(choices, { autoAlpha: 0, y: 16, scale: 0.96 });
+
+      gsap.timeline({
+        defaults: { overwrite: "auto" },
+        onComplete: () => setCrystalAnimating(false),
+      })
+        .fromTo(
+          ".velaCrystalTransition",
+          { autoAlpha: 1, clipPath: "circle(0% at 50% 78%)" },
+          { autoAlpha: 1, clipPath: "circle(145% at 50% 78%)", duration: 0.58, ease: "power4.inOut" },
+        )
+        .fromTo(
+          ".velaRevealedArtwork",
+          { scale: 1.035, y: 12 },
+          { scale: 1, y: 0, duration: 0.48, ease: "power3.out" },
+          "-=0.22",
+        )
+        .to(".velaCrystalTransition", { autoAlpha: 0, duration: 0.36, ease: "power2.out" })
+        .to(".velaDialogueBubble", { autoAlpha: 1, y: 0, scale: 1, duration: 0.38, ease: "back.out(1.35)" }, "-=0.18")
+        .to(".velaJourneyPanel", { autoAlpha: 1, y: 0, scale: 1, duration: 0.44, ease: "power3.out" }, "-=0.24")
+        .to(choices, { autoAlpha: 1, y: 0, scale: 1, duration: 0.34, stagger: 0.065, ease: "power2.out" }, "-=0.28");
+    }, rootRef);
+
+    return () => context.revert();
+  }, [crystalAnimating, entryMode, experience]);
 
   function pushEntryHistory(mode, step = "area") {
     const current = window.history.state || {};
@@ -110,8 +154,40 @@ export default function VelaExperience() {
   }
 
   function revealHomeEntry() {
-    setEntryMode("choice");
-    pushEntryHistory("choice");
+    if (entryMode !== "landing" || crystalAnimating) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const root = rootRef.current;
+
+    if (prefersReducedMotion || !root) {
+      setEntryMode("choice");
+      pushEntryHistory("choice");
+      return;
+    }
+
+    const crystal = root.querySelector(".velaCrystalArtwork");
+    const aura = root.querySelector(".velaCrystalAura");
+    const hint = root.querySelector(".velaCrystalHint");
+
+    setCrystalAnimating(true);
+
+    gsap.timeline({
+      defaults: { overwrite: "auto" },
+      onComplete: () => {
+        setEntryMode("choice");
+        pushEntryHistory("choice");
+      },
+    })
+      .to(hint, { autoAlpha: 0, y: 6, duration: 0.16, ease: "power1.out" })
+      .to(crystal, {
+        scale: 1.14,
+        y: -4,
+        filter: "brightness(1.28) drop-shadow(0 0 34px rgba(224, 172, 255, .78))",
+        duration: 0.28,
+        ease: "power2.out",
+      }, "<")
+      .to(aura, { scale: 1.55, autoAlpha: 1, duration: 0.3, ease: "power2.out" }, "<")
+      .to(crystal, { scale: 1, y: 0, duration: 0.16, ease: "power1.inOut" });
   }
 
   function openFreeform() {
@@ -171,7 +247,8 @@ export default function VelaExperience() {
 
   if (experience === "home") {
     return (
-      <section className={`velaExperienceHub velaGuideHome entry-${entryMode}`}>
+      <section ref={rootRef} className={`velaExperienceHub velaGuideHome entry-${entryMode} ${crystalAnimating ? "isCrystalTransitioning" : ""}`}>
+        <div className="velaCrystalTransition" aria-hidden="true" />
         <VelaAccount experience="home" onExperienceChange={changeExperience} />
 
         <div className="velaHomeStageLayout">
