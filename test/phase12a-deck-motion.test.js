@@ -7,6 +7,7 @@ const packagePath = new URL("../package.json", import.meta.url);
 const flipPagePath = new URL("../components/VelaFlipPage.js", import.meta.url);
 const motionCssPath = new URL("../app/phase12a-deck-motion.css", import.meta.url);
 const controllerPath = new URL("../components/VelaPageStackMotion.js", import.meta.url);
+const stagePath = new URL("../components/VelaStage.js", import.meta.url);
 
 test("Vela motion overrides load last and mount the shared transition controller", async () => {
   const layout = await readFile(layoutPath, "utf8");
@@ -46,28 +47,42 @@ test("Vela transition uses GSAP lifecycle events without observing or cloning wh
   assert.match(controller, /import \{ gsap \} from "gsap"/u);
   assert.match(controller, /gsap\.timeline/u);
   assert.match(controller, /VELA_FLIP_PAGE_READY_EVENT/u);
-  assert.match(controller, /createEclipseLayer/u);
-  assert.match(controller, /tarot-card-back\.webp/u);
+  assert.match(controller, /createCinematicLayer/u);
+  assert.doesNotMatch(controller, /tarot-card-back\.webp/u);
   assert.doesNotMatch(controller, /MutationObserver/u);
   assert.doesNotMatch(controller, /offsetWidth/u);
   assert.doesNotMatch(controller, /cloneNode/u);
 });
 
-test("eclipse transition keeps animated work on transforms and opacity", async () => {
+test("cinematic transition avoids game-like emblems and keeps motion compositor-friendly", async () => {
   const [css, controller] = await Promise.all([
     readFile(motionCssPath, "utf8"),
     readFile(controllerPath, "utf8"),
   ]);
 
-  assert.match(controller, /scaleX:\s*1/u);
-  assert.match(controller, /autoAlpha:\s*1/u);
+  assert.match(controller, /velaCinematicVeil/u);
+  assert.match(controller, /velaCinematicLight/u);
+  assert.match(controller, /velaCinematicVignette/u);
   assert.match(controller, /force3D:\s*true/u);
   assert.match(controller, /willChange:\s*"transform,opacity"/u);
   assert.doesNotMatch(controller, /filter:/u);
-  assert.match(css, /\.velaEclipseTransition/u);
-  assert.match(css, /\.velaEclipseVeil/u);
-  assert.match(css, /\.velaEclipseCard/u);
-  assert.match(css, /\.velaEclipseOrbit/u);
+  assert.doesNotMatch(controller, /EclipseOrbit|EclipseCard|EclipseGleam/u);
+  assert.match(css, /\.velaCinematicTransition/u);
+  assert.match(css, /\.velaCinematicVeil/u);
+  assert.match(css, /\.velaCinematicLight/u);
+  assert.doesNotMatch(css, /\.velaEclipseCard|\.velaEclipseOrbit/u);
   assert.doesNotMatch(css, /@keyframes velaTopPageToDeckBottom/u);
-  assert.doesNotMatch(css, /@keyframes velaNextPageFadeIn/u);
+});
+
+test("home cover has a restrained GSAP opening sequence before the crystal CTA appears", async () => {
+  const stage = await readFile(stagePath, "utf8");
+
+  assert.match(stage, /import \{ gsap \} from "gsap"/u);
+  assert.match(stage, /useLayoutEffect/u);
+  assert.match(stage, /data\.introReady|dataset\.introReady/u);
+  assert.match(stage, /\.velaCharacterSlot/u);
+  assert.match(stage, /\.velaCrystalButton/u);
+  assert.match(stage, /\.velaCrystalHint/u);
+  assert.match(stage, /gsap\.timeline/u);
+  assert.match(stage, /prefersReducedMotion/u);
 });
