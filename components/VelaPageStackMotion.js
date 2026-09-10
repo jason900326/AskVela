@@ -15,14 +15,15 @@ function isDrawingRevealBridge(previous, next) {
   );
 }
 
-function createCinematicLayer() {
+function createMistLayer() {
   const root = document.createElement("div");
-  root.className = "velaCinematicTransition";
+  root.className = "velaMistTransition";
   root.setAttribute("aria-hidden", "true");
   root.innerHTML = `
-    <div class="velaCinematicVeil"></div>
-    <div class="velaCinematicLight"></div>
-    <div class="velaCinematicVignette"></div>
+    <div class="velaMistDim"></div>
+    <div class="velaMistCloud velaMistCloudA"></div>
+    <div class="velaMistCloud velaMistCloudB"></div>
+    <div class="velaMistCloud velaMistCloudC"></div>
   `;
   document.body.append(root);
   return root;
@@ -37,10 +38,11 @@ export default function VelaPageStackMotion() {
   useEffect(() => {
     document.documentElement.classList.add("velaDeckMotionReady");
 
-    const layer = createCinematicLayer();
-    const veil = layer.querySelector(".velaCinematicVeil");
-    const light = layer.querySelector(".velaCinematicLight");
-    const vignette = layer.querySelector(".velaCinematicVignette");
+    const layer = createMistLayer();
+    const dim = layer.querySelector(".velaMistDim");
+    const cloudA = layer.querySelector(".velaMistCloudA");
+    const cloudB = layer.querySelector(".velaMistCloudB");
+    const cloudC = layer.querySelector(".velaMistCloudC");
 
     let activePage = null;
     let activeTimeline = null;
@@ -50,8 +52,8 @@ export default function VelaPageStackMotion() {
     function stopTransition() {
       activeTimeline?.kill();
       activeTimeline = null;
-      gsap.set(layer, { autoAlpha: 0, clearProps: "pointerEvents" });
-      gsap.set([veil, light, vignette], { clearProps: "all" });
+      gsap.set(layer, { autoAlpha: 0 });
+      gsap.set([dim, cloudA, cloudB, cloudC], { clearProps: "all" });
       clearPageStyles(activePage);
     }
 
@@ -70,69 +72,103 @@ export default function VelaPageStackMotion() {
 
       activeTimeline?.kill();
 
-      // Keep the page exchange visually continuous without animating a copied DOM
-      // tree. The incoming page waits behind a lightweight cinematic veil.
+      // The incoming page is prepared in the layout phase. A lightweight set of
+      // gradient fog layers covers the visual cut, so no outgoing DOM clone,
+      // forced reflow, canvas, or animated blur is required.
       gsap.set(nextPage, {
         autoAlpha: 0,
-        y: 10,
-        scale: 0.994,
+        y: 8,
+        scale: 0.996,
         force3D: true,
         willChange: "transform,opacity",
       });
 
+      // Start with a faint darkened atmosphere on the very first painted frame,
+      // then let three mist banks cross at different speeds.
       gsap.set(layer, { autoAlpha: 1, pointerEvents: "none" });
-      gsap.set(veil, { autoAlpha: 0, scale: 1.035, force3D: true });
-      gsap.set(vignette, { autoAlpha: 0 });
-      gsap.set(light, { xPercent: -125, autoAlpha: 0, force3D: true });
+      gsap.set(dim, { autoAlpha: 0.34 });
+      gsap.set(cloudA, { xPercent: -58, yPercent: 2, scale: 1.05, autoAlpha: 0.18, force3D: true });
+      gsap.set(cloudB, { xPercent: 58, yPercent: -3, scale: 1.08, autoAlpha: 0.14, force3D: true });
+      gsap.set(cloudC, { xPercent: -16, yPercent: 18, scale: 1.12, autoAlpha: 0.08, force3D: true });
 
       const timeline = gsap.timeline({
         defaults: { overwrite: "auto" },
         onComplete: () => {
           clearPageStyles(nextPage);
-          gsap.set(layer, { autoAlpha: 0, clearProps: "pointerEvents" });
+          gsap.set(layer, { autoAlpha: 0 });
           activeTimeline = null;
         },
       });
       activeTimeline = timeline;
 
-      // Vela cinematic cut: lower the room light, let a restrained light sweep
-      // bridge the edit, then bring the next page into focus. No emblems, cards,
-      // spinning rings, or other game-like transition objects.
+      // Vela Mist: fog gathers from both sides, hides the edit at its densest
+      // moment, then drifts apart while the next page quietly settles forward.
       timeline
-        .to(vignette, {
-          autoAlpha: 0.72,
-          duration: 0.18,
+        .to(dim, {
+          autoAlpha: 0.58,
+          duration: 0.2,
+          ease: "power1.out",
+        }, 0)
+        .to(cloudA, {
+          xPercent: -3,
+          yPercent: 0,
+          scale: 1,
+          autoAlpha: 0.82,
+          duration: 0.34,
           ease: "power2.out",
         }, 0)
-        .to(veil, {
-          autoAlpha: 0.9,
+        .to(cloudB, {
+          xPercent: 4,
+          yPercent: 1,
           scale: 1,
-          duration: 0.24,
-          ease: "power2.inOut",
-        }, 0.02)
-        .to(light, {
-          xPercent: 130,
-          autoAlpha: 0.28,
-          duration: 0.38,
-          ease: "power1.inOut",
-        }, 0.08)
-        .set(nextPage, { autoAlpha: 1 }, 0.2)
+          autoAlpha: 0.68,
+          duration: 0.36,
+          ease: "power2.out",
+        }, 0.035)
+        .to(cloudC, {
+          xPercent: 0,
+          yPercent: 2,
+          scale: 1,
+          autoAlpha: 0.46,
+          duration: 0.32,
+          ease: "power1.out",
+        }, 0.075)
+        .set(nextPage, { autoAlpha: 1 }, 0.25)
         .to(nextPage, {
           y: 0,
           scale: 1,
-          duration: 0.34,
+          duration: 0.36,
           ease: "power2.out",
-        }, 0.2)
-        .to(veil, {
+        }, 0.25)
+        .to(cloudA, {
+          xPercent: 46,
+          yPercent: -4,
+          scale: 1.03,
           autoAlpha: 0,
-          duration: 0.3,
-          ease: "power2.out",
-        }, 0.24)
-        .to(vignette, {
+          duration: 0.38,
+          ease: "power2.inOut",
+        }, 0.29)
+        .to(cloudB, {
+          xPercent: -42,
+          yPercent: 5,
+          scale: 1.02,
           autoAlpha: 0,
-          duration: 0.32,
-          ease: "power2.out",
-        }, 0.22);
+          duration: 0.4,
+          ease: "power2.inOut",
+        }, 0.3)
+        .to(cloudC, {
+          xPercent: 14,
+          yPercent: -18,
+          scale: 1.06,
+          autoAlpha: 0,
+          duration: 0.38,
+          ease: "power1.inOut",
+        }, 0.31)
+        .to(dim, {
+          autoAlpha: 0,
+          duration: 0.36,
+          ease: "power1.out",
+        }, 0.32);
     }
 
     window.addEventListener(VELA_FLIP_PAGE_READY_EVENT, handlePageReady);
