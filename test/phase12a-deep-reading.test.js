@@ -99,3 +99,18 @@ test("Deep Reading API and UI wire intake, three selected cards, staged reveal, 
   assert.match(css, /\.deepCardWalkthrough/u);
   assert.match(css, /\.deepClarifierPool/u);
 });
+
+test("Deep Reading reveals interpretation one position at a time before synthesis and continuation", async () => {
+  const [deep, css] = await Promise.all([
+    readFile(deepPath, "utf8"),
+    readFile(cssPath, "utf8"),
+  ]);
+
+  assert.match(deep, /walkthroughCount/u);
+  assert.match(deep, /result\.cards\.slice\(0, walkthroughCount\)/u);
+  assert.match(deep, /setShowSynthesis\(true\)/u);
+  assert.match(deep, /把三張牌放在一起看/u);
+  assert.match(deep, /showSynthesis && \(/u);
+  assert.match(css, /\.deepWalkthroughAdvance/u);
+  assert.match(css, /\.deepSynthesisReveal/u);
+});
