@@ -1,4 +1,4 @@
-/* Phase 12A — signed-in Vela+ home entry. */
+/* Phase 12A — shared Free / Vela+ question entry. */
 
 .velaPlusHomeQuestion {
   display: grid;
@@ -9,15 +9,15 @@
   text-align: left;
 }
 
-.velaPlusHomeBadge {
+.velaSharedTrust {
   display: inline-flex;
   align-items: center;
   width: fit-content;
   margin-bottom: 8px;
-  color: #e6c46f;
-  font-size: 10px;
+  color: rgba(244, 224, 166, .88);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing: .04em;
 }
 
 .velaPlusHomeForm {
@@ -66,13 +66,59 @@
   min-width: 156px;
 }
 
-.phase12PlanChecking {
-  min-height: 210px;
+.velaHomeSuggestions {
   display: grid;
-  place-items: center;
-  color: rgba(248, 242, 255, .62);
-  font-size: 13px;
-  letter-spacing: .02em;
+  gap: 8px;
+}
+
+.velaHomeSuggestions > span {
+  color: rgba(248, 242, 255, .52);
+  font-size: 11px;
+}
+
+.velaHomeSuggestions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.velaHomeSuggestions button {
+  border: 1px solid rgba(227, 204, 251, .14);
+  border-radius: 999px;
+  background: rgba(31, 17, 58, .58);
+  color: rgba(248, 242, 255, .78);
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.phase12HomeClarify {
+  display: grid;
+  gap: 14px;
+}
+
+.phase12HomeClarify h1 {
+  margin: 0;
+  font-size: clamp(23px, 6vw, 34px);
+  line-height: 1.25;
+}
+
+.phase12HomeClarify .deepDynamicChoices {
+  display: grid;
+  gap: 9px;
+}
+
+.phase12HomeClarify .deepDynamicChoices button {
+  width: 100%;
+  text-align: left;
+}
+
+.phase12HomeClarifyNote {
+  margin: 0;
+  color: rgba(248, 242, 255, .58);
+  font-size: 12px;
+  line-height: 1.65;
 }
 
 .phase12TarotHome.is-vela-plus .phase12HomeFlipPage {
@@ -92,5 +138,16 @@
 
   .velaPlusHomeFormFooter .primaryButton {
     width: 100%;
+  }
+
+  .velaHomeSuggestions > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .velaHomeSuggestions button {
+    border-radius: 14px;
+    text-align: left;
+    line-height: 1.35;
   }
 }
