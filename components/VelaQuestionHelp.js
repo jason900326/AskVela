@@ -39,21 +39,31 @@ export default function VelaQuestionHelp({ onReady, onBack, onAstrology, onDream
     <div className="velaQuestionHelp">
       <div className="velaDialogueBubble phase12HomeBubble velaQuestionHelpBubble">
         <h1>先選一個最接近的方向。</h1>
-        <p>不用再回去打字。點下去後，Vela 就會直接從這裡開始問。</p>
       </div>
 
       <div className="velaQuestionHelpGrid" aria-label="選擇想看的方向">
-        {GUIDED_CHOICES.map((item) => (
-          <button
-            type="button"
-            key={item.question}
-            disabled={Boolean(loadingQuestion)}
-            onClick={() => choose(item.question)}
-          >
-            <strong>{item.label}</strong>
-            {loadingQuestion === item.question && <span>Vela 正在整理…</span>}
-          </button>
-        ))}
+        {GUIDED_CHOICES.map((item) => {
+          const isLoading = loadingQuestion === item.question;
+          return (
+            <button
+              type="button"
+              key={item.question}
+              className={isLoading ? "isLoading" : ""}
+              disabled={Boolean(loadingQuestion)}
+              onClick={() => choose(item.question)}
+              aria-busy={isLoading}
+            >
+              <strong>{item.label}</strong>
+              {isLoading && (
+                <span className="velaChoiceLoader" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <section className="velaQuestionHelpOther" aria-label="其他占卜方式">
