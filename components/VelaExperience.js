@@ -24,6 +24,8 @@ export default function VelaExperience() {
   const [experience, setExperience] = useState("home");
   const [entryMode, setEntryMode] = useState("landing");
   const [quickQuestion, setQuickQuestion] = useState("");
+  const [quickDeepSeed, setQuickDeepSeed] = useState(null);
+  const [homeSeed, setHomeSeed] = useState(null);
   const [dreamHandoffText, setDreamHandoffText] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
   const [planReady, setPlanReady] = useState(false);
@@ -37,6 +39,8 @@ export default function VelaExperience() {
       setExperience("home");
       setEntryMode("landing");
       setQuickQuestion("");
+      setQuickDeepSeed(null);
+      setHomeSeed(null);
       setDreamHandoffText("");
       setDeepSeed(null);
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -80,8 +84,14 @@ export default function VelaExperience() {
   useEffect(() => {
     function handleExperience(event) {
       const next = event?.detail;
-      if (next === "tarot") changeExperience("quick-tarot");
-      else changeExperience(next);
+      if (next === "tarot") {
+        setExperience("home");
+        setEntryMode("quick");
+        setHomeSeed(null);
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        return;
+      }
+      changeExperience(next);
     }
     window.addEventListener("vela:experience", handleExperience);
     return () => window.removeEventListener("vela:experience", handleExperience);
@@ -92,22 +102,34 @@ export default function VelaExperience() {
       if (experience !== "home") return;
       const entry = event.state?.askVelaEntry;
       setEntryMode(entry?.mode === "quick" ? "quick" : "landing");
+      if (entry?.mode !== "quick") setHomeSeed(null);
     }
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [experience]);
 
   function revealQuickEntry() {
+    setHomeSeed(null);
     setEntryMode("quick");
     const current = window.history.state || {};
     window.history.pushState({ ...current, askVelaEntry: { mode: "quick" } }, "");
   }
 
-  function startQuick(nextQuestion) {
+  function returnToQuestionEntry() {
+    setExperience("home");
+    setEntryMode("quick");
+    setQuickQuestion("");
+    setQuickDeepSeed(null);
+    setHomeSeed(null);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }
+
+  function startQuick(nextQuestion, seed = null) {
     const text = String(nextQuestion || "").trim();
-    if (!FREE_QUESTION_PRESETS.includes(text)) return;
+    if (text.length < 8 || text.length > 500) return;
 
     setQuickQuestion(text);
+    setQuickDeepSeed(seed);
     setExperience("quick-tarot");
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
@@ -121,11 +143,36 @@ export default function VelaExperience() {
 
   function startDeepReading(seed = null) {
     const nextSeed = seed?.question && seed?.plan
-      ? { question: String(seed.question), plan: seed.plan }
+      ? {
+        question: String(seed.question),
+        plan: seed.plan,
+        selectedOptionId: String(seed.selectedOptionId || ""),
+      }
       : null;
     setPlanOpen(false);
     setDeepSeed(nextSeed);
     changeExperience("deep");
+  }
+
+  function handleHomeQuestionReady(seed) {
+    if (!seed?.question || !seed?.plan) return;
+    setHomeSeed({ question: String(seed.question), plan: seed.plan });
+  }
+
+  function chooseHomeDirection(option) {
+    if (!homeSeed?.question || !homeSeed?.plan || !option || !planReady) return;
+    const seed = {
+      question: homeSeed.question,
+      plan: homeSeed.plan,
+      selectedOptionId: option.id,
+    };
+
+    if (isVelaPlus) {
+      startDeepReading(seed);
+      return;
+    }
+
+    startQuick(option.focusQuestion, seed);
   }
 
   const secondaryModes = (
@@ -156,29 +203,33 @@ export default function VelaExperience() {
 
         {entryMode !== "landing" && (
           <div className="velaHomeEntry mode-quick" id="vela-home-entry">
-            {!planReady ? (
-              <VelaFlipPage pageKey="home-plan-check" step={1} total={5} label="準備中" className="phase12HomeFlipPage">
-                <div className="phase12PlanChecking">Vela 正在確認你的方案…</div>
-              </VelaFlipPage>
-            ) : isVelaPlus ? (
-              <VelaFlipPage pageKey="home-vela-plus" step={1} total={7} label="說說你的問題" className="phase12HomeFlipPage">
-                <VelaPlusQuestionEntry onReady={startDeepReading} />
+            {!homeSeed ? (
+              <VelaFlipPage pageKey="home-question" step={1} total={5} label="說說你的問題" className="phase12HomeFlipPage">
+                <VelaPlusQuestionEntry onReady={handleHomeQuestionReady} suggestions={FREE_QUESTION_PRESETS} />
                 {secondaryModes}
               </VelaFlipPage>
             ) : (
-              <VelaFlipPage pageKey="home-question" step={1} total={5} label="選一個問題" className="phase12HomeFlipPage">
-                <div className="velaDialogueBubble phase12HomeBubble">
-                  <h1>今天想看什麼？</h1>
-                  <p>選一題，抽一張牌。</p>
+              <VelaFlipPage pageKey="home-clarify" step={2} total={5} label="先釐清你真正想看的地方" className="phase12HomeFlipPage">
+                <div className="phase12HomeClarify">
+                  <div className="deepVelaLine">{homeSeed.plan.velaLine}</div>
+                  <h1>{homeSeed.plan.clarifyingQuestion}</h1>
+                  <div className="deepDynamicChoices">
+                    {homeSeed.plan.options.map((option) => (
+                      <button type="button" key={option.id} disabled={!planReady} onClick={() => chooseHomeDirection(option)}>
+                        <strong>{option.label}</strong>
+                        <span>{option.focusQuestion}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="phase12HomeClarifyNote">
+                    {!planReady
+                      ? "正在確認你的方案…"
+                      : isVelaPlus
+                        ? "你的 Vela+ 會從這個方向直接展開完整 Deep Reading。"
+                        : "選完方向後，先免費抽一張。這一張會完整回答，不會做到一半才鎖結果。"}
+                  </p>
+                  <button className="deepTextBack" type="button" onClick={() => setHomeSeed(null)}>我想補充原本的描述</button>
                 </div>
-
-                <div className="phase12PresetGrid" aria-label="Free 預設問題">
-                  {FREE_QUESTION_PRESETS.map((item) => (
-                    <button type="button" key={item} onClick={() => startQuick(item)}>{item}</button>
-                  ))}
-                </div>
-
-                {secondaryModes}
               </VelaFlipPage>
             )}
           </div>
@@ -194,14 +245,17 @@ export default function VelaExperience() {
       <VelaDeepReadingIntro
         initialQuestion={deepSeed?.question || ""}
         initialPlan={deepSeed?.plan || null}
+        initialSelectedOptionId={deepSeed?.selectedOptionId || ""}
         onBack={() => changeExperience("home")}
-        onOpenPlans={() => setPlanOpen(true)}
       />
     );
   } else {
     content = (
       <FreeQuickTarot
         initialQuestion={quickQuestion}
+        deepSeed={quickDeepSeed}
+        onStartDeep={startDeepReading}
+        onReturnHome={returnToQuestionEntry}
         onOpenPlans={() => setPlanOpen(true)}
         onQuotaExhausted={() => setPlanOpen(true)}
       />
