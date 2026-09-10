@@ -50,8 +50,8 @@ export default function VelaExperience() {
   useEffect(() => {
     const client = getSupabaseBrowser();
     if (!client) {
-      setPlanReady(true);
-      return undefined;
+      const timer = window.setTimeout(() => setPlanReady(true), 0);
+      return () => window.clearTimeout(timer);
     }
 
     let mounted = true;
