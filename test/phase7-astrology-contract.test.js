@@ -5,6 +5,7 @@ import test from "node:test";
 const paths = {
   flow: new URL("../components/AstrologyReadingFlowV2.js", import.meta.url),
   hub: new URL("../components/VelaExperience.js", import.meta.url),
+  entry: new URL("../components/VelaPlusQuestionEntry.js", import.meta.url),
   account: new URL("../components/VelaAccount.js", import.meta.url),
   accountCss: new URL("../app/account.css", import.meta.url),
   astrologyCss: new URL("../app/astrology.css", import.meta.url),
@@ -74,13 +75,17 @@ test("historical astrology claims are curated instead of copied as modern fact",
   assert.match(prompt, /不得沿用書中的醫療診斷/u);
 });
 
-test("Vela home is Tarot-first while Astrology and Dream remain directly reachable as secondary modes", async () => {
-  const hub = await readFile(paths.hub, "utf8");
+test("Vela home stays Tarot-first with shared free-form intake while Astrology and Dream remain secondary", async () => {
+  const [hub, entry] = await Promise.all([
+    readFile(paths.hub, "utf8"),
+    readFile(paths.entry, "utf8"),
+  ]);
   assert.match(hub, /VelaStage/u);
   assert.match(hub, /velaHomeStageLayout/u);
-  assert.match(hub, /今天想看什麼？/u);
+  assert.match(hub, /VelaPlusQuestionEntry/u);
+  assert.match(entry, /最近有什麼事一直放在心上？/u);
+  assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
   assert.match(hub, /FREE_QUESTION_PRESETS/u);
-  assert.match(hub, /抽一張牌/u);
   assert.match(hub, /phase12SecondaryModes/u);
   assert.match(hub, /星座運勢/u);
   assert.match(hub, /changeExperience\("astrology"\)/u);
