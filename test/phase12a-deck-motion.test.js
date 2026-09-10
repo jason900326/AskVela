@@ -49,7 +49,7 @@ test("Vela transition reuses the detached outgoing page for a true dissolve with
   assert.match(controller, /previousPage\.isConnected/u);
   assert.match(controller, /layer\.append\(outgoingPage\)/u);
   assert.match(controller, /previousRect/u);
-  assert.match(controller, /autoAlpha:\s*0\.18/u);
+  assert.match(controller, /autoAlpha:\s*hasOutgoing\s*\?\s*0\.18\s*:\s*0\.72/u);
   assert.match(controller, /duration:\s*0\.36/u);
   assert.match(controller, /duration:\s*0\.42/u);
   assert.doesNotMatch(controller, /MutationObserver/u);
