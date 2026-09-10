@@ -10,6 +10,7 @@ const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
 const deepPolishCssPath = new URL("../app/phase12a-deep-reading-polish.css", import.meta.url);
+const readingPromptsPath = new URL("../lib/reading-prompts.js", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
 
 test("Free entry uses preset questions without inline upgrade advertising", async () => {
@@ -140,15 +141,19 @@ test("Deep reveal is card-driven and never auto-leaves after the third flip", as
   assert.match(polishCss, /rotateY\(180deg\)/u);
 });
 
-test("Deep waiting view rotates one message, keeps visible motion, and waits long enough to be seen", async () => {
+test("Deep waiting gives every line breathing room and has enough varied copy", async () => {
   const [deep, polishCss] = await Promise.all([
     readFile(deepPath, "utf8"),
     readFile(deepPolishCssPath, "utf8"),
   ]);
 
   assert.match(deep, /DEEP_WAITING_LINES/u);
-  assert.match(deep, /WAITING_MIN_MS = 2800/u);
-  assert.match(deep, /WAITING_LINE_MS = 1200/u);
+  assert.match(deep, /WAITING_MIN_MS = 9500/u);
+  assert.match(deep, /WAITING_LINE_MS = 3200/u);
+  assert.match(deep, /WAITING_LINE_MIN_VISIBLE_MS = 3000/u);
+  assert.match(deep, /Math\.floor\(Math\.random\(\) \* DEEP_WAITING_LINES\.length\)/u);
+  assert.match(deep, /三張牌有一個地方，比單看其中任何一張都更明顯/u);
+  assert.match(deep, /有沒有哪張牌其實在反駁第一眼的直覺/u);
   assert.match(deep, /window\.setInterval/u);
   assert.match(deep, /aria-live="polite"/u);
   assert.match(deep, /label="整理這次 Reading"/u);
@@ -166,6 +171,27 @@ test("Deep result reuses draw metadata for card art and saves signed-in readings
   assert.match(deep, /const activeReading = useMemo/u);
   assert.match(deep, /kind: "tarot"/u);
   assert.match(deep, /<VelaAccount activeReading=\{activeReading\} experience="tarot" \/>/u);
+});
+
+test("Deep synthesis pays off with a conclusion first and hides the longer reasoning", async () => {
+  const [deep, polishCss, prompts] = await Promise.all([
+    readFile(deepPath, "utf8"),
+    readFile(deepPolishCssPath, "utf8"),
+    readFile(readingPromptsPath, "utf8"),
+  ]);
+
+  assert.match(deep, /VELA 的結論/u);
+  assert.match(deep, /真正值得注意的是/u);
+  assert.match(deep, /接下來看這幾件事/u);
+  assert.match(deep, /<details className="deepSynthesisReasoning">/u);
+  assert.match(deep, /為什麼我會這樣看？/u);
+  assert.doesNotMatch(deep, /<h2>三張牌放在一起<\/h2>/u);
+  assert.match(polishCss, /\.deepVerdict h2/u);
+  assert.match(polishCss, /\.deepReadingPrototype \.deepBackButton[\s\S]*display:\s*none\s*!important/u);
+  assert.match(prompts, /Do NOT repeat those explanations card by card/u);
+  assert.match(prompts, /overview is the conclusion/u);
+  assert.match(prompts, /crossCardPattern is the reveal or turning point/u);
+  assert.match(prompts, /only 2-4 sentences/u);
 });
 
 test("Phase 12A entry surfaces are mobile-first", async () => {
