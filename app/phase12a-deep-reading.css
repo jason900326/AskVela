@@ -1,0 +1,500 @@
+/* Phase 12A — Vela+ Deep Reading MVP. */
+
+.deepReadingPrototype {
+  min-height: 100svh;
+  overflow-x: hidden;
+}
+
+.deepReadingShell {
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+}
+
+.deepReadingStep,
+.deepReadingResult {
+  width: min(100%, 660px);
+  margin: 0 auto;
+}
+
+.deepReadingStep h2,
+.deepReadingResult h2 {
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.deepIntakeCard textarea,
+.deepFollowUpComposer textarea {
+  min-height: 132px;
+}
+
+.deepDynamicChoices {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.deepDynamicChoices button {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  padding: 15px 16px;
+  border: 1px solid rgba(230, 203, 255, .18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .035);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.deepDynamicChoices button:hover,
+.deepDynamicChoices button:focus-visible {
+  border-color: rgba(230, 196, 111, .58);
+  background: rgba(111, 75, 145, .18);
+}
+
+.deepDynamicChoices strong {
+  font-size: 15px;
+}
+
+.deepDynamicChoices span {
+  font-size: 12px;
+  line-height: 1.55;
+  opacity: .62;
+}
+
+.deepTextBack {
+  display: block;
+  margin: 15px auto 0;
+  border: 0;
+  background: transparent;
+  color: rgba(248, 242, 255, .55);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.deepIssueTitle {
+  color: #e6c46f;
+  font-size: 11px;
+  letter-spacing: .12em;
+}
+
+.deepPlanCard > h1 {
+  margin-top: 8px;
+  font-size: clamp(25px, 7vw, 39px);
+}
+
+.deepLensList {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.deepLensList article {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 11px;
+  align-items: start;
+  padding: 13px 14px;
+  border-radius: 15px;
+  border: 1px solid rgba(223, 202, 250, .12);
+  background: rgba(8, 4, 20, .34);
+}
+
+.deepLensList article > span {
+  color: #e6c46f;
+  font-size: 11px;
+  letter-spacing: .1em;
+  padding-top: 3px;
+}
+
+.deepLensList strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.deepLensList p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.deepSelectionProgress {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 14px 0 18px;
+}
+
+.deepSelectionProgress span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.045);
+  font-size: 10px;
+  opacity: .5;
+}
+
+.deepSelectionProgress span.isReady {
+  color: #f2d98e;
+  opacity: 1;
+}
+
+.deepCardPool {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px 8px;
+}
+
+.deepCardPool button,
+.deepClarifierPool button {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.deepCardPool img,
+.deepClarifierPool img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3.45;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.deepCardPool button.isSelected img {
+  transform: translateY(-7px);
+  box-shadow: 0 0 0 2px rgba(230,196,111,.85), 0 18px 30px rgba(0,0,0,.36);
+}
+
+.deepCardPool button b {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e6c46f;
+  color: #21142f;
+  font-size: 11px;
+}
+
+.deepRevealCard {
+  text-align: center;
+}
+
+.deepRevealRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  width: 100%;
+  margin: 20px 0;
+}
+
+.deepRevealRow article {
+  min-width: 0;
+}
+
+.deepRevealRow article > span,
+.deepCardWalkthrough article span,
+.deepClarifierResult span {
+  display: block;
+  min-height: 30px;
+  margin-bottom: 7px;
+  color: #e6c46f;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.deepRevealImage img,
+.deepResultCardImage img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 14px 30px rgba(0,0,0,.34);
+}
+
+.deepRevealImage.isReversed img,
+.deepResultCardImage.isReversed img {
+  transform: rotate(180deg);
+}
+
+.deepRevealRow strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.deepRevealRow small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(248,242,255,.55);
+}
+
+.deepRevealNext {
+  width: min(100%, 320px);
+}
+
+.deepWaitingCard {
+  min-height: min(64svh, 560px);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.deepWaitingOrb {
+  width: 74px;
+  height: 74px;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 34%, rgba(235,222,255,.9), rgba(151,102,199,.44) 28%, rgba(70,38,100,.22) 58%, transparent 72%);
+  box-shadow: 0 0 42px rgba(159,104,213,.2);
+  animation: deepWaitingPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes deepWaitingPulse {
+  0%, 100% { transform: scale(.96); opacity: .68; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+.deepReadingResult {
+  padding: 20px;
+  border: 1px solid rgba(223,202,250,.14);
+  border-radius: 22px;
+  background: rgba(25,14,48,.76);
+  box-shadow: 0 24px 80px rgba(4,2,12,.28);
+}
+
+.deepReadingResult > header > span {
+  color: #e6c46f;
+  font-size: 10px;
+  letter-spacing: .12em;
+}
+
+.deepReadingResult > header h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(25px, 7vw, 38px);
+  line-height: 1.23;
+}
+
+.deepReadingResult > header p {
+  margin: 0;
+  color: rgba(248,242,255,.72);
+  line-height: 1.7;
+}
+
+.deepCardWalkthrough {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.deepCardWalkthrough > article,
+.deepClarifierResult {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 15px;
+  align-items: start;
+}
+
+.deepCardWalkthrough h2,
+.deepClarifierResult h3 {
+  margin: 2px 0 8px;
+  font-size: 17px;
+}
+
+.deepCardWalkthrough p,
+.deepClarifierResult p,
+.deepSynthesis p,
+.deepFollowUpExchange p {
+  margin: 0;
+  color: rgba(248,242,255,.78);
+  line-height: 1.72;
+}
+
+.deepCardWalkthrough small,
+.deepClarifierResult small,
+.deepFollowUpExchange small {
+  display: block;
+  margin-top: 8px;
+  color: #d9bd73;
+  line-height: 1.55;
+}
+
+.deepSynthesis,
+.deepContinuation {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(223,202,250,.12);
+}
+
+.deepSynthesis blockquote {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-left: 2px solid #e6c46f;
+  background: rgba(230,196,111,.05);
+  line-height: 1.65;
+}
+
+.deepGuidanceList {
+  display: grid;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.deepGuidanceList span {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.035);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.deepContinuation > p {
+  margin: -6px 0 16px;
+  font-size: 12px;
+  opacity: .55;
+}
+
+.deepFollowUpExchange {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: rgba(8,4,20,.34);
+}
+
+.deepFollowUpExchange strong {
+  font-size: 12px;
+  color: rgba(248,242,255,.66);
+}
+
+.deepFollowUpComposer {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.deepFollowUpComposer textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid rgba(220,195,250,.2);
+  border-radius: 14px;
+  background: rgba(8,4,20,.6);
+  color: #f8f2ff;
+  padding: 12px 13px;
+  font: inherit;
+  line-height: 1.6;
+}
+
+.deepResolutionCheck,
+.deepClarifierOffer {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 15px;
+  border: 1px solid rgba(230,196,111,.18);
+  background: rgba(230,196,111,.035);
+}
+
+.deepResolutionCheck > span {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.deepResolutionCheck > div {
+  display: flex;
+  gap: 8px;
+}
+
+.deepResolutionCheck button {
+  flex: 1;
+  border: 1px solid rgba(223,202,250,.16);
+  border-radius: 999px;
+  background: rgba(255,255,255,.035);
+  color: inherit;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.deepClarifierOffer h3 {
+  margin: 0 0 5px;
+}
+
+.deepClarifierOffer p {
+  margin: 0 0 13px;
+  font-size: 12px;
+  line-height: 1.55;
+  opacity: .62;
+}
+
+.deepClarifierPool {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.deepClarifierResult {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(111,75,145,.12);
+}
+
+.deepReadingError {
+  margin-top: 12px;
+}
+
+body:has(.deepReadingPrototype.deep-stage-result),
+html:has(.deepReadingPrototype.deep-stage-result) {
+  height: auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto !important;
+}
+
+body:has(.deepReadingPrototype.deep-stage-result) .deepReadingPrototype,
+body:has(.deepReadingPrototype.deep-stage-result) .deepReadingShell,
+body:has(.deepReadingPrototype.deep-stage-result) .velaFlipDeck,
+body:has(.deepReadingPrototype.deep-stage-result) .velaFlipPage {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 560px) {
+  .deepReadingPrototype {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .deepReadingStep,
+  .deepReadingResult {
+    border-radius: 18px;
+    padding: 15px;
+  }
+
+  .deepCardWalkthrough > article,
+  .deepClarifierResult {
+    grid-template-columns: 82px 1fr;
+    gap: 12px;
+  }
+
+  .deepClarifierPool {
+    gap: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deepWaitingOrb { animation: none; }
+  .deepCardPool img { transition: none; }
+}
