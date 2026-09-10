@@ -78,12 +78,14 @@ test("Vela home is Tarot-first while Astrology and Dream remain directly reachab
   const hub = await readFile(paths.hub, "utf8");
   assert.match(hub, /VelaStage/u);
   assert.match(hub, /velaHomeStageLayout/u);
-  assert.match(hub, /先讓 Vela 看一個小問題。/u);
+  assert.match(hub, /今天想看什麼？/u);
   assert.match(hub, /FREE_QUESTION_PRESETS/u);
   assert.match(hub, /抽一張牌/u);
-  assert.match(hub, /phase12SecondaryJourneys/u);
+  assert.match(hub, /phase12SecondaryModes/u);
+  assert.match(hub, /星座運勢/u);
   assert.match(hub, /changeExperience\("astrology"\)/u);
-  assert.match(hub, /changeExperience\("dream"\)/u);
+  assert.match(hub, /解夢/u);
+  assert.match(hub, /beginDream\(""\)/u);
   assert.match(hub, /AstrologyReadingFlowV2/u);
   assert.match(hub, /DreamReadingFlowV2/u);
   assert.match(hub, /FreeQuickTarot/u);
