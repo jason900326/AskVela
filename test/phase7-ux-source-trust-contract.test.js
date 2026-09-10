@@ -21,11 +21,13 @@ test("AskVela home is Tarot-first instead of exposing equal mode tabs", async ()
   assert.match(experience, /velaHomeStageLayout/u);
   assert.match(velaStage, /velaCrystalButton/u);
   assert.match(velaStage, /onCrystalClick/u);
-  assert.match(experience, /先讓 Vela 看一個小問題。/u);
+  assert.match(experience, /今天想看什麼？/u);
   assert.match(experience, /抽一張牌/u);
   assert.match(experience, /FREE_QUESTION_PRESETS/u);
-  assert.match(experience, /phase12SecondaryJourneys/u);
-  assert.match(experience, /Deep Reading/u);
+  assert.match(experience, /phase12SecondaryModes/u);
+  assert.match(experience, /星座運勢/u);
+  assert.match(experience, /解夢/u);
+  assert.doesNotMatch(experience, /<strong>Deep Reading<\/strong>/u);
   assert.doesNotMatch(experience, /className="experienceTabs"/u);
 });
 
