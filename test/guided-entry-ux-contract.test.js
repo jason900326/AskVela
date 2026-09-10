@@ -11,7 +11,9 @@ const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const cssPath = new URL("../app/phase12a-monetization-ui.css", import.meta.url);
 const immersiveCssPath = new URL("../app/phase12a-immersive-tarot.css", import.meta.url);
 const stabilityCssPath = new URL("../app/phase12a-mobile-stability.css", import.meta.url);
+const cleanupCssPath = new URL("../app/phase12a-ux-cleanup.css", import.meta.url);
 const deepPolishCssPath = new URL("../app/phase12a-deep-reading-polish.css", import.meta.url);
+const layoutPath = new URL("../app/layout.js", import.meta.url);
 const readingPromptsPath = new URL("../lib/reading-prompts.js", import.meta.url);
 const sharePath = new URL("../lib/tarot-share-card.js", import.meta.url);
 
@@ -33,7 +35,7 @@ test("home keeps the first question page focused on typing plus one help CTA", a
   assert.doesNotMatch(entry, /VELA\+/u);
 });
 
-test("guided choices live on the next page and start intake directly instead of filling the textarea", async () => {
+test("guided choices live on the next page, animate silently, and start intake directly", async () => {
   const [experience, help] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(helpPath, "utf8"),
@@ -45,6 +47,10 @@ test("guided choices live on the next page and start intake directly instead of 
   assert.match(help, /onClick=\{\(\) => choose\(item\.question\)\}/u);
   assert.match(help, /\/api\/deep-reading\/intake/u);
   assert.match(help, /onReady\?\.\(\{ question, plan \}\)/u);
+  assert.match(help, /velaChoiceLoader/u);
+  assert.match(help, /aria-busy=\{isLoading\}/u);
+  assert.doesNotMatch(help, /不用再回去打字/u);
+  assert.doesNotMatch(help, /Vela 正在整理/u);
   assert.doesNotMatch(help, /setQuestion/u);
   assert.doesNotMatch(help, /<textarea/u);
 });
@@ -64,18 +70,18 @@ test("Astrology and Dream move off the first entry page and remain available fro
   assert.match(experience, /onDream=\{\(\) => beginDream\(""\)\}/u);
 });
 
-test("Free gets the AI clarification before entering its one-card reading", async () => {
+test("Free gets the AI clarification before entering its one-card reading without redundant helper copy", async () => {
   const [experience, entry] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
   ]);
 
   assert.match(entry, /\/api\/deep-reading\/intake/u);
-  assert.match(experience, /homeSeed\.plan\.velaLine/u);
   assert.match(experience, /homeSeed\.plan\.clarifyingQuestion/u);
   assert.match(experience, /homeSeed\.plan\.options\.map/u);
   assert.match(experience, /startQuick\(option\.focusQuestion, seed\)/u);
-  assert.match(experience, /這一張會完整回答，不會做到一半才鎖結果/u);
+  assert.doesNotMatch(experience, /homeSeed\.plan\.velaLine/u);
+  assert.doesNotMatch(experience, /phase12HomeClarifyNote/u);
 });
 
 test("free quick Tarot accepts the focused custom question and has no free-form follow-up loop", async () => {
@@ -134,6 +140,20 @@ test("quick Tarot stays viewport-bound except for a Safari-safe whole-result scr
   assert.match(immersiveCss, /\.quickTarotExperience\.immersiveQuickTarot\s*\{[^}]*height:\s*100svh;[^}]*overflow:\s*hidden;/su);
   assert.match(stabilityCss, /body:has\(\.immersiveQuickTarot\.stage-result\)[\s\S]*overflow-y:\s*auto\s*!important/u);
   assert.match(stabilityCss, /\.immersiveQuickTarot\.stage-result \.immersiveResultScroll[\s\S]*overflow:\s*visible\s*!important/u);
+});
+
+test("latest Phase 12A cleanup stabilizes home width, strengthens result headline, and centers plans", async () => {
+  const [cleanupCss, layout] = await Promise.all([
+    readFile(cleanupCssPath, "utf8"),
+    readFile(layoutPath, "utf8"),
+  ]);
+
+  assert.ok(layout.indexOf('import "./phase12a-ux-cleanup.css";') > layout.indexOf('import "./phase12a-deep-reading-polish.css";'));
+  assert.match(cleanupCss, /\.phase12TarotHome\.entry-quick \.velaHomeEntry > \.velaFlipDeck[\s\S]*width:\s*min\(calc\(100vw - 20px\), 560px\)\s*!important/u);
+  assert.match(cleanupCss, /\.immersiveQuickTarot\.stage-result \.quickResultReading h2[\s\S]*font-size:\s*clamp\(24px, 6\.4vw, 31px\)\s*!important/u);
+  assert.match(cleanupCss, /\.velaPlanOverlay[\s\S]*align-items:\s*center\s*!important/u);
+  assert.match(cleanupCss, /\.velaPlanSheet[\s\S]*border-radius:\s*24px\s*!important/u);
+  assert.match(cleanupCss, /@keyframes velaChoicePulse/u);
 });
 
 test("Deep Reading uses AI clarification, a Vela-designed three-lens plan, continuation, and optional clarifier", async () => {
