@@ -7,6 +7,7 @@ const quickPath = new URL("../components/FreeQuickTarot.js", import.meta.url);
 const deepPath = new URL("../components/VelaDeepReadingIntro.js", import.meta.url);
 const experiencePath = new URL("../components/VelaExperience.js", import.meta.url);
 const entryPath = new URL("../components/VelaPlusQuestionEntry.js", import.meta.url);
+const helpPath = new URL("../components/VelaQuestionHelp.js", import.meta.url);
 const flipPath = new URL("../components/VelaFlipPage.js", import.meta.url);
 const flipCssPath = new URL("../app/phase12a-flip-pages.css", import.meta.url);
 
@@ -25,9 +26,10 @@ test("Phase 12A exposes Free, one-off Deep Reading, and Vela+ without stored val
 });
 
 test("Free and Vela+ share a free-form intake while Free still gives a complete one-card answer", async () => {
-  const [experience, entry, quick, deep] = await Promise.all([
+  const [experience, entry, help, quick, deep] = await Promise.all([
     readFile(experiencePath, "utf8"),
     readFile(entryPath, "utf8"),
+    readFile(helpPath, "utf8"),
     readFile(quickPath, "utf8"),
     readFile(deepPath, "utf8"),
   ]);
@@ -35,7 +37,8 @@ test("Free and Vela+ share a free-form intake while Free still gives a complete 
   assert.match(entry, /<textarea/u);
   assert.match(entry, /免費一張 · 約 60 秒 · 不需註冊/u);
   assert.match(entry, /\/api\/deep-reading\/intake/u);
-  assert.match(experience, /<VelaPlusQuestionEntry onReady=\{handleHomeQuestionReady\} suggestions=\{FREE_QUESTION_PRESETS\} \/>/u);
+  assert.match(entry, /我不知道怎麼說/u);
+  assert.match(help, /\/api\/deep-reading\/intake/u);
   assert.match(experience, /homeSeed\.plan\.clarifyingQuestion/u);
   assert.match(experience, /option\.focusQuestion/u);
   assert.match(quick, /result\.synthesis\?\.overview/u);
@@ -47,13 +50,14 @@ test("Free and Vela+ share a free-form intake while Free still gives a complete 
   assert.match(deep, /補一張/u);
 });
 
-test("one-card result finishes before a transparent NT$29 Deep Reading offer appears", async () => {
+test("one-card result stays complete and mentions no price until the user opens plans", async () => {
   const quick = await readFile(quickPath, "utf8");
 
   assert.match(quick, /剛才這一張已經完整回答/u);
-  assert.match(quick, /DEEP READING · NT\$29 \/ 次/u);
-  assert.match(quick, /完整 Deep Reading · NT\$29/u);
-  assert.match(quick, /不會把已經做完的答案鎖起來/u);
+  assert.match(quick, /<span>深度解析<\/span>/u);
+  assert.match(quick, />深度解析<\/button>/u);
+  assert.doesNotMatch(quick, /DEEP READING · NT\$29 \/ 次/u);
+  assert.doesNotMatch(quick, /完整 Deep Reading · NT\$29/u);
   assert.match(quick, /onClick=\{onOpenPlans\}/u);
 });
 
