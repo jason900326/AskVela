@@ -10,46 +10,62 @@ export default function VelaPlanSheet({ open, onClose, onStartDeep }) {
       <section className="velaPlanSheet" role="dialog" aria-modal="true" aria-labelledby="vela-plan-title">
         <button className="velaPlanClose" type="button" onClick={onClose} aria-label="關閉方案比較">×</button>
         <div className="velaPlanEyebrow">ASK VELA</div>
-        <h2 id="vela-plan-title">你想怎麼問 Vela？</h2>
-        <p className="velaPlanLead">Free 適合從預設的小問題體驗 Vela；Vela+ 才能把自己的事情直接說給她聽。</p>
+        <h2 id="vela-plan-title">想看到多深，由你決定。</h2>
+        <p className="velaPlanLead">所有人都可以先自由提問、讓 Vela 聽懂，再免費完整看一張牌。需要更深入時，價格會在開始前說清楚。</p>
 
-        <div className="velaPlanGrid">
+        <div className="velaPlanGrid velaPlanGridThree">
           <article className="velaPlanCard isFree">
             <div className="velaPlanCardHead">
               <span>FREE</span>
-              <strong>先玩一張牌</strong>
+              <strong>先看最重要的一張</strong>
             </div>
-            <p>完整回答，不把免費版做成比較笨的 Vela；差別在你能不能自由提出自己的問題。</p>
+            <p>免費版也會理解你的問題，並給一個完整答案；不會把結果做到一半再鎖起來。</p>
             <ul>
-              <li>從 Vela 準備的預設問題中選擇</li>
-              <li>登入後每天 3 次 Free 體驗</li>
-              <li>每題自己抽 1 張牌</li>
-              <li>完整、grounded 的單張解讀</li>
-              <li>保存與分享結果</li>
+              <li>自由描述自己的問題</li>
+              <li>Vela 先做一次問題釐清</li>
+              <li>自己抽 1 張牌</li>
+              <li>一句結論、解釋與下一步</li>
+              <li>不需先註冊才能看結果</li>
             </ul>
             <button className="ghostButton" type="button" onClick={onClose}>繼續免費使用</button>
+          </article>
+
+          <article className="velaPlanCard isDeep">
+            <div className="velaPlanCardHead">
+              <span>DEEP READING</span>
+              <strong>NT$29 / 次</strong>
+            </div>
+            <p>這一筆只買這次完整 Reading，沒有點數、儲值或預付餘額。</p>
+            <ul>
+              <li>Vela 依你的事情設計 3 個閱讀位置</li>
+              <li>3 張牌逐張揭示與解析</li>
+              <li>最後給一個精簡的整體結論</li>
+              <li>包含有限追問</li>
+              <li>真的卡住時才補 1 張釐清牌</li>
+            </ul>
+            <button className="primaryButton" type="button" onClick={onStartDeep}>預覽完整 Deep Reading · NT$29</button>
+            <small>Phase 12A 尚未啟用付款；目前按鈕只開啟產品原型。</small>
           </article>
 
           <article className="velaPlanCard isPlus">
             <div className="velaPlanCardHead">
               <span>VELA+</span>
-              <strong>把自己的事看深</strong>
+              <strong>月訂 · 價格待定</strong>
             </div>
-            <p>自由描述真正困擾你的事情；Vela 會先理解問題，再主持整個閱讀 Session。</p>
+            <p>適合不是只想看一次，而是希望同一件事之後有變化還能接著聊的人。</p>
             <ul>
-              <li>自由輸入自己的問題，不受預設題目限制</li>
-              <li>Vela 先幫你釐清真正卡住的地方</li>
-              <li>依問題決定閱讀結構，不用自己選牌陣</li>
-              <li>可以回答 Vela、追問同一件事</li>
-              <li>必要時補牌，保留事情的前後脈絡</li>
-              <li>完整個人占星能力將納入 Vela+</li>
+              <li>包含完整 Deep Reading 能力</li>
+              <li>同一議題可以持續追問</li>
+              <li>隔幾天回來仍保留前後脈絡</li>
+              <li>必要時再補牌，不用每次重抽</li>
+              <li>正式月額與使用上限會依實際成本決定</li>
             </ul>
-            <button className="primaryButton" type="button" onClick={onStartDeep}>看看 Deep Reading</button>
-            <small>目前為 Phase 12A 體驗原型；尚未啟用收費。</small>
+            <button className="ghostButton" type="button" onClick={onStartDeep}>先體驗 Vela+ Reading</button>
+            <small>目前只驗證產品體驗，尚未啟用正式訂閱。</small>
           </article>
         </div>
 
-        <p className="velaPlanPolicy">AskVela 不使用點數、錢包、儲值或充值制度。</p>
+        <p className="velaPlanPolicy">AskVela 不使用點數、錢包、儲值、充值或購買餘額；單次 Reading 直接購買該次服務。</p>
       </section>
     </div>
   );
