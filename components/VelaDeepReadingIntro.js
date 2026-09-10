@@ -9,13 +9,20 @@ const ORIENTATION_LABELS = { upright: "正位", reversed: "逆位" };
 const RANK_NUMBER = { ace: "01", two: "02", three: "03", four: "04", five: "05", six: "06", seven: "07", eight: "08", nine: "09", ten: "10", page: "11", knight: "12", queen: "13", king: "14" };
 const SELECTION_POOL_SIZE = 12;
 const CLARIFIER_POOL_SIZE = 6;
-const WAITING_MIN_MS = 2800;
-const WAITING_LINE_MS = 1200;
+const WAITING_MIN_MS = 9500;
+const WAITING_LINE_MS = 3200;
+const WAITING_LINE_MIN_VISIBLE_MS = 3000;
 const DEEP_WAITING_LINES = [
-  "我先看三張牌之間哪裡在呼應。",
-  "有些訊息要放回你的問題裡，才會看出真正的重量。",
-  "我再確認一下，哪些是牌面真的有說到的。",
-  "快好了，我把最值得你帶走的地方整理出來。",
+  "三張牌有一個地方，比單看其中任何一張都更明顯。",
+  "其中兩張正在互相呼應，第三張可能剛好是轉折。",
+  "我在分開『現在的壓力』和『真正需要處理的事』。",
+  "有個拉扯藏在三個位置之間，我再對一下。",
+  "先把表面的情緒放旁邊，看真正影響判斷的是什麼。",
+  "我正在找：哪一張是在提醒你先別急著做決定。",
+  "有些訊息單看不明顯，放回你的問題裡就變得很清楚。",
+  "我再看一次，有沒有哪張牌其實在反駁第一眼的直覺。",
+  "最後確認一下：哪些是牌面支持的，哪些還不能下結論。",
+  "快好了，我把最值得你帶走的那一句留下來。",
 ];
 
 function makeRequestId() {
@@ -127,9 +134,12 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
   useEffect(() => {
     if (stage !== "interpreting" || !result) return undefined;
     const elapsed = Date.now() - waitingStartedAtRef.current;
+    const minimumRemaining = Math.max(0, WAITING_MIN_MS - elapsed);
+    const currentLineElapsed = elapsed % WAITING_LINE_MS;
+    const currentLineNeeds = Math.max(0, WAITING_LINE_MIN_VISIBLE_MS - currentLineElapsed);
     const timer = window.setTimeout(
       () => setStage("result"),
-      Math.max(0, WAITING_MIN_MS - elapsed),
+      Math.max(minimumRemaining, currentLineNeeds),
     );
     return () => window.clearTimeout(timer);
   }, [result, stage]);
@@ -240,7 +250,7 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
   function beginInterpretation() {
     if (!draw || revealedIndexes.length !== draw.cards.length) return;
     waitingStartedAtRef.current = Date.now();
-    setWaitingIndex(0);
+    setWaitingIndex(Math.floor(Math.random() * DEEP_WAITING_LINES.length));
     setStage("interpreting");
   }
 
@@ -480,7 +490,6 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
                 <span>{plan.readingTitle}</span>
                 <h1>{selectedOption.focusQuestion}</h1>
                 {!showSynthesis && <p>我先一個位置一個位置說。前一張看清楚之後，再把下一張接上來。</p>}
-                {showSynthesis && <p>{result.synthesis?.overview}</p>}
               </header>
 
               <section className="deepCardWalkthrough">
@@ -515,13 +524,32 @@ export default function VelaDeepReadingIntro({ onBack, initialQuestion = "", ini
               {showSynthesis && (
                 <>
                   <section className="deepSynthesis deepSynthesisReveal">
-                    <h2>三張牌放在一起</h2>
-                    <p>{result.synthesis?.narrative}</p>
-                    {result.synthesis?.crossCardPattern && <blockquote>{result.synthesis.crossCardPattern}</blockquote>}
-                    {Array.isArray(result.synthesis?.practicalGuidance) && result.synthesis.practicalGuidance.length > 0 && (
-                      <div className="deepGuidanceList">
-                        {result.synthesis.practicalGuidance.map((item) => <span key={item}>{item}</span>)}
+                    <div className="deepVerdict">
+                      <span>VELA 的結論</span>
+                      <h2>{result.synthesis?.overview || "這三張牌的重點，已經比單看其中一張更清楚了。"}</h2>
+                    </div>
+
+                    {result.synthesis?.crossCardPattern && (
+                      <div className="deepTurningPoint">
+                        <span>真正值得注意的是</span>
+                        <p>{result.synthesis.crossCardPattern}</p>
                       </div>
+                    )}
+
+                    {Array.isArray(result.synthesis?.practicalGuidance) && result.synthesis.practicalGuidance.length > 0 && (
+                      <div className="deepGuidanceBlock">
+                        <span>接下來看這幾件事</span>
+                        <div className="deepGuidanceList">
+                          {result.synthesis.practicalGuidance.map((item) => <span key={item}>{item}</span>)}
+                        </div>
+                      </div>
+                    )}
+
+                    {result.synthesis?.narrative && (
+                      <details className="deepSynthesisReasoning">
+                        <summary>為什麼我會這樣看？</summary>
+                        <p>{result.synthesis.narrative}</p>
+                      </details>
                     )}
                   </section>
 
