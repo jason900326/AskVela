@@ -11,8 +11,8 @@ export default function VelaPlusQuestionEntry({ onReady, onNeedHelp }) {
     event.preventDefault();
     const text = question.trim();
     if (loading) return;
-    if (text.length < 8) {
-      setError("再多說一點點，Vela 才能分辨你真正卡住的是哪一塊。");
+    if (!text) {
+      setError("先說一點你想看的事情。");
       return;
     }
 
@@ -54,7 +54,7 @@ export default function VelaPlusQuestionEntry({ onReady, onNeedHelp }) {
         />
         <div className="velaPlusHomeFormFooter">
           <span>{question.length}/700</span>
-          <button className="primaryButton" type="submit" disabled={loading || question.trim().length < 8}>
+          <button className="primaryButton" type="submit" disabled={loading || question.trim().length === 0}>
             {loading ? "Vela 正在整理…" : "讓 Vela 先聽懂"}
           </button>
         </div>
