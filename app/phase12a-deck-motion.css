@@ -1,4 +1,4 @@
-/* Phase 12A — Vela atmosphere + lightweight eclipse transition.
+/* Phase 12A — Vela atmosphere + restrained cinematic page motion.
    Imported after mobile stability so these rules intentionally win. */
 
 /* ---------- Home: keep Vela present behind the Free entry card ---------- */
@@ -47,110 +47,75 @@
   gap: 0 !important;
 }
 
-/* ---------- Vela Eclipse page transition ---------- */
+/* ---------- Cinematic page transition ---------- */
 html.velaDeckMotionReady .velaFlipPage {
   animation: none !important;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.velaEclipseTransition {
+.velaCinematicTransition {
   position: fixed;
   inset: 0;
   z-index: 999;
-  display: grid;
-  place-items: center;
   pointer-events: none;
   overflow: hidden;
   contain: layout paint style;
   visibility: hidden;
 }
 
-.velaEclipseVeil {
+.velaCinematicVeil,
+.velaCinematicLight,
+.velaCinematicVignette {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+
+.velaCinematicVeil {
   background:
-    radial-gradient(circle at 50% 48%, rgba(89, 57, 135, .34), transparent 36%),
-    linear-gradient(90deg, #130b24 0%, #241237 48%, #130b24 100%);
-  transform: translateZ(0) scaleX(0);
-  will-change: transform;
-}
-
-.velaEclipseSeal {
-  position: relative;
-  z-index: 2;
-  width: clamp(96px, 27vw, 148px);
-  aspect-ratio: 2 / 3;
-  display: grid;
-  place-items: center;
-  transform-style: preserve-3d;
+    radial-gradient(circle at 50% 42%, rgba(67, 42, 91, .14), transparent 44%),
+    linear-gradient(180deg, rgba(15, 8, 26, .92), rgba(8, 4, 15, .97));
+  transform: translateZ(0) scale(1.035);
   will-change: transform, opacity;
 }
 
-.velaEclipseCard {
-  position: relative;
-  z-index: 3;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow:
-    0 22px 56px rgba(0, 0, 0, .42),
-    0 0 0 1px rgba(235, 208, 126, .2);
-  backface-visibility: hidden;
-  will-change: transform;
+.velaCinematicVignette {
+  background:
+    radial-gradient(circle at 50% 46%, transparent 30%, rgba(5, 2, 10, .36) 72%, rgba(3, 1, 7, .72) 100%);
+  will-change: opacity;
 }
 
-.velaEclipseOrbit,
-.velaEclipseOrbitSecondary {
-  position: absolute;
-  z-index: 1;
-  width: 165%;
-  aspect-ratio: 1;
-  border: 1px solid rgba(231, 199, 116, .62);
-  border-radius: 50%;
-  box-shadow:
-    inset 0 0 18px rgba(231, 199, 116, .08),
-    0 0 26px rgba(163, 115, 220, .13);
+.velaCinematicLight {
+  left: -45%;
+  width: 42%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(188, 148, 221, .02) 18%,
+    rgba(227, 207, 244, .12) 48%,
+    rgba(179, 139, 210, .025) 78%,
+    transparent 100%
+  );
+  transform: skewX(-12deg) translateZ(0);
   will-change: transform, opacity;
 }
 
-.velaEclipseOrbit::before,
-.velaEclipseOrbitSecondary::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -4px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(244, 218, 147, .94);
-  box-shadow: 0 0 16px rgba(244, 218, 147, .48);
-  transform: translateX(-50%);
-}
-
-.velaEclipseOrbitSecondary {
-  width: 205%;
-  border-color: rgba(196, 163, 230, .27);
-}
-
-.velaEclipseOrbitSecondary::before {
-  width: 4px;
-  height: 4px;
-  background: rgba(213, 190, 241, .78);
-}
-
-.velaEclipseGleam {
-  position: absolute;
-  z-index: 4;
-  inset: 8% 46% 8% -22%;
-  width: 22%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(255, 239, 196, .56), transparent);
-  transform: skewX(-11deg) translateZ(0);
-  opacity: 0;
+/* ---------- Home opening sequence support ---------- */
+.velaStage[data-intro-ready="true"] .velaCharacterSlot,
+.velaStage[data-intro-ready="true"] .velaCrystalButton,
+.velaStage[data-intro-ready="true"] .velaCrystalHint,
+.velaStage[data-intro-ready="true"] .velaStageGlow,
+.velaStage[data-intro-ready="true"] .velaStageStars i {
   will-change: transform, opacity;
+}
+
+.velaStage[data-intro-complete="true"] .velaCharacterSlot,
+.velaStage[data-intro-complete="true"] .velaCrystalButton,
+.velaStage[data-intro-complete="true"] .velaCrystalHint,
+.velaStage[data-intro-complete="true"] .velaStageGlow,
+.velaStage[data-intro-complete="true"] .velaStageStars i {
+  will-change: auto;
 }
 
 @media (max-width: 600px) {
@@ -169,13 +134,14 @@ html.velaDeckMotionReady .velaFlipPage {
     max-height: calc(100svh - max(166px, 20vh) - max(14px, env(safe-area-inset-bottom))) !important;
   }
 
-  .velaEclipseSeal {
-    width: clamp(92px, 30vw, 126px);
+  .velaCinematicLight {
+    left: -58%;
+    width: 54%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .velaEclipseTransition {
+  .velaCinematicTransition {
     display: none !important;
   }
 }
