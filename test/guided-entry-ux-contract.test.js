@@ -115,7 +115,7 @@ test("Free result sharing still generates an image while the user-facing action 
   assert.match(quick, /buildTarotSharePng/u);
   assert.match(quick, /shareTarotPng/u);
   assert.match(quick, /準備分享中/u);
-  assert.match(quick, />分享<\/button>/u);
+  assert.match(quick, /shareLoading \? "準備分享中…" : "分享"/u);
   assert.doesNotMatch(quick, /分享 PNG<\/button>/u);
   assert.doesNotMatch(quick, /clipboard\.writeText/u);
   assert.match(share, /canvas\.toBlob/u);
