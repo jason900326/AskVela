@@ -66,31 +66,118 @@
   min-width: 156px;
 }
 
-.velaHomeSuggestions {
+.velaQuestionHelpButton {
+  width: 100%;
+  min-height: 46px;
+}
+
+.velaQuestionHelp {
+  display: grid;
+  gap: 14px;
+}
+
+.velaQuestionHelpBubble {
+  text-align: left;
+}
+
+.velaQuestionHelpBubble h1 {
+  margin-bottom: 7px;
+}
+
+.velaQuestionHelpBubble p {
+  margin: 0;
+  color: rgba(248, 242, 255, .58);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.velaQuestionHelpGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.velaQuestionHelpGrid button,
+.velaQuestionHelpOther button {
+  border: 1px solid rgba(227, 204, 251, .17);
+  border-radius: 16px;
+  background: rgba(24, 13, 47, .62);
+  color: #f8f2ff;
+  padding: 13px 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .18s ease, transform .18s ease, background .18s ease;
+}
+
+.velaQuestionHelpGrid button {
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  text-align: left;
+}
+
+.velaQuestionHelpGrid button:hover,
+.velaQuestionHelpGrid button:focus-visible,
+.velaQuestionHelpOther button:hover,
+.velaQuestionHelpOther button:focus-visible {
+  border-color: rgba(230, 196, 111, .5);
+  background: rgba(49, 28, 76, .76);
+  transform: translateY(-1px);
+}
+
+.velaQuestionHelpGrid button:disabled,
+.velaQuestionHelpOther button:disabled {
+  cursor: wait;
+  opacity: .58;
+  transform: none;
+}
+
+.velaQuestionHelpGrid strong {
+  font-size: 13px;
+}
+
+.velaQuestionHelpGrid span {
+  color: rgba(244, 224, 166, .72);
+  font-size: 10px;
+}
+
+.velaQuestionHelpOther {
   display: grid;
   gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(227, 204, 251, .1);
 }
 
-.velaHomeSuggestions > span {
-  color: rgba(248, 242, 255, .52);
+.velaQuestionHelpOther > span {
+  color: rgba(248, 242, 255, .45);
   font-size: 11px;
 }
 
-.velaHomeSuggestions > div {
+.velaQuestionHelpOther > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.velaQuestionHelpOther button {
   display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
 }
 
-.velaHomeSuggestions button {
-  border: 1px solid rgba(227, 204, 251, .14);
-  border-radius: 999px;
-  background: rgba(31, 17, 58, .58);
-  color: rgba(248, 242, 255, .78);
-  padding: 8px 11px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
+.velaQuestionHelpOther b {
+  color: #e6c46f;
+  font-size: 18px;
+}
+
+.velaQuestionHelpOther strong {
+  font-size: 12px;
+}
+
+.velaQuestionHelpBack {
+  justify-self: center;
 }
 
 .phase12HomeClarify {
@@ -155,14 +242,8 @@
     width: 100%;
   }
 
-  .velaHomeSuggestions > div {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .velaHomeSuggestions button {
-    border-radius: 14px;
-    text-align: left;
-    line-height: 1.35;
+  .velaQuestionHelpGrid button {
+    min-height: 60px;
+    padding: 11px 12px;
   }
 }
