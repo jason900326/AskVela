@@ -31,21 +31,20 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
     }
 
     const artwork = root.querySelector(".velaHoodedArtwork");
-    const crystal = root.querySelector(".velaCrystalButton");
+    const crystalArtwork = root.querySelector(".velaCrystalArtwork");
     const aura = root.querySelector(".velaCrystalAura");
     const hint = root.querySelector(".velaCrystalHint");
     const glows = root.querySelectorAll(".velaStageGlow");
     const stars = root.querySelectorAll(".velaStageStars i");
 
-    // The intro begins after a real paint, but nothing blocks that paint. Visitors
-    // see Vela immediately in a dim, slightly distant state instead of watching a
-    // blank transition screen while assets settle.
+    // Nothing blocks first paint. Vela is already visible in a quieter state,
+    // then resolves into focus once the two key images are truly ready.
     const frame = window.requestAnimationFrame(() => {
       const intro = gsap.timeline({
         defaults: { overwrite: "auto" },
         onComplete: () => {
           setIntroComplete(true);
-          gsap.set([artwork, crystal, aura, hint, ...glows, ...stars], {
+          gsap.set([artwork, crystalArtwork, aura, hint, ...glows, ...stars], {
             clearProps: "transform,opacity,visibility,willChange",
           });
           introTimelineRef.current = null;
@@ -72,7 +71,7 @@ export default function VelaStage({ onCrystalClick, awakened = false }) {
           duration: 1.02,
           ease: "power2.out",
         }, 0.04)
-        .to(crystal, {
+        .to(crystalArtwork, {
           autoAlpha: 1,
           y: 0,
           scale: 1,
