@@ -1,6 +1,6 @@
 "use client";
 
-export default function VelaPlanSheet({ open, onClose, onStartDeep }) {
+export default function VelaPlanSheet({ open, isVelaPlus = false, onClose, onStartDeep }) {
   if (!open) return null;
 
   return (
@@ -43,14 +43,15 @@ export default function VelaPlanSheet({ open, onClose, onStartDeep }) {
               <li>包含有限追問</li>
               <li>真的卡住時才補 1 張釐清牌</li>
             </ul>
-            <button className="primaryButton" type="button" onClick={onStartDeep}>預覽完整 Deep Reading · NT$29</button>
-            <small>Phase 12A 尚未啟用付款；目前按鈕只開啟產品原型。</small>
+            <button className="primaryButton" type="button" disabled>
+              {isVelaPlus ? "已包含在 Vela+" : "即將開放"}
+            </button>
           </article>
 
           <article className="velaPlanCard isPlus">
             <div className="velaPlanCardHead">
               <span>VELA+</span>
-              <strong>月訂 · 價格待定</strong>
+              <strong>{isVelaPlus ? "已啟用" : "月訂 · 價格待定"}</strong>
             </div>
             <p>適合不是只想看一次，而是希望同一件事之後有變化還能接著聊的人。</p>
             <ul>
@@ -60,8 +61,11 @@ export default function VelaPlanSheet({ open, onClose, onStartDeep }) {
               <li>必要時再補牌，不用每次重抽</li>
               <li>正式月額與使用上限會依實際成本決定</li>
             </ul>
-            <button className="ghostButton" type="button" onClick={onStartDeep}>先體驗 Vela+ Reading</button>
-            <small>目前只驗證產品體驗，尚未啟用正式訂閱。</small>
+            {isVelaPlus ? (
+              <button className="primaryButton" type="button" onClick={onStartDeep}>開始深度解析</button>
+            ) : (
+              <button className="ghostButton" type="button" disabled>訂閱即將開放</button>
+            )}
           </article>
         </div>
 
