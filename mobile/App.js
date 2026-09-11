@@ -28,11 +28,11 @@ const PHASE = {
 };
 
 const IDLE_SCENES = [
-  { key: 'phone', label: '滑手機', detail: '窩在沙發上，一邊滑手機一邊吃洋芋片。' },
-  { key: 'tea', label: '發呆', detail: '抱著馬克杯發呆，完全沒有要工作的意思。' },
-  { key: 'book', label: '亂翻書', detail: '拿著一本書翻了半天，但看起來沒有真的在看。' },
-  { key: 'cat', label: '跟貓混在一起', detail: '和貓一起佔滿沙發，誰都沒有要讓位。' },
-  { key: 'nap', label: '快睡著了', detail: '整個人縮在沙發角落，差一點就睡著。' },
+  { key: 'phone', label: '滑手機' },
+  { key: 'tea', label: '發呆' },
+  { key: 'book', label: '亂翻書' },
+  { key: 'cat', label: '跟貓混在一起' },
+  { key: 'nap', label: '快睡著了' },
 ];
 
 const PREPARE_LINES = [
@@ -166,8 +166,6 @@ function VelaStage({ phase, speech, idleScene }) {
   return (
     <View style={[styles.stage, !daily && styles.stageTarot]}>
       <Text style={styles.moon}>☾</Text>
-      <Text style={styles.roomLabel}>{daily ? 'VELA’S ROOM' : 'TAROT ROOM'}</Text>
-
       <Animated.View
         style={[
           styles.velaPlaceholder,
@@ -181,10 +179,8 @@ function VelaStage({ phase, speech, idleScene }) {
         ]}
       >
         <Text style={styles.velaInitial}>V</Text>
-        <Text style={styles.velaState}>{daily ? idleScene.label.toUpperCase() : 'TAROT VELA'}</Text>
+        <Text style={styles.velaState}>{daily ? idleScene.label : 'TAROT VELA'}</Text>
       </Animated.View>
-
-      {phase === PHASE.IDLE && <Text style={styles.sceneDetail}>{idleScene.detail}</Text>}
 
       <View style={styles.speechBubble}>
         <Text style={styles.speech}>{speech}</Text>
@@ -192,9 +188,14 @@ function VelaStage({ phase, speech, idleScene }) {
 
       {phase === PHASE.CURTAIN && (
         <View pointerEvents="none" style={styles.curtainLayer}>
-          <Animated.View style={[styles.curtainPanel, styles.curtainLeft, { transform: [{ translateX: leftX }] }]} />
-          <Animated.View style={[styles.curtainPanel, styles.curtainRight, { transform: [{ translateX: rightX }] }]} />
+          <Animated.View
+            style={[styles.curtainPanel, styles.curtainLeft, { transform: [{ translateX: leftX }] }]}
+          />
+          <Animated.View
+            style={[styles.curtainPanel, styles.curtainRight, { transform: [{ translateX: rightX }] }]}
+          />
           <Text style={styles.curtainMoon}>☾</Text>
+          <Text style={styles.curtainCopy}>{speech}</Text>
         </View>
       )}
     </View>
@@ -220,7 +221,7 @@ function BackCard({ selected, special, onPress, index }) {
   );
 }
 
-function RevealCard({ card, revealed, canReveal, onPress }) {
+function RevealCard({ card, revealed, canReveal, onPress, lockedHint = '先翻前一張' }) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -242,7 +243,9 @@ function RevealCard({ card, revealed, canReveal, onPress }) {
       ) : (
         <>
           <Text style={styles.revealMoon}>☾</Text>
-          <Text style={styles.tapHint}>{canReveal ? '點一下翻牌' : '先翻前一張'}</Text>
+          {(canReveal || lockedHint) && (
+            <Text style={styles.tapHint}>{canReveal ? '點一下翻牌' : lockedHint}</Text>
+          )}
         </>
       )}
     </Pressable>
@@ -314,7 +317,7 @@ export default function App() {
     if (phase !== PHASE.DRAW || selectedIds.length !== 3) return undefined;
     const timer = setTimeout(() => {
       setRevealCount(0);
-      setSpeech('好，就這三張。其他的我收走。');
+      setSpeech('好，就這三張。');
       setPhase(PHASE.REVEAL);
     }, 650);
     return () => clearTimeout(timer);
@@ -338,7 +341,7 @@ export default function App() {
         setThinkingIndex((value) => value + 1);
       } else {
         setAnalysisCount(1);
-        setSpeech('好，先從第一張開始。');
+        setSpeech('好，先看第一張。');
         setPhase(PHASE.FIRST_READING);
       }
     }, 1050);
@@ -360,7 +363,7 @@ export default function App() {
       const timer = setTimeout(() => {
         const next = analysisCount + 1;
         setAnalysisCount(next);
-        setSpeech(next === 2 ? '第二張就是卡住你的地方。' : '最後一張，我覺得你要注意這裡。');
+        setSpeech(next === 2 ? '第二張是卡住你的地方。' : '最後一張，我覺得你要注意這裡。');
       }, 1650);
       return () => clearTimeout(timer);
     }
@@ -372,7 +375,32 @@ export default function App() {
   }, [phase, analysisCount]);
 
   useEffect(() => {
-    if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)) {
+    if (phase !== PHASE.FOLLOWUP || !followupAnswered) return undefined;
+    const timer = setTimeout(() => {
+      const remaining = cards.filter((card) => !selectedIds.includes(card.id));
+      const nextCard = remaining[Math.floor(Math.random() * remaining.length)] ?? createReading()[0];
+      setSupplementCard({ ...nextCard, id: `supplement-${Date.now()}` });
+      setSupplementRevealed(false);
+      setSpeech('等一下，我想確認一件事。');
+      setPhase(PHASE.SUPPLEMENT);
+    }, 1250);
+    return () => clearTimeout(timer);
+  }, [phase, followupAnswered, cards, selectedIds]);
+
+  useEffect(() => {
+    if (phase !== PHASE.SUPPLEMENT || !supplementCard || supplementRevealed) return undefined;
+    const timer = setTimeout(() => {
+      Vibration.vibrate(28);
+      setSupplementRevealed(true);
+      setSpeech('……嗯，果然。');
+    }, 1150);
+    return () => clearTimeout(timer);
+  }, [phase, supplementCard, supplementRevealed]);
+
+  useEffect(() => {
+    if (
+      [PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)
+    ) {
       const timer = setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 80);
       return () => clearTimeout(timer);
     }
@@ -395,7 +423,7 @@ export default function App() {
     const clean = value.trim();
     if (!clean) return;
     setQuestion(clean);
-    setQuestionDraft(clean);
+    setQuestionDraft('');
     setSpeech('好。先別想太多，憑感覺挑三張。');
     setPhase(PHASE.DRAW);
   }
@@ -410,13 +438,13 @@ export default function App() {
 
     setSelectedIds((current) => {
       if (current.includes(card.id)) {
-        setSpeech('反悔也可以。再挑一張。');
+        setSpeech('反悔也可以。');
         return current.filter((id) => id !== card.id);
       }
       if (current.length >= 3) return current;
       const next = [...current, card.id];
       Vibration.vibrate(12);
-      setSpeech(next.length === 3 ? '好，就這三張。其他的我收走。' : `還差 ${3 - next.length} 張。`);
+      if (next.length === 3) setSpeech('好，就這三張。');
       return next;
     });
   }
@@ -433,7 +461,7 @@ export default function App() {
 
   function unlockFullReading() {
     setAnalysisCount(1);
-    setSpeech('好。那我繼續講，你先別急著下結論。');
+    setSpeech('好。那我繼續講。');
     setPhase(PHASE.FULL_READING);
   }
 
@@ -443,23 +471,7 @@ export default function App() {
     setFollowupMessage(clean);
     setFollowupInput('');
     setFollowupAnswered(true);
-    setSpeech('嗯，那我懂你卡住的點了。這裡補一張會比較有用。');
-  }
-
-  function beginSupplement() {
-    const remaining = cards.filter((card) => !selectedIds.includes(card.id));
-    const nextCard = remaining[Math.floor(Math.random() * remaining.length)] ?? createReading()[0];
-    setSupplementCard({ ...nextCard, id: `supplement-${Date.now()}` });
-    setSupplementRevealed(false);
-    setSpeech('這次只補一張。你自己翻。');
-    setPhase(PHASE.SUPPLEMENT);
-  }
-
-  function revealSupplement() {
-    if (supplementRevealed) return;
-    Vibration.vibrate(28);
-    setSupplementRevealed(true);
-    setSpeech('嗯，就是這張。它其實是在回答你剛剛那句話。');
+    setSpeech('嗯……等一下。');
   }
 
   function resetReading() {
@@ -493,14 +505,10 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       <ScrollView ref={scrollRef} contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
-        <Text style={styles.brand}>ASK VELA</Text>
-        <Text style={styles.prototypeLabel}>INTERACTIVE TAROT · VERTICAL SLICE</Text>
-
         <VelaStage phase={phase} speech={stageSpeech} idleScene={idleScene} />
 
         {phase === PHASE.IDLE && (
           <View style={styles.actionArea}>
-            <Text style={styles.bodyCopy}>她現在有自己的事在做。你可以直接打斷她。</Text>
             <Pressable style={styles.primaryButton} onPress={noticeVela}>
               <Text style={styles.primaryButtonText}>Vela，我想看塔羅</Text>
             </Pressable>
@@ -509,29 +517,17 @@ export default function App() {
 
         {phase === PHASE.NOTICE && (
           <View style={styles.actionArea}>
-            <Text style={styles.bodyCopy}>Vela 突然靠近鏡頭，確認你是不是認真的。</Text>
             <Pressable style={styles.primaryButton} onPress={startCurtain}>
               <Text style={styles.primaryButtonText}>對，幫我看</Text>
             </Pressable>
             <Pressable style={styles.secondaryButton} onPress={resetReading}>
-              <Text style={styles.secondaryButtonText}>算了，我只是路過</Text>
+              <Text style={styles.secondaryButtonText}>沒事</Text>
             </Pressable>
-          </View>
-        )}
-
-        {phase === PHASE.CURTAIN && (
-          <View style={styles.loadingArea}>
-            <View style={styles.loadingTrack}>
-              <View style={[styles.loadingFill, { width: `${((prepareIndex + 1) / PREPARE_LINES.length) * 100}%` }]} />
-            </View>
-            <Text style={styles.smallCopy}>布幕關上後，Vela 正在另一邊準備。</Text>
           </View>
         )}
 
         {phase === PHASE.QUESTION && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>今天想問什麼？</Text>
-            <Text style={styles.sectionHint}>先把問題留給 Vela，等等抽牌時只要專心選。</Text>
             <View style={styles.choiceList}>
               {QUESTION_PROMPTS.map((prompt) => (
                 <Pressable key={prompt} style={styles.choiceButton} onPress={() => submitQuestion(prompt)}>
@@ -543,14 +539,14 @@ export default function App() {
               <TextInput
                 value={questionDraft}
                 onChangeText={setQuestionDraft}
-                placeholder="或直接告訴 Vela 你想問的事……"
+                placeholder="或直接告訴 Vela……"
                 placeholderTextColor="#725E7B"
                 style={styles.textInput}
                 returnKeyType="send"
                 onSubmitEditing={() => submitQuestion()}
               />
               <Pressable style={styles.sendButton} onPress={() => submitQuestion()}>
-                <Text style={styles.sendButtonText}>開始</Text>
+                <Text style={styles.sendButtonText}>送出</Text>
               </Pressable>
             </View>
           </View>
@@ -558,14 +554,6 @@ export default function App() {
 
         {phase === PHASE.DRAW && (
           <View style={styles.tableSection}>
-            <View style={styles.questionChip}><Text style={styles.questionChipText}>「{question}」</Text></View>
-            <View style={styles.sectionHeader}>
-              <View>
-                <Text style={styles.sectionTitle}>挑 3 張</Text>
-                <Text style={styles.sectionHint}>選滿後 Vela 會直接把其他牌收走。</Text>
-              </View>
-              <Text style={styles.selectionCount}>{selectedIds.length}/3</Text>
-            </View>
             <View style={styles.cardGrid}>
               {cards.map((card, index) => (
                 <BackCard
@@ -577,17 +565,20 @@ export default function App() {
                 />
               ))}
             </View>
-            {selectedIds.length === 3 && <Text style={styles.autoAdvanceCopy}>Vela 正在把其他牌收起來……</Text>}
           </View>
         )}
 
         {phase === PHASE.REVEAL && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>一張一張翻開</Text>
-            <Text style={styles.sectionHint}>第三張翻開後，Vela 會直接開始想。</Text>
             <View style={styles.revealRow}>
               {selectedCards.map((card, index) => (
-                <RevealCard key={card.id} card={card} revealed={index < revealCount} canReveal={index === revealCount} onPress={() => revealCard(index)} />
+                <RevealCard
+                  key={card.id}
+                  card={card}
+                  revealed={index < revealCount}
+                  canReveal={index === revealCount}
+                  onPress={() => revealCard(index)}
+                />
               ))}
             </View>
           </View>
@@ -595,34 +586,30 @@ export default function App() {
 
         {phase === PHASE.THINKING && (
           <View style={styles.thinkingSection}>
-            <View style={styles.questionChip}><Text style={styles.questionChipText}>「{question}」</Text></View>
             <View style={styles.miniCardRow}>
               {selectedCards.map((card) => <MiniCard key={card.id} card={card} />)}
             </View>
             <View style={styles.thinkingDots}>
-              <View style={styles.thinkingDot} /><View style={styles.thinkingDot} /><View style={styles.thinkingDot} />
+              <View style={styles.thinkingDot} />
+              <View style={styles.thinkingDot} />
+              <View style={styles.thinkingDot} />
             </View>
-            <Text style={styles.smallCopy}>不用按任何東西，讓她想一下。</Text>
           </View>
         )}
 
         {phase === PHASE.FIRST_READING && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>Vela 開始解牌</Text>
             <ReadingBlock card={selectedCards[0]} index={0} />
           </View>
         )}
 
         {phase === PHASE.LOGIN_GATE && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>Vela 開始解牌</Text>
             <ReadingBlock card={selectedCards[0]} index={0} />
             <View style={styles.gateCard}>
-              <Text style={styles.endEyebrow}>FREE READING</Text>
               <Text style={styles.analysisTitle}>後面兩張會把關係串起來。</Text>
-              <Text style={styles.bodyCopy}>正式版這裡會要求登入，並提供一次完整免費體驗。Prototype 先直接模擬已登入。</Text>
               <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
-                <Text style={styles.primaryButtonText}>Prototype：登入並繼續</Text>
+                <Text style={styles.primaryButtonText}>登入並繼續</Text>
               </Pressable>
             </View>
           </View>
@@ -630,13 +617,15 @@ export default function App() {
 
         {phase === PHASE.FULL_READING && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>Vela 的解讀</Text>
-            {selectedCards.slice(0, analysisCount).map((card, index) => <ReadingBlock key={card.id} card={card} index={index} />)}
+            {selectedCards.slice(0, analysisCount).map((card, index) => (
+              <ReadingBlock key={card.id} card={card} index={index} />
+            ))}
             {analysisCount === 3 && (
               <View style={styles.synthesisCard}>
-                <Text style={styles.endEyebrow}>TOGETHER</Text>
                 <Text style={styles.analysisTitle}>三張牌放在一起</Text>
-                <Text style={styles.bodyCopy}>第一張像你現在的感受，第二張把真正的阻力指出來，第三張才是下一步。它們不是在替你決定，而是在提醒你：現在最需要處理的其實不是結果，而是你一直繞開的那個選擇。</Text>
+                <Text style={styles.bodyCopy}>
+                  第一張像你現在的感受，第二張把真正的阻力指出來，第三張才是下一步。它們不是在替你決定，而是在提醒你：現在最需要處理的其實不是結果，而是你一直繞開的那個選擇。
+                </Text>
               </View>
             )}
           </View>
@@ -644,12 +633,10 @@ export default function App() {
 
         {phase === PHASE.FOLLOWUP && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>先別急著走</Text>
             <View style={styles.synthesisCard}>
-              <Text style={styles.endEyebrow}>VELA WANTS TO ASK</Text>
               <Text style={styles.analysisTitle}>你現在真正怕的是「選錯」，還是「失去」？</Text>
-              <Text style={styles.bodyCopy}>正式版這裡會把你剛剛的牌、原始問題與解讀一起留在對話裡。</Text>
             </View>
+
             {!followupAnswered && (
               <>
                 <View style={styles.choiceList}>
@@ -660,17 +647,26 @@ export default function App() {
                   ))}
                 </View>
                 <View style={styles.inputRow}>
-                  <TextInput value={followupInput} onChangeText={setFollowupInput} placeholder="或自己問 Vela……" placeholderTextColor="#725E7B" style={styles.textInput} returnKeyType="send" onSubmitEditing={() => answerFollowup(followupInput)} />
-                  <Pressable style={styles.sendButton} onPress={() => answerFollowup(followupInput)}><Text style={styles.sendButtonText}>送出</Text></Pressable>
+                  <TextInput
+                    value={followupInput}
+                    onChangeText={setFollowupInput}
+                    placeholder="或自己問 Vela……"
+                    placeholderTextColor="#725E7B"
+                    style={styles.textInput}
+                    returnKeyType="send"
+                    onSubmitEditing={() => answerFollowup(followupInput)}
+                  />
+                  <Pressable style={styles.sendButton} onPress={() => answerFollowup(followupInput)}>
+                    <Text style={styles.sendButtonText}>送出</Text>
+                  </Pressable>
                 </View>
               </>
             )}
+
             {followupAnswered && (
               <View style={styles.followupResult}>
                 <Text style={styles.userBubble}>{followupMessage}</Text>
-                <Text style={styles.velaReply}>那這就不是單純問「結果會怎樣」了。你其實是在確認自己有沒有承受那個選擇的空間。我會建議補一張，只問「現在最值得注意的是什麼」。</Text>
-                <Pressable style={styles.primaryButton} onPress={beginSupplement}><Text style={styles.primaryButtonText}>好，補一張</Text></Pressable>
-                <Pressable style={styles.secondaryButton} onPress={resetReading}><Text style={styles.secondaryButtonText}>今天先到這裡</Text></Pressable>
+                <Text style={styles.velaReply}>等一下，我想確認一件事。</Text>
               </View>
             )}
           </View>
@@ -678,18 +674,25 @@ export default function App() {
 
         {phase === PHASE.SUPPLEMENT && supplementCard && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>補一張</Text>
-            <Text style={styles.sectionHint}>這張只回答你剛剛的追問。</Text>
             <View style={styles.supplementWrap}>
-              <RevealCard card={supplementCard} revealed={supplementRevealed} canReveal={!supplementRevealed} onPress={revealSupplement} />
+              <RevealCard
+                card={supplementCard}
+                revealed={supplementRevealed}
+                canReveal={false}
+                onPress={() => {}}
+                lockedHint=""
+              />
             </View>
+
             {supplementRevealed && (
               <View style={styles.synthesisCard}>
-                <Text style={styles.endEyebrow}>CLARIFIER</Text>
                 <Text style={styles.analysisTitle}>{supplementCard.name} · {supplementCard.reversed ? '逆位' : '正位'}</Text>
-                <Text style={styles.bodyCopy}>這張補牌不是推翻前面三張，而是把焦點縮小：你接下來先處理自己能控制的部分，比一直猜結果更有用。正式版會由同一份 reading context 產生真正的補牌解讀。</Text>
-                <Text style={styles.velaReply}>Vela：好，這次我真的講完了。</Text>
-                <Pressable style={styles.primaryButton} onPress={resetReading}><Text style={styles.primaryButtonText}>再看一次</Text></Pressable>
+                <Text style={styles.bodyCopy}>
+                  這張沒有推翻前面三張，它只是把焦點縮小：你接下來先處理自己能控制的部分，比一直猜結果更有用。
+                </Text>
+                <Pressable style={styles.primaryButton} onPress={resetReading}>
+                  <Text style={styles.primaryButtonText}>今天先到這裡</Text>
+                </Pressable>
               </View>
             )}
           </View>
@@ -701,79 +704,227 @@ export default function App() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
-  screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 36, backgroundColor: '#100918' },
-  brand: { color: '#F3DEFF', fontSize: 25, fontWeight: '800', letterSpacing: 4 },
-  prototypeLabel: { marginTop: 5, color: '#9D86AA', fontSize: 10, letterSpacing: 1.5 },
-  stage: { marginTop: 22, minHeight: 330, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 20 },
+  screen: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 36,
+    backgroundColor: '#100918',
+  },
+  stage: {
+    minHeight: 330,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#3B2550',
+    backgroundColor: '#1A1025',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    padding: 20,
+  },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
   moon: { position: 'absolute', top: 17, right: 22, color: '#D9B96E', fontSize: 31 },
-  roomLabel: { position: 'absolute', top: 20, left: 22, color: '#735E7D', fontSize: 9, letterSpacing: 1.5, fontWeight: '700' },
-  velaPlaceholder: { width: 150, height: 190, borderTopLeftRadius: 74, borderTopRightRadius: 74, borderBottomLeftRadius: 34, borderBottomRightRadius: 34, backgroundColor: '#2B1D36', borderWidth: 1, borderColor: '#594064', alignItems: 'center', justifyContent: 'center' },
+  velaPlaceholder: {
+    width: 150,
+    height: 190,
+    borderTopLeftRadius: 74,
+    borderTopRightRadius: 74,
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
+    backgroundColor: '#2B1D36',
+    borderWidth: 1,
+    borderColor: '#594064',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   velaPlaceholderReady: { backgroundColor: '#392046', borderColor: '#9E77B2' },
   velaInitial: { color: '#F5E7FA', fontSize: 68, fontWeight: '300', fontFamily: 'serif' },
   velaState: { marginTop: 12, color: '#A993B5', fontSize: 9, letterSpacing: 1.2 },
-  sceneDetail: { marginTop: 11, color: '#8F7A99', fontSize: 11, textAlign: 'center', maxWidth: 250 },
-  speechBubble: { marginTop: 22, width: '100%', borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingVertical: 14 },
+  speechBubble: {
+    marginTop: 22,
+    width: '100%',
+    borderRadius: 18,
+    backgroundColor: '#F0E4F4',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   speech: { color: '#25182C', fontSize: 16, lineHeight: 23, textAlign: 'center', fontWeight: '600' },
-  curtainLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
+  curtainLayer: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    zIndex: 20,
+  },
   curtainPanel: { position: 'absolute', top: 0, bottom: 0, width: '52%', backgroundColor: '#4B205E' },
   curtainLeft: { left: 0, borderRightWidth: 1, borderRightColor: '#8C5DA0' },
   curtainRight: { right: 0, borderLeftWidth: 1, borderLeftColor: '#8C5DA0' },
-  curtainMoon: { position: 'absolute', top: '42%', color: '#D9B96E', fontSize: 54, zIndex: 25 },
-  actionArea: { marginTop: 24 },
+  curtainMoon: { position: 'absolute', top: '35%', color: '#D9B96E', fontSize: 54, zIndex: 25 },
+  curtainCopy: {
+    position: 'absolute',
+    top: '57%',
+    left: 28,
+    right: 28,
+    color: '#F3E8F6',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    zIndex: 25,
+  },
+  actionArea: { marginTop: 20 },
   bodyCopy: { color: '#B8A8BF', fontSize: 14, lineHeight: 22 },
-  primaryButton: { marginTop: 18, minHeight: 54, borderRadius: 16, backgroundColor: '#7D4A91', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
+  primaryButton: {
+    marginTop: 14,
+    minHeight: 54,
+    borderRadius: 16,
+    backgroundColor: '#7D4A91',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
   primaryButtonText: { color: '#FFF8FF', fontSize: 16, fontWeight: '800' },
-  secondaryButton: { marginTop: 12, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#70517D', alignItems: 'center', justifyContent: 'center' },
+  secondaryButton: {
+    marginTop: 10,
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#70517D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   secondaryButtonText: { color: '#D9C6E0', fontSize: 15, fontWeight: '700' },
-  loadingArea: { marginTop: 26 },
-  loadingTrack: { height: 6, borderRadius: 20, overflow: 'hidden', backgroundColor: '#2C2032' },
-  loadingFill: { height: '100%', borderRadius: 20, backgroundColor: '#B58AC6' },
-  smallCopy: { marginTop: 12, color: '#806E89', textAlign: 'center', fontSize: 12 },
-  tableSection: { marginTop: 26 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14 },
-  sectionTitle: { color: '#F2E8F4', fontSize: 19, fontWeight: '800' },
-  sectionHint: { marginTop: 5, color: '#806E89', fontSize: 12, lineHeight: 18 },
-  selectionCount: { color: '#C7A6D4', fontSize: 14, fontWeight: '700' },
-  questionChip: { alignSelf: 'flex-start', maxWidth: '100%', marginBottom: 16, borderRadius: 999, borderWidth: 1, borderColor: '#533760', backgroundColor: '#1B1122', paddingHorizontal: 13, paddingVertical: 8 },
-  questionChipText: { color: '#CBB7D2', fontSize: 12, lineHeight: 17 },
-  cardGrid: { marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  card: { width: '22.5%', aspectRatio: 0.62, borderRadius: 10, borderWidth: 1, borderColor: '#6B4B77', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center' },
-  cardSelected: { borderWidth: 2, borderColor: '#E4C6EE', transform: [{ translateY: -5 }], backgroundColor: '#3A2046' },
+  tableSection: { marginTop: 20 },
+  cardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
+  },
+  card: {
+    width: '15.2%',
+    aspectRatio: 0.62,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#6B4B77',
+    backgroundColor: '#24142F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardSelected: {
+    borderWidth: 2,
+    borderColor: '#E4C6EE',
+    transform: [{ translateY: -5 }],
+    backgroundColor: '#3A2046',
+  },
   businessCard: { borderStyle: 'dashed', borderColor: '#D6B56D', backgroundColor: '#30233A' },
   cardPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
-  cardMoon: { color: '#D4B46D', fontSize: 23 },
-  cardIndex: { position: 'absolute', bottom: 7, color: '#795E85', fontSize: 9 },
-  autoAdvanceCopy: { marginTop: 16, color: '#B58AC6', textAlign: 'center', fontSize: 12, fontWeight: '700' },
-  revealRow: { marginTop: 18, flexDirection: 'row', gap: 10 },
-  revealCard: { flex: 1, minHeight: 210, borderRadius: 14, borderWidth: 1, borderColor: '#62456F', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  cardMoon: { color: '#D4B46D', fontSize: 18 },
+  cardIndex: { position: 'absolute', bottom: 5, color: '#795E85', fontSize: 8 },
+  revealRow: { flexDirection: 'row', gap: 10 },
+  revealCard: {
+    flex: 1,
+    minHeight: 210,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#62456F',
+    backgroundColor: '#24142F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
   revealCardOpen: { backgroundColor: '#EBDFF0', borderColor: '#F8ECFB' },
   revealMoon: { color: '#D4B46D', fontSize: 34 },
   tapHint: { marginTop: 12, color: '#9B84A5', fontSize: 11, textAlign: 'center' },
   revealName: { color: '#291C30', fontSize: 19, fontWeight: '800', textAlign: 'center' },
   revealEnglish: { marginTop: 8, color: '#6D5A74', fontSize: 11, textAlign: 'center' },
   orientation: { marginTop: 20, color: '#7D4A91', fontSize: 13, fontWeight: '800' },
-  thinkingSection: { marginTop: 26, alignItems: 'center' },
+  thinkingSection: { marginTop: 20, alignItems: 'center' },
   miniCardRow: { width: '100%', flexDirection: 'row', gap: 10 },
-  miniCard: { flex: 1, minHeight: 96, borderRadius: 13, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  miniCard: {
+    flex: 1,
+    minHeight: 96,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: '#5E416A',
+    backgroundColor: '#24142F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
   miniCardName: { color: '#EBDFF0', fontSize: 14, fontWeight: '800', textAlign: 'center' },
   miniCardOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
-  thinkingDots: { marginTop: 24, flexDirection: 'row', gap: 8 },
+  thinkingDots: { marginTop: 22, flexDirection: 'row', gap: 8 },
   thinkingDot: { width: 7, height: 7, borderRadius: 99, backgroundColor: '#B58AC6' },
-  analysisCard: { marginTop: 18, borderRadius: 20, borderWidth: 1, borderColor: '#3C2A45', backgroundColor: '#18101F', padding: 18 },
-  gateCard: { marginTop: 18, borderRadius: 20, borderWidth: 1, borderColor: '#6A4C77', backgroundColor: '#201328', padding: 18 },
-  synthesisCard: { marginTop: 18, borderRadius: 20, borderWidth: 1, borderColor: '#4D3559', backgroundColor: '#18101F', padding: 18 },
+  analysisCard: {
+    marginTop: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#3C2A45',
+    backgroundColor: '#18101F',
+    padding: 18,
+  },
+  gateCard: {
+    marginTop: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#6A4C77',
+    backgroundColor: '#201328',
+    padding: 18,
+  },
+  synthesisCard: {
+    marginTop: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#4D3559',
+    backgroundColor: '#18101F',
+    padding: 18,
+  },
   endEyebrow: { color: '#B58AC6', fontSize: 10, fontWeight: '800', letterSpacing: 1.8 },
-  analysisTitle: { marginTop: 7, marginBottom: 10, color: '#F3E8F6', fontSize: 18, fontWeight: '800' },
-  choiceList: { marginTop: 18, gap: 10 },
-  choiceButton: { minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#5F436B', backgroundColor: '#1B1122', justifyContent: 'center', paddingHorizontal: 15 },
+  analysisTitle: { marginBottom: 10, color: '#F3E8F6', fontSize: 18, fontWeight: '800' },
+  choiceList: { gap: 10 },
+  choiceButton: {
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#5F436B',
+    backgroundColor: '#1B1122',
+    justifyContent: 'center',
+    paddingHorizontal: 15,
+  },
   choiceButtonText: { color: '#E8DCEB', fontSize: 14, lineHeight: 20 },
   inputRow: { marginTop: 14, flexDirection: 'row', gap: 10 },
-  textInput: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#5F436B', backgroundColor: '#18101F', color: '#F2E8F4', paddingHorizontal: 14, fontSize: 14 },
-  sendButton: { minWidth: 70, borderRadius: 14, backgroundColor: '#7D4A91', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  textInput: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#5F436B',
+    backgroundColor: '#18101F',
+    color: '#F2E8F4',
+    paddingHorizontal: 14,
+    fontSize: 14,
+  },
+  sendButton: {
+    minWidth: 70,
+    borderRadius: 14,
+    backgroundColor: '#7D4A91',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
   sendButtonText: { color: '#FFF8FF', fontSize: 14, fontWeight: '800' },
-  followupResult: { marginTop: 18 },
-  userBubble: { alignSelf: 'flex-end', maxWidth: '86%', borderRadius: 16, backgroundColor: '#6D427D', color: '#FFF8FF', paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, lineHeight: 20 },
+  followupResult: { marginTop: 14 },
+  userBubble: {
+    alignSelf: 'flex-end',
+    maxWidth: '86%',
+    borderRadius: 16,
+    backgroundColor: '#6D427D',
+    color: '#FFF8FF',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    lineHeight: 20,
+  },
   velaReply: { marginTop: 14, color: '#D7C6DC', fontSize: 14, lineHeight: 22 },
-  supplementWrap: { marginTop: 18, width: '45%', alignSelf: 'center' },
+  supplementWrap: { marginTop: 6, width: '45%', alignSelf: 'center' },
 });
