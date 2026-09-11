@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -19,6 +20,14 @@ import {
   makeRequestId,
   normalizeDrawCards,
 } from './vela-api';
+
+const VELA_ART = {
+  ready: require('./assets/vela/ready.png'),
+  reading: require('./assets/vela/reading.png'),
+  thinking: require('./assets/vela/thinking.png'),
+  asking: require('./assets/vela/asking.png'),
+  clarifier: require('./assets/vela/clarifier.png'),
+};
 
 const PHASE = {
   IDLE: 'idle',
@@ -145,27 +154,15 @@ function createMockInterpretation(cards) {
   };
 }
 
-function VelaStage({ phase, speech, idleScene }) {
-  const float = useRef(new Animated.Value(0)).current;
+function VelaStage({ phase, speech, idleScene, pose = 'ready' }) {
   const proximity = useRef(new Animated.Value(0)).current;
   const curtain = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: -5, duration: 1800, useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 1800, useNativeDriver: true }),
-      ]),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [float]);
-
-  useEffect(() => {
     Animated.spring(proximity, {
       toValue: phase === PHASE.NOTICE ? 1 : 0,
-      friction: 7,
-      tension: 70,
+      friction: 8,
+      tension: 65,
       useNativeDriver: true,
     }).start();
   }, [phase, proximity]);
@@ -179,23 +176,28 @@ function VelaStage({ phase, speech, idleScene }) {
   }, [phase, curtain]);
 
   const daily = phase === PHASE.IDLE || phase === PHASE.NOTICE;
-  const closeScale = proximity.interpolate({ inputRange: [0, 1], outputRange: [1, 1.55] });
-  const closeY = proximity.interpolate({ inputRange: [0, 1], outputRange: [0, 42] });
+  const closeScale = proximity.interpolate({ inputRange: [0, 1], outputRange: [1, 1.24] });
+  const closeY = proximity.interpolate({ inputRange: [0, 1], outputRange: [0, 22] });
   const leftX = curtain.interpolate({ inputRange: [0, 1], outputRange: [-190, 0] });
   const rightX = curtain.interpolate({ inputRange: [0, 1], outputRange: [190, 0] });
+  const art = VELA_ART[pose] || VELA_ART.ready;
 
   return (
     <View style={[styles.stage, !daily && styles.stageTarot]}>
       <Text style={styles.moon}>☾</Text>
       <Animated.View
+        pointerEvents="none"
         style={[
-          styles.velaPlaceholder,
-          !daily && styles.velaPlaceholderReady,
-          { transform: [{ translateY: Animated.add(float, closeY) }, { scale: closeScale }] },
+          styles.velaPortraitWrap,
+          { transform: [{ translateY: closeY }, { scale: closeScale }] },
         ]}
       >
-        <Text style={styles.velaInitial}>V</Text>
-        <Text style={styles.velaState}>{daily ? idleScene.label : 'TAROT VELA'}</Text>
+        <Image
+          source={art}
+          resizeMode="contain"
+          style={styles.velaPortrait}
+          accessibilityLabel={`Vela · ${daily ? idleScene?.label || '待機' : pose}`}
+        />
       </Animated.View>
       <View style={styles.speechBubble}>
         <Text style={styles.speakerTag}>VELA</Text>
@@ -680,11 +682,23 @@ export default function App() {
             ? '這張沒有推翻前面三張。它只是把焦點縮小：先處理你能控制的部分，比一直猜結果更有用。'
             : readingDialogue || speech;
 
+  const velaPose = phase === PHASE.THINKING
+    ? 'thinking'
+    : phase === PHASE.NOTICE
+      ? 'asking'
+      : phase === PHASE.FOLLOWUP
+        ? (followupLoading ? 'thinking' : followupAnswered ? 'reading' : 'asking')
+        : phase === PHASE.SUPPLEMENT
+          ? (supplementRevealed ? 'clarifier' : 'reading')
+          : [PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.SYNTHESIS].includes(phase)
+            ? 'reading'
+            : 'ready';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       <ScrollView ref={scrollRef} contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
-        <VelaStage phase={phase} speech={stageSpeech} idleScene={idleScene} />
+        <VelaStage phase={phase} speech={stageSpeech} idleScene={idleScene} pose={velaPose} />
 
         {phase === PHASE.IDLE && (
           <View style={styles.actionArea}>
@@ -883,14 +897,12 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
   screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36, backgroundColor: '#100918' },
-  stage: { minHeight: 420, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 20, paddingBottom: 128 },
+  stage: { minHeight: 458, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 16, paddingBottom: 126 },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
-  moon: { position: 'absolute', top: 17, right: 22, color: '#D9B96E', fontSize: 31 },
-  velaPlaceholder: { marginTop: 26, width: 200, height: 235, borderTopLeftRadius: 96, borderTopRightRadius: 96, borderBottomLeftRadius: 38, borderBottomRightRadius: 38, backgroundColor: '#2B1D36', borderWidth: 1, borderColor: '#594064', alignItems: 'center', justifyContent: 'center' },
-  velaPlaceholderReady: { backgroundColor: '#392046', borderColor: '#9E77B2' },
-  velaInitial: { color: '#F5E7FA', fontSize: 68, fontWeight: '300', fontFamily: 'serif' },
-  velaState: { marginTop: 12, color: '#A993B5', fontSize: 9, letterSpacing: 1.2 },
-  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 16, minHeight: 92, borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14 },
+  moon: { position: 'absolute', top: 17, right: 22, color: '#D9B96E', fontSize: 31, zIndex: 3 },
+  velaPortraitWrap: { marginTop: 3, width: '96%', height: 326, alignItems: 'center', justifyContent: 'flex-end', zIndex: 1 },
+  velaPortrait: { width: '100%', height: '100%' },
+  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 16, minHeight: 92, borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14, zIndex: 5 },
   speakerTag: { position: 'absolute', top: -10, left: 14, borderRadius: 8, backgroundColor: '#5C356B', color: '#FFF5FF', paddingHorizontal: 9, paddingVertical: 4, fontSize: 9, fontWeight: '800', letterSpacing: 1.2, overflow: 'hidden' },
   speech: { color: '#25182C', fontSize: 15, lineHeight: 22, textAlign: 'left', fontWeight: '600' },
   curtainLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
