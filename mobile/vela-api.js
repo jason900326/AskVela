@@ -59,6 +59,33 @@ export function interpretTarotReading({
   );
 }
 
+export function followUpTarotReading({
+  question,
+  readingId,
+  selectedCardIndexes,
+  requestId,
+  message,
+  history = [],
+  initialReading,
+  spreadId = DEFAULT_SPREAD_ID,
+}) {
+  const operationId = `${requestId}:follow-up:${history.length + 1}`;
+  return postJson(
+    '/api/readings/follow-up',
+    {
+      question,
+      spreadId,
+      requestId,
+      readingId,
+      selectedCardIndexes,
+      message,
+      history,
+      initialReading,
+    },
+    operationId,
+  );
+}
+
 export function normalizeDrawCards(draw) {
   return (draw?.cards || []).map((card, index) => ({
     id: card.cardId || `server-card-${index}`,

@@ -14,6 +14,7 @@ import {
 import {
   LIVE_READING_ENABLED,
   drawTarotReading,
+  followUpTarotReading,
   interpretTarotReading,
   makeRequestId,
   normalizeDrawCards,
@@ -294,6 +295,9 @@ export default function App() {
   const [followupInput, setFollowupInput] = useState('');
   const [followupMessage, setFollowupMessage] = useState('');
   const [followupAnswered, setFollowupAnswered] = useState(false);
+  const [followupAnswer, setFollowupAnswer] = useState('');
+  const [followupPracticalFocus, setFollowupPracticalFocus] = useState('');
+  const [followupLoading, setFollowupLoading] = useState(false);
   const [supplementCard, setSupplementCard] = useState(null);
   const [supplementRevealed, setSupplementRevealed] = useState(false);
 
@@ -423,7 +427,7 @@ export default function App() {
   }, [phase, analysisCount]);
 
   useEffect(() => {
-    if (phase !== PHASE.FOLLOWUP || !followupAnswered) return undefined;
+    if (phase !== PHASE.FOLLOWUP || !followupAnswered || followupLoading || !followupAnswer) return undefined;
     const timer = setTimeout(() => {
       const [name, english] = TAROT_POOL[Math.floor(Math.random() * TAROT_POOL.length)];
       setSupplementCard({ id: `supplement-${Date.now()}`, name, english, reversed: Math.random() < 0.5 });
@@ -432,7 +436,7 @@ export default function App() {
       setPhase(PHASE.SUPPLEMENT);
     }, 1250);
     return () => clearTimeout(timer);
-  }, [phase, followupAnswered]);
+  }, [phase, followupAnswered, followupLoading, followupAnswer]);
 
   useEffect(() => {
     if (phase !== PHASE.SUPPLEMENT || !supplementCard || supplementRevealed) return undefined;
@@ -515,13 +519,52 @@ export default function App() {
     setPhase(PHASE.FULL_READING);
   }
 
-  function answerFollowup(message) {
+  async function answerFollowup(message) {
     const clean = message.trim();
-    if (!clean) return;
+    if (!clean || followupLoading || followupAnswered) return;
+
     setFollowupMessage(clean);
     setFollowupInput('');
     setFollowupAnswered(true);
-    setSpeech('嗯……等一下。');
+    setFollowupAnswer('');
+    setFollowupPracticalFocus('');
+    setFollowupLoading(true);
+    setSpeech('嗯……我再看一下。');
+
+    try {
+      if (!LIVE_READING_ENABLED || !drawData?.readingId || !interpretation) {
+        throw new Error('live follow-up unavailable');
+      }
+
+      const analysis = interpretation?.analysisSynthesis || interpretation?.synthesis || {};
+      const result = await followUpTarotReading({
+        question,
+        readingId: drawData.readingId,
+        selectedCardIndexes: selectedIndexes,
+        requestId,
+        message: clean,
+        history: [],
+        initialReading: {
+          overview: analysis.overview || '',
+          narrative: analysis.narrative || '',
+          cards: (interpretation?.cards || []).map((card) => ({
+            cardId: card.cardId || '',
+            contextInterpretation: card.contextInterpretation || '',
+            practicalFocus: card.practicalFocus || '',
+          })),
+        },
+      });
+
+      setFollowupAnswer(result.answer || '我會把你這句話放回原本三張牌裡一起看。');
+      setFollowupPracticalFocus(result.practicalFocus || '');
+    } catch (error) {
+      console.warn('Falling back to mock follow-up:', error?.message || error);
+      setFollowupAnswer('我會把你這句話放回原本三張牌裡看。現在比較重要的不是逼自己立刻做決定，而是分清楚：你是在怕選錯，還是真的有一個不能忽略的卡點。');
+      setFollowupPracticalFocus('');
+    } finally {
+      setFollowupLoading(false);
+      setSpeech('等一下，我想再確認一件事。');
+    }
   }
 
   function resetReading() {
@@ -543,6 +586,9 @@ export default function App() {
     setFollowupInput('');
     setFollowupMessage('');
     setFollowupAnswered(false);
+    setFollowupAnswer('');
+    setFollowupPracticalFocus('');
+    setFollowupLoading(false);
     setSupplementCard(null);
     setSupplementRevealed(false);
     setBusinessCardIndex(Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
@@ -722,7 +768,10 @@ export default function App() {
             {followupAnswered && (
               <View style={styles.followupResult}>
                 <Text style={styles.userBubble}>{followupMessage}</Text>
-                <Text style={styles.velaReply}>等一下，我想確認一件事。</Text>
+                <Text style={styles.velaReply}>{followupLoading ? '……' : followupAnswer}</Text>
+                {!followupLoading && !!followupPracticalFocus && (
+                  <Text style={styles.practicalFocus}>{followupPracticalFocus}</Text>
+                )}
               </View>
             )}
           </View>
@@ -730,6 +779,9 @@ export default function App() {
 
         {phase === PHASE.SUPPLEMENT && supplementCard && (
           <View style={styles.tableSection}>
+            {!!followupAnswer && (
+              <Text style={styles.velaReply}>{followupAnswer}</Text>
+            )}
             <View style={styles.supplementWrap}>
               <RevealCard card={supplementCard} revealed={supplementRevealed} canReveal={false} onPress={() => {}} lockedHint="" />
             </View>
