@@ -31,6 +31,7 @@ const PHASE = {
   FIRST_READING: 'first-reading',
   LOGIN_GATE: 'login-gate',
   FULL_READING: 'full-reading',
+  SYNTHESIS: 'synthesis',
   FOLLOWUP: 'followup',
   SUPPLEMENT: 'supplement',
 };
@@ -124,8 +125,15 @@ function createMockInterpretation(cards) {
   return {
     cards: cards.map((card, index) => ({
       cardId: card.cardId,
+      coreJudgment: [
+        '你現在卡住的不是沒有答案，而是還不想放掉另一個可能。',
+        '真正讓你停住的，比較像是對選錯之後代價的擔心。',
+        '這張牌比較支持先做一個能測試方向的小動作，而不是逼自己一次決定到底。',
+      ][index],
+      briefReason: mockCardReading(card, index),
+      recap: ['還不想放掉另一個可能', '怕的是選錯的代價', '先試一步，不用一次定終局'][index],
       contextInterpretation: mockCardReading(card, index),
-      practicalFocus: index === 2 ? '先處理你能控制的那一步。' : '',
+      practicalFocus: ['列出你真正不想失去的那一項。', '把最怕的代價寫成可以驗證的事。', '先做一個可回頭的小測試。'][index],
     })),
     analysisSynthesis: {
       overview: '三張牌放在一起',
@@ -260,15 +268,43 @@ function MiniCard({ card }) {
   );
 }
 
-function ReadingBlock({ card, index, interpretation }) {
+function getGameReading(resultCard, card, index) {
+  const fallback = mockCardReading(card, index);
+  return {
+    coreJudgment: resultCard?.coreJudgment || resultCard?.contextInterpretation?.split('。')?.[0] || fallback,
+    briefReason: resultCard?.briefReason || resultCard?.contextInterpretation || fallback,
+    recap: resultCard?.recap || resultCard?.coreJudgment || `${card?.name}：${fallback}`,
+    practicalFocus: resultCard?.practicalFocus || '',
+  };
+}
+
+function ActiveReading({ card, index, interpretation }) {
   if (!card) return null;
-  const resultCard = interpretation?.cards?.[index];
+  const game = getGameReading(interpretation?.cards?.[index], card, index);
   return (
-    <View style={styles.analysisCard}>
-      <Text style={styles.endEyebrow}>{card.positionLabel || `CARD ${index + 1}`}</Text>
-      <Text style={styles.analysisTitle}>{card.name} · {card.reversed ? '逆位' : '正位'}</Text>
-      <Text style={styles.bodyCopy}>{resultCard?.contextInterpretation || mockCardReading(card, index)}</Text>
-      {!!resultCard?.practicalFocus && <Text style={styles.practicalFocus}>{resultCard.practicalFocus}</Text>}
+    <View style={styles.activeReading}>
+      <View style={styles.activeCardIdentity}>
+        <Text style={styles.endEyebrow}>{card.positionLabel || `CARD ${index + 1}`}</Text>
+        <Text style={styles.activeCardName}>{card.name} · {card.reversed ? '逆位' : '正位'}</Text>
+      </View>
+      <Text style={styles.reasonCopy}>{game.briefReason}</Text>
+      {!!game.practicalFocus && (
+        <View style={styles.actionCue}>
+          <Text style={styles.actionCueLabel}>你可以先做</Text>
+          <Text style={styles.actionCueText}>{game.practicalFocus}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function ReadingRecap({ card, index, interpretation }) {
+  if (!card) return null;
+  const game = getGameReading(interpretation?.cards?.[index], card, index);
+  return (
+    <View style={styles.recapRow}>
+      <Text style={styles.recapCard}>{card.name} · {card.reversed ? '逆位' : '正位'}</Text>
+      <Text style={styles.recapText}>→ {game.recap}</Text>
     </View>
   );
 }
@@ -405,7 +441,7 @@ export default function App() {
 
 
   useEffect(() => {
-    if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)) {
+    if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.SYNTHESIS, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)) {
       const timer = setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 80);
       return () => clearTimeout(timer);
     }
@@ -488,7 +524,12 @@ export default function App() {
       return;
     }
 
-    setSpeech('三張放在一起，我反而想先問你一件事。');
+    setSpeech(synthesisOverview);
+    setPhase(PHASE.SYNTHESIS);
+  }
+
+  function continueToFollowup() {
+    setSpeech(reflectionQuestion);
     setPhase(PHASE.FOLLOWUP);
   }
 
@@ -585,11 +626,22 @@ export default function App() {
     setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 50);
   }
 
+  const activeReadingIndex = phase === PHASE.FIRST_READING
+    ? 0
+    : phase === PHASE.FULL_READING
+      ? Math.max(0, analysisCount - 1)
+      : null;
+  const activeResultCard = activeReadingIndex === null ? null : interpretation?.cards?.[activeReadingIndex];
+  const activeDrawCard = activeReadingIndex === null ? null : drawCards[activeReadingIndex];
+  const activeGameReading = activeReadingIndex === null
+    ? null
+    : getGameReading(activeResultCard, activeDrawCard, activeReadingIndex);
+
   const stageSpeech = phase === PHASE.CURTAIN
     ? PREPARE_LINES[prepareIndex]
     : phase === PHASE.THINKING
       ? THINKING_LINES[thinkingIndex]
-      : speech;
+      : activeGameReading?.coreJudgment || speech;
 
   const synthesisOverview = interpretation?.analysisSynthesis?.overview || '三張牌放在一起';
   const synthesisNarrative = interpretation?.analysisSynthesis?.narrative
@@ -694,18 +746,18 @@ export default function App() {
 
         {phase === PHASE.FIRST_READING && (
           <View style={styles.tableSection}>
-            <ReadingBlock card={drawCards[0]} index={0} interpretation={interpretation} />
+            <ActiveReading card={drawCards[0]} index={0} interpretation={interpretation} />
             <Pressable style={styles.primaryButton} onPress={continueAfterFirstReading}>
-              <Text style={styles.primaryButtonText}>我看完了，繼續</Text>
+              <Text style={styles.primaryButtonText}>我懂了，繼續</Text>
             </Pressable>
           </View>
         )}
 
         {phase === PHASE.LOGIN_GATE && (
           <View style={styles.tableSection}>
-            <ReadingBlock card={drawCards[0]} index={0} interpretation={interpretation} />
+            <ReadingRecap card={drawCards[0]} index={0} interpretation={interpretation} />
             <View style={styles.gateCard}>
-              <Text style={styles.analysisTitle}>後面兩張會把關係串起來。</Text>
+              <Text style={styles.bodyCopy}>後面兩張會把這件事講完整。</Text>
               <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
                 <Text style={styles.primaryButtonText}>登入並繼續</Text>
               </Pressable>
@@ -715,26 +767,40 @@ export default function App() {
 
         {phase === PHASE.FULL_READING && (
           <View style={styles.tableSection}>
-            {drawCards.slice(0, analysisCount).map((card, index) => (
-              <ReadingBlock key={card.id} card={card} index={index} interpretation={interpretation} />
+            {drawCards.slice(0, Math.max(0, analysisCount - 1)).map((card, index) => (
+              <ReadingRecap key={card.id} card={card} index={index} interpretation={interpretation} />
             ))}
-            {analysisCount === 3 && (
-              <View style={styles.synthesisCard}>
-                <Text style={styles.analysisTitle}>{synthesisOverview}</Text>
-                <Text style={styles.bodyCopy}>{synthesisNarrative}</Text>
-              </View>
-            )}
+            <ActiveReading card={drawCards[analysisCount - 1]} index={analysisCount - 1} interpretation={interpretation} />
             <Pressable style={styles.primaryButton} onPress={advanceFullReading}>
-              <Text style={styles.primaryButtonText}>{analysisCount < 3 ? '看下一張' : '我看完了，繼續'}</Text>
+              <Text style={styles.primaryButtonText}>{analysisCount < 3 ? '看下一張' : '三張一起看'}</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {phase === PHASE.SYNTHESIS && (
+          <View style={styles.tableSection}>
+            <View style={styles.recapStack}>
+              {drawCards.map((card, index) => (
+                <ReadingRecap key={card.id} card={card} index={index} interpretation={interpretation} />
+              ))}
+            </View>
+            <View style={styles.synthesisScene}>
+              <Text style={styles.synthesisNarrative}>{synthesisNarrative}</Text>
+              {(interpretation?.analysisSynthesis?.practicalGuidance || interpretation?.synthesis?.practicalGuidance || []).slice(0, 2).map((item) => (
+                <View key={item} style={styles.synthesisStep}>
+                  <Text style={styles.synthesisStepDot}>•</Text>
+                  <Text style={styles.synthesisStepText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+            <Pressable style={styles.primaryButton} onPress={continueToFollowup}>
+              <Text style={styles.primaryButtonText}>我看完了</Text>
             </Pressable>
           </View>
         )}
 
         {phase === PHASE.FOLLOWUP && (
           <View style={styles.tableSection}>
-            <View style={styles.synthesisCard}>
-              <Text style={styles.analysisTitle}>{reflectionQuestion}</Text>
-            </View>
             {!followupAnswered && (
               <>
                 <View style={styles.choiceList}>
@@ -860,6 +926,22 @@ const styles = StyleSheet.create({
   miniCardOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
   thinkingDots: { marginTop: 22, flexDirection: 'row', gap: 8 },
   thinkingDot: { width: 7, height: 7, borderRadius: 99, backgroundColor: '#B58AC6' },
+  activeReading: { marginTop: 14, paddingVertical: 6 },
+  activeCardIdentity: { marginBottom: 14 },
+  activeCardName: { color: '#F3E8F6', fontSize: 19, fontWeight: '800' },
+  reasonCopy: { color: '#CDBED2', fontSize: 15, lineHeight: 24 },
+  actionCue: { marginTop: 16, borderLeftWidth: 2, borderLeftColor: '#B58AC6', paddingLeft: 12 },
+  actionCueLabel: { color: '#9E7EAA', fontSize: 10, fontWeight: '800', letterSpacing: 1.1, marginBottom: 5 },
+  actionCueText: { color: '#EFE3F2', fontSize: 14, lineHeight: 21, fontWeight: '700' },
+  recapStack: { gap: 8 },
+  recapRow: { borderRadius: 14, borderWidth: 1, borderColor: '#3E2B48', backgroundColor: '#17101E', paddingHorizontal: 13, paddingVertical: 11 },
+  recapCard: { color: '#AA8FB4', fontSize: 11, fontWeight: '800', marginBottom: 4 },
+  recapText: { color: '#E5D8E9', fontSize: 13, lineHeight: 19 },
+  synthesisScene: { marginTop: 18, paddingHorizontal: 4 },
+  synthesisNarrative: { color: '#D8CADC', fontSize: 15, lineHeight: 24 },
+  synthesisStep: { marginTop: 11, flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  synthesisStepDot: { color: '#B58AC6', fontSize: 17, lineHeight: 20 },
+  synthesisStepText: { flex: 1, color: '#F0E5F3', fontSize: 14, lineHeight: 21, fontWeight: '600' },
   analysisCard: { marginTop: 14, borderRadius: 20, borderWidth: 1, borderColor: '#3C2A45', backgroundColor: '#18101F', padding: 18 },
   gateCard: { marginTop: 14, borderRadius: 20, borderWidth: 1, borderColor: '#6A4C77', backgroundColor: '#201328', padding: 18 },
   synthesisCard: { marginTop: 14, borderRadius: 20, borderWidth: 1, borderColor: '#4D3559', backgroundColor: '#18101F', padding: 18 },
