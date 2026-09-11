@@ -1,0 +1,32 @@
+name: Mobile prototype CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-prototype.yml'
+
+jobs:
+  expo-bundle:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install mobile dependencies
+        run: npm install
+
+      - name: Normalize Expo dependencies
+        run: npx expo install --fix
+
+      - name: Bundle iOS prototype
+        run: npx expo export --platform ios --output-dir /tmp/askvela-mobile-dist
