@@ -1,0 +1,35 @@
+name: Manual pacing patch
+
+on:
+  push:
+    branches:
+      - app-prototype-vertical-slice
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: app-prototype-vertical-slice
+          fetch-depth: 0
+      - name: Apply pacing patch
+        run: python .github/scripts/patch_manual_pacing.py
+      - name: Verify manual pacing
+        run: |
+          grep -q "我看完了，繼續" mobile/App.js
+          grep -q "再補一張確認" mobile/App.js
+          grep -q "onPress={revealSupplement}" mobile/App.js
+          ! grep -q "if (phase !== PHASE.FULL_READING) return undefined;" mobile/App.js
+          ! grep -q "if (phase !== PHASE.SUPPLEMENT || !supplementCard || supplementRevealed) return undefined;" mobile/App.js
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/App.js
+          git commit -m "Make tarot reading progression user controlled"
+          git push origin HEAD:app-prototype-vertical-slice
