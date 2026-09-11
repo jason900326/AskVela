@@ -1,0 +1,52 @@
+name: Rebuild Vela assets
+
+on:
+  push:
+    branches:
+      - app-prototype-vertical-slice
+    paths:
+      - '.github/vela_b64/**'
+      - '.github/workflows/rebuild-vela-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: app-prototype-vertical-slice
+          fetch-depth: 0
+
+      - name: Decode Vela PNG assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mobile/assets/vela
+          for pose in ready reading thinking asking clarifier; do
+            test -s ".github/vela_b64/${pose}.b64"
+            base64 --decode ".github/vela_b64/${pose}.b64" > "mobile/assets/vela/${pose}.png"
+            test "$(head -c 8 "mobile/assets/vela/${pose}.png" | xxd -p)" = "89504e470d0a1a0a"
+            file "mobile/assets/vela/${pose}.png"
+          done
+
+      - name: Clean temporary upload files
+        shell: bash
+        run: |
+          rm -rf .github/vela_b64 .github/vela_chunks
+          rm -f .github/vela_upload_marker.txt
+          rm -f .github/workflows/rebuild-vela-assets.yml
+
+      - name: Commit rebuilt Vela assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A mobile/assets/vela .github
+          git commit -m "Rebuild valid Vela character assets"
+          git push origin HEAD:app-prototype-vertical-slice
