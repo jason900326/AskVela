@@ -400,53 +400,9 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [phase, thinkingIndex, interpretation]);
 
-  useEffect(() => {
-    if (phase !== PHASE.FIRST_READING) return undefined;
-    const timer = setTimeout(() => {
-      setSpeech('後面兩張才會把這件事講完整。要我繼續嗎？');
-      setPhase(PHASE.LOGIN_GATE);
-    }, 2300);
-    return () => clearTimeout(timer);
-  }, [phase]);
 
-  useEffect(() => {
-    if (phase !== PHASE.FULL_READING) return undefined;
-    if (analysisCount < 3) {
-      const timer = setTimeout(() => {
-        const next = analysisCount + 1;
-        setAnalysisCount(next);
-        setSpeech(next === 2 ? '第二張是卡住你的地方。' : '最後一張，我覺得你要注意這裡。');
-      }, 1650);
-      return () => clearTimeout(timer);
-    }
-    const timer = setTimeout(() => {
-      setSpeech('三張放在一起，我反而想先問你一件事。');
-      setPhase(PHASE.FOLLOWUP);
-    }, 1900);
-    return () => clearTimeout(timer);
-  }, [phase, analysisCount]);
 
-  useEffect(() => {
-    if (phase !== PHASE.FOLLOWUP || !followupAnswered || followupLoading || !followupAnswer) return undefined;
-    const timer = setTimeout(() => {
-      const [name, english] = TAROT_POOL[Math.floor(Math.random() * TAROT_POOL.length)];
-      setSupplementCard({ id: `supplement-${Date.now()}`, name, english, reversed: Math.random() < 0.5 });
-      setSupplementRevealed(false);
-      setSpeech('等一下，我想確認一件事。');
-      setPhase(PHASE.SUPPLEMENT);
-    }, 1250);
-    return () => clearTimeout(timer);
-  }, [phase, followupAnswered, followupLoading, followupAnswer]);
 
-  useEffect(() => {
-    if (phase !== PHASE.SUPPLEMENT || !supplementCard || supplementRevealed) return undefined;
-    const timer = setTimeout(() => {
-      Vibration.vibrate(28);
-      setSupplementRevealed(true);
-      setSpeech('……嗯，果然。');
-    }, 1150);
-    return () => clearTimeout(timer);
-  }, [phase, supplementCard, supplementRevealed]);
 
   useEffect(() => {
     if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)) {
@@ -517,6 +473,39 @@ export default function App() {
     setAnalysisCount(1);
     setSpeech('好。那我繼續講。');
     setPhase(PHASE.FULL_READING);
+  }
+
+  function continueAfterFirstReading() {
+    setSpeech('後面兩張才會把這件事講完整。要我繼續嗎？');
+    setPhase(PHASE.LOGIN_GATE);
+  }
+
+  function advanceFullReading() {
+    if (analysisCount < 3) {
+      const next = analysisCount + 1;
+      setAnalysisCount(next);
+      setSpeech(next === 2 ? '第二張是卡住你的地方。' : '最後一張，我覺得你要注意這裡。');
+      return;
+    }
+
+    setSpeech('三張放在一起，我反而想先問你一件事。');
+    setPhase(PHASE.FOLLOWUP);
+  }
+
+  function openSupplement() {
+    if (followupLoading || !followupAnswer) return;
+    const [name, english] = TAROT_POOL[Math.floor(Math.random() * TAROT_POOL.length)];
+    setSupplementCard({ id: `supplement-${Date.now()}`, name, english, reversed: Math.random() < 0.5 });
+    setSupplementRevealed(false);
+    setSpeech('我再補一張。先別急，你自己翻。');
+    setPhase(PHASE.SUPPLEMENT);
+  }
+
+  function revealSupplement() {
+    if (!supplementCard || supplementRevealed) return;
+    Vibration.vibrate(28);
+    setSupplementRevealed(true);
+    setSpeech('……嗯，果然。');
   }
 
   async function answerFollowup(message) {
@@ -706,6 +695,9 @@ export default function App() {
         {phase === PHASE.FIRST_READING && (
           <View style={styles.tableSection}>
             <ReadingBlock card={drawCards[0]} index={0} interpretation={interpretation} />
+            <Pressable style={styles.primaryButton} onPress={continueAfterFirstReading}>
+              <Text style={styles.primaryButtonText}>我看完了，繼續</Text>
+            </Pressable>
           </View>
         )}
 
@@ -732,6 +724,9 @@ export default function App() {
                 <Text style={styles.bodyCopy}>{synthesisNarrative}</Text>
               </View>
             )}
+            <Pressable style={styles.primaryButton} onPress={advanceFullReading}>
+              <Text style={styles.primaryButtonText}>{analysisCount < 3 ? '看下一張' : '我看完了，繼續'}</Text>
+            </Pressable>
           </View>
         )}
 
@@ -772,6 +767,16 @@ export default function App() {
                 {!followupLoading && !!followupPracticalFocus && (
                   <Text style={styles.practicalFocus}>{followupPracticalFocus}</Text>
                 )}
+                {!followupLoading && !!followupAnswer && (
+                  <>
+                    <Pressable style={styles.primaryButton} onPress={openSupplement}>
+                      <Text style={styles.primaryButtonText}>再補一張確認</Text>
+                    </Pressable>
+                    <Pressable style={styles.secondaryButton} onPress={resetReading}>
+                      <Text style={styles.secondaryButtonText}>先不用，今天到這裡</Text>
+                    </Pressable>
+                  </>
+                )}
               </View>
             )}
           </View>
@@ -783,7 +788,13 @@ export default function App() {
               <Text style={styles.velaReply}>{followupAnswer}</Text>
             )}
             <View style={styles.supplementWrap}>
-              <RevealCard card={supplementCard} revealed={supplementRevealed} canReveal={false} onPress={() => {}} lockedHint="" />
+              <RevealCard
+                card={supplementCard}
+                revealed={supplementRevealed}
+                canReveal={!supplementRevealed}
+                onPress={revealSupplement}
+                lockedHint=""
+              />
             </View>
             {supplementRevealed && (
               <View style={styles.synthesisCard}>
