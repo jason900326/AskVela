@@ -11,6 +11,13 @@ import {
   Vibration,
   View,
 } from 'react-native';
+import {
+  LIVE_READING_ENABLED,
+  drawTarotReading,
+  interpretTarotReading,
+  makeRequestId,
+  normalizeDrawCards,
+} from './vela-api';
 
 const PHASE = {
   IDLE: 'idle',
@@ -86,38 +93,47 @@ const FOLLOWUP_CHOICES = [
   '那我現在最應該做什麼？',
 ];
 
-function shuffle(input) {
-  const array = [...input];
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
 function pickIdleScene() {
   return IDLE_SCENES[Math.floor(Math.random() * IDLE_SCENES.length)];
 }
 
-function createReading() {
-  return shuffle(TAROT_POOL)
-    .slice(0, 12)
-    .map(([name, english], index) => ({
-      id: `card-${index}`,
-      name,
-      english,
-      reversed: Math.random() < 0.5,
-    }));
+function createMockCards() {
+  const shuffled = [...TAROT_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
+  return shuffled.map(([name, english], index) => ({
+    id: `mock-${Date.now()}-${index}`,
+    cardId: `mock-${index}`,
+    name,
+    english,
+    reversed: Math.random() < 0.5,
+    positionLabel: ['現況', '阻礙', '建議'][index],
+  }));
 }
 
-function cardReading(card, index) {
+function mockCardReading(card, index) {
   const orientation = card?.reversed ? '逆位' : '正位';
   const lines = [
-    `${card?.name}出現在第一個位置，比較像是在說：你現在已經感覺到事情哪裡不對，只是還沒有完全承認。${orientation}讓這個訊號更明顯。`,
-    `第二張${card?.name}比較像中間的卡點。它不是單獨在講好或壞，而是在提醒你：現在的反應很可能被前一張牌推著走。`,
-    `最後的${card?.name}比較接近你接下來可以採取的方向。這張牌不是命令，比較像是提醒你哪一種選擇會讓事情變得比較清楚。`,
+    `${card?.name}放在第一個位置，比較像你現在正在經歷的狀態。${orientation}讓這個訊號更值得注意。`,
+    `${card?.name}落在中間，比較像真正卡住你的地方。它不只是在講好或壞，而是在指出你現在最難跨過去的那一步。`,
+    `${card?.name}放在最後，比較像下一步可以留意的方向。它不是替你決定，而是把一個你可以主動處理的地方指出來。`,
   ];
-  return lines[index] ?? `${card?.name}在這組牌裡有自己的位置。`;
+  return lines[index] || `${card?.name}在這組牌裡有自己的位置。`;
+}
+
+function createMockInterpretation(cards) {
+  return {
+    cards: cards.map((card, index) => ({
+      cardId: card.cardId,
+      contextInterpretation: mockCardReading(card, index),
+      practicalFocus: index === 2 ? '先處理你能控制的那一步。' : '',
+    })),
+    analysisSynthesis: {
+      overview: '三張牌放在一起',
+      narrative: '第一張描述你現在的位置，第二張指出真正的阻力，第三張則把下一步縮小到一個比較能處理的方向。',
+    },
+    synthesis: {
+      reflectionQuestions: ['你現在真正怕的是「選錯」，還是「失去」？'],
+    },
+  };
 }
 
 function VelaStage({ phase, speech, idleScene }) {
@@ -150,11 +166,7 @@ function VelaStage({ phase, speech, idleScene }) {
       curtain.setValue(0);
       return;
     }
-    Animated.timing(curtain, {
-      toValue: 1,
-      duration: 620,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(curtain, { toValue: 1, duration: 620, useNativeDriver: true }).start();
   }, [phase, curtain]);
 
   const daily = phase === PHASE.IDLE || phase === PHASE.NOTICE;
@@ -170,30 +182,19 @@ function VelaStage({ phase, speech, idleScene }) {
         style={[
           styles.velaPlaceholder,
           !daily && styles.velaPlaceholderReady,
-          {
-            transform: [
-              { translateY: Animated.add(float, closeY) },
-              { scale: closeScale },
-            ],
-          },
+          { transform: [{ translateY: Animated.add(float, closeY) }, { scale: closeScale }] },
         ]}
       >
         <Text style={styles.velaInitial}>V</Text>
         <Text style={styles.velaState}>{daily ? idleScene.label : 'TAROT VELA'}</Text>
       </Animated.View>
-
       <View style={styles.speechBubble}>
         <Text style={styles.speech}>{speech}</Text>
       </View>
-
       {phase === PHASE.CURTAIN && (
         <View pointerEvents="none" style={styles.curtainLayer}>
-          <Animated.View
-            style={[styles.curtainPanel, styles.curtainLeft, { transform: [{ translateX: leftX }] }]}
-          />
-          <Animated.View
-            style={[styles.curtainPanel, styles.curtainRight, { transform: [{ translateX: rightX }] }]}
-          />
+          <Animated.View style={[styles.curtainPanel, styles.curtainLeft, { transform: [{ translateX: leftX }] }]} />
+          <Animated.View style={[styles.curtainPanel, styles.curtainRight, { transform: [{ translateX: rightX }] }]} />
           <Text style={styles.curtainMoon}>☾</Text>
           <Text style={styles.curtainCopy}>{speech}</Text>
         </View>
@@ -202,17 +203,18 @@ function VelaStage({ phase, speech, idleScene }) {
   );
 }
 
-function BackCard({ selected, special, onPress, index }) {
+function BackCard({ selected, special, onPress, index, disabled }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`第 ${index + 1} 張牌`}
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.card,
         selected && styles.cardSelected,
         special && styles.businessCard,
-        pressed && styles.cardPressed,
+        pressed && !disabled && styles.cardPressed,
       ]}
     >
       <Text style={styles.cardMoon}>{special ? '✦' : '☾'}</Text>
@@ -224,8 +226,6 @@ function BackCard({ selected, special, onPress, index }) {
 function RevealCard({ card, revealed, canReveal, onPress, lockedHint = '先翻前一張' }) {
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={revealed ? `${card.name}${card.reversed ? '逆位' : '正位'}` : '未翻開的塔羅牌'}
       onPress={onPress}
       disabled={!canReveal || revealed}
       style={({ pressed }) => [
@@ -243,9 +243,7 @@ function RevealCard({ card, revealed, canReveal, onPress, lockedHint = '先翻�
       ) : (
         <>
           <Text style={styles.revealMoon}>☾</Text>
-          {(canReveal || lockedHint) && (
-            <Text style={styles.tapHint}>{canReveal ? '點一下翻牌' : lockedHint}</Text>
-          )}
+          {(canReveal || lockedHint) && <Text style={styles.tapHint}>{canReveal ? '點一下翻牌' : lockedHint}</Text>}
         </>
       )}
     </Pressable>
@@ -261,13 +259,15 @@ function MiniCard({ card }) {
   );
 }
 
-function ReadingBlock({ card, index }) {
+function ReadingBlock({ card, index, interpretation }) {
   if (!card) return null;
+  const resultCard = interpretation?.cards?.[index];
   return (
     <View style={styles.analysisCard}>
-      <Text style={styles.endEyebrow}>CARD {index + 1}</Text>
+      <Text style={styles.endEyebrow}>{card.positionLabel || `CARD ${index + 1}`}</Text>
       <Text style={styles.analysisTitle}>{card.name} · {card.reversed ? '逆位' : '正位'}</Text>
-      <Text style={styles.bodyCopy}>{cardReading(card, index)}</Text>
+      <Text style={styles.bodyCopy}>{resultCard?.contextInterpretation || mockCardReading(card, index)}</Text>
+      {!!resultCard?.practicalFocus && <Text style={styles.practicalFocus}>{resultCard.practicalFocus}</Text>}
     </View>
   );
 }
@@ -280,11 +280,14 @@ export default function App() {
   const [thinkingIndex, setThinkingIndex] = useState(0);
   const [question, setQuestion] = useState('');
   const [questionDraft, setQuestionDraft] = useState('');
-  const [cards, setCards] = useState(() => createReading());
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [businessCardIndex, setBusinessCardIndex] = useState(() =>
-    Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null,
-  );
+  const [requestId, setRequestId] = useState('');
+  const [selectedIndexes, setSelectedIndexes] = useState([]);
+  const [drawData, setDrawData] = useState(null);
+  const [drawCards, setDrawCards] = useState([]);
+  const [drawLoading, setDrawLoading] = useState(false);
+  const [interpretation, setInterpretation] = useState(null);
+  const [interpretationLoading, setInterpretationLoading] = useState(false);
+  const [businessCardIndex, setBusinessCardIndex] = useState(() => Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
   const [speech, setSpeech] = useState('……嗯？你來了。');
   const [revealCount, setRevealCount] = useState(0);
   const [analysisCount, setAnalysisCount] = useState(1);
@@ -294,10 +297,9 @@ export default function App() {
   const [supplementCard, setSupplementCard] = useState(null);
   const [supplementRevealed, setSupplementRevealed] = useState(false);
 
-  const selectedCards = useMemo(
-    () => selectedIds.map((id) => cards.find((card) => card.id === id)).filter(Boolean),
-    [cards, selectedIds],
-  );
+  const slots = useMemo(() => Array.from({ length: 12 }, (_, index) => index), []);
+  const reflectionQuestion = interpretation?.synthesis?.reflectionQuestions?.[0]
+    || '你現在真正怕的是「選錯」，還是「失去」？';
 
   useEffect(() => {
     if (phase !== PHASE.CURTAIN) return undefined;
@@ -314,39 +316,85 @@ export default function App() {
   }, [phase, prepareIndex]);
 
   useEffect(() => {
-    if (phase !== PHASE.DRAW || selectedIds.length !== 3) return undefined;
-    const timer = setTimeout(() => {
-      setRevealCount(0);
-      setSpeech('好，就這三張。');
-      setPhase(PHASE.REVEAL);
-    }, 650);
-    return () => clearTimeout(timer);
-  }, [phase, selectedIds]);
+    if (phase !== PHASE.DRAW || selectedIndexes.length !== 3 || drawLoading) return undefined;
+    let cancelled = false;
+    setDrawLoading(true);
+    setSpeech('好，就這三張。');
+
+    (async () => {
+      try {
+        if (!LIVE_READING_ENABLED) throw new Error('mobile API URL not configured');
+        const draw = await drawTarotReading({ question, selectedCardIndexes: selectedIndexes, requestId });
+        if (cancelled) return;
+        setDrawData(draw);
+        setDrawCards(normalizeDrawCards(draw));
+      } catch (error) {
+        console.warn('Falling back to mock draw:', error?.message || error);
+        if (cancelled) return;
+        setDrawData(null);
+        setDrawCards(createMockCards());
+      } finally {
+        if (!cancelled) {
+          setRevealCount(0);
+          setDrawLoading(false);
+          setPhase(PHASE.REVEAL);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [phase, selectedIndexes, drawLoading, question, requestId]);
 
   useEffect(() => {
-    if (phase !== PHASE.REVEAL || selectedCards.length !== 3 || revealCount !== selectedCards.length) {
-      return undefined;
-    }
+    if (phase !== PHASE.REVEAL || drawCards.length !== 3 || revealCount !== drawCards.length) return undefined;
     const timer = setTimeout(() => {
       setThinkingIndex(0);
+      setInterpretation(null);
       setPhase(PHASE.THINKING);
     }, 850);
     return () => clearTimeout(timer);
-  }, [phase, revealCount, selectedCards.length]);
+  }, [phase, revealCount, drawCards.length]);
+
+  useEffect(() => {
+    if (phase !== PHASE.THINKING || interpretationLoading || interpretation) return undefined;
+    let cancelled = false;
+    setInterpretationLoading(true);
+
+    (async () => {
+      try {
+        if (!LIVE_READING_ENABLED || !drawData?.readingId) throw new Error('live interpretation unavailable');
+        const result = await interpretTarotReading({
+          question,
+          readingId: drawData.readingId,
+          selectedCardIndexes: selectedIndexes,
+          requestId,
+        });
+        if (!cancelled) setInterpretation(result);
+      } catch (error) {
+        console.warn('Falling back to mock interpretation:', error?.message || error);
+        if (!cancelled) setInterpretation(createMockInterpretation(drawCards));
+      } finally {
+        if (!cancelled) setInterpretationLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [phase, interpretationLoading, interpretation, drawData, drawCards, question, selectedIndexes, requestId]);
 
   useEffect(() => {
     if (phase !== PHASE.THINKING) return undefined;
+    if (thinkingIndex < THINKING_LINES.length - 1) {
+      const timer = setTimeout(() => setThinkingIndex((value) => value + 1), 1050);
+      return () => clearTimeout(timer);
+    }
+    if (!interpretation) return undefined;
     const timer = setTimeout(() => {
-      if (thinkingIndex < THINKING_LINES.length - 1) {
-        setThinkingIndex((value) => value + 1);
-      } else {
-        setAnalysisCount(1);
-        setSpeech('好，先看第一張。');
-        setPhase(PHASE.FIRST_READING);
-      }
-    }, 1050);
+      setAnalysisCount(1);
+      setSpeech('好，先看第一張。');
+      setPhase(PHASE.FIRST_READING);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [phase, thinkingIndex]);
+  }, [phase, thinkingIndex, interpretation]);
 
   useEffect(() => {
     if (phase !== PHASE.FIRST_READING) return undefined;
@@ -377,15 +425,14 @@ export default function App() {
   useEffect(() => {
     if (phase !== PHASE.FOLLOWUP || !followupAnswered) return undefined;
     const timer = setTimeout(() => {
-      const remaining = cards.filter((card) => !selectedIds.includes(card.id));
-      const nextCard = remaining[Math.floor(Math.random() * remaining.length)] ?? createReading()[0];
-      setSupplementCard({ ...nextCard, id: `supplement-${Date.now()}` });
+      const [name, english] = TAROT_POOL[Math.floor(Math.random() * TAROT_POOL.length)];
+      setSupplementCard({ id: `supplement-${Date.now()}`, name, english, reversed: Math.random() < 0.5 });
       setSupplementRevealed(false);
       setSpeech('等一下，我想確認一件事。');
       setPhase(PHASE.SUPPLEMENT);
     }, 1250);
     return () => clearTimeout(timer);
-  }, [phase, followupAnswered, cards, selectedIds]);
+  }, [phase, followupAnswered]);
 
   useEffect(() => {
     if (phase !== PHASE.SUPPLEMENT || !supplementCard || supplementRevealed) return undefined;
@@ -398,9 +445,7 @@ export default function App() {
   }, [phase, supplementCard, supplementRevealed]);
 
   useEffect(() => {
-    if (
-      [PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)
-    ) {
+    if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)) {
       const timer = setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 80);
       return () => clearTimeout(timer);
     }
@@ -424,26 +469,31 @@ export default function App() {
     if (!clean) return;
     setQuestion(clean);
     setQuestionDraft('');
+    setRequestId(makeRequestId());
+    setSelectedIndexes([]);
+    setDrawData(null);
+    setDrawCards([]);
+    setInterpretation(null);
     setSpeech('好。先別想太多，憑感覺挑三張。');
     setPhase(PHASE.DRAW);
   }
 
-  function chooseCard(card, index) {
+  function chooseCard(index) {
+    if (drawLoading) return;
     if (index === businessCardIndex) {
       Vibration.vibrate(35);
       setSpeech('啊！抱歉，那是我的名片。你當作沒看到。');
       setBusinessCardIndex(null);
       return;
     }
-
-    setSelectedIds((current) => {
-      if (current.includes(card.id)) {
+    setSelectedIndexes((current) => {
+      if (current.includes(index)) {
         setSpeech('反悔也可以。');
-        return current.filter((id) => id !== card.id);
+        return current.filter((value) => value !== index);
       }
       if (current.length >= 3) return current;
-      const next = [...current, card.id];
       Vibration.vibrate(12);
+      const next = [...current, index];
       if (next.length === 3) setSpeech('好，就這三張。');
       return next;
     });
@@ -452,10 +502,10 @@ export default function App() {
   function revealCard(index) {
     if (index !== revealCount) return;
     Vibration.vibrate(25);
-    const nextCount = revealCount + 1;
-    setRevealCount(nextCount);
-    if (nextCount === 1) setSpeech('……喔。這張有點意思。');
-    else if (nextCount === 2) setSpeech('嗯，這兩張放在一起就不太單純了。');
+    const next = revealCount + 1;
+    setRevealCount(next);
+    if (next === 1) setSpeech('……喔。這張有點意思。');
+    else if (next === 2) setSpeech('嗯，這兩張放在一起就不太單純了。');
     else setSpeech('好，我大概知道它們想說什麼了。');
   }
 
@@ -475,22 +525,27 @@ export default function App() {
   }
 
   function resetReading() {
-    setCards(createReading());
-    setSelectedIds([]);
-    setRevealCount(0);
+    setPhase(PHASE.IDLE);
+    setIdleScene(pickIdleScene());
     setPrepareIndex(0);
     setThinkingIndex(0);
-    setAnalysisCount(1);
     setQuestion('');
     setQuestionDraft('');
+    setRequestId('');
+    setSelectedIndexes([]);
+    setDrawData(null);
+    setDrawCards([]);
+    setDrawLoading(false);
+    setInterpretation(null);
+    setInterpretationLoading(false);
+    setRevealCount(0);
+    setAnalysisCount(1);
     setFollowupInput('');
     setFollowupMessage('');
     setFollowupAnswered(false);
     setSupplementCard(null);
     setSupplementRevealed(false);
-    setIdleScene(pickIdleScene());
     setBusinessCardIndex(Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
-    setPhase(PHASE.IDLE);
     setSpeech('……嗯？你來了。');
     setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 50);
   }
@@ -500,6 +555,10 @@ export default function App() {
     : phase === PHASE.THINKING
       ? THINKING_LINES[thinkingIndex]
       : speech;
+
+  const synthesisOverview = interpretation?.analysisSynthesis?.overview || '三張牌放在一起';
+  const synthesisNarrative = interpretation?.analysisSynthesis?.narrative
+    || '第一張描述你現在的位置，第二張指出真正的阻力，第三張則把下一步縮小到一個比較能處理的方向。';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -555,13 +614,14 @@ export default function App() {
         {phase === PHASE.DRAW && (
           <View style={styles.tableSection}>
             <View style={styles.cardGrid}>
-              {cards.map((card, index) => (
+              {slots.map((index) => (
                 <BackCard
-                  key={card.id}
+                  key={index}
                   index={index}
                   special={index === businessCardIndex}
-                  selected={selectedIds.includes(card.id)}
-                  onPress={() => chooseCard(card, index)}
+                  selected={selectedIndexes.includes(index)}
+                  disabled={drawLoading}
+                  onPress={() => chooseCard(index)}
                 />
               ))}
             </View>
@@ -571,7 +631,7 @@ export default function App() {
         {phase === PHASE.REVEAL && (
           <View style={styles.tableSection}>
             <View style={styles.revealRow}>
-              {selectedCards.map((card, index) => (
+              {drawCards.map((card, index) => (
                 <RevealCard
                   key={card.id}
                   card={card}
@@ -587,7 +647,7 @@ export default function App() {
         {phase === PHASE.THINKING && (
           <View style={styles.thinkingSection}>
             <View style={styles.miniCardRow}>
-              {selectedCards.map((card) => <MiniCard key={card.id} card={card} />)}
+              {drawCards.map((card) => <MiniCard key={card.id} card={card} />)}
             </View>
             <View style={styles.thinkingDots}>
               <View style={styles.thinkingDot} />
@@ -599,13 +659,13 @@ export default function App() {
 
         {phase === PHASE.FIRST_READING && (
           <View style={styles.tableSection}>
-            <ReadingBlock card={selectedCards[0]} index={0} />
+            <ReadingBlock card={drawCards[0]} index={0} interpretation={interpretation} />
           </View>
         )}
 
         {phase === PHASE.LOGIN_GATE && (
           <View style={styles.tableSection}>
-            <ReadingBlock card={selectedCards[0]} index={0} />
+            <ReadingBlock card={drawCards[0]} index={0} interpretation={interpretation} />
             <View style={styles.gateCard}>
               <Text style={styles.analysisTitle}>後面兩張會把關係串起來。</Text>
               <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
@@ -617,15 +677,13 @@ export default function App() {
 
         {phase === PHASE.FULL_READING && (
           <View style={styles.tableSection}>
-            {selectedCards.slice(0, analysisCount).map((card, index) => (
-              <ReadingBlock key={card.id} card={card} index={index} />
+            {drawCards.slice(0, analysisCount).map((card, index) => (
+              <ReadingBlock key={card.id} card={card} index={index} interpretation={interpretation} />
             ))}
             {analysisCount === 3 && (
               <View style={styles.synthesisCard}>
-                <Text style={styles.analysisTitle}>三張牌放在一起</Text>
-                <Text style={styles.bodyCopy}>
-                  第一張像你現在的感受，第二張把真正的阻力指出來，第三張才是下一步。它們不是在替你決定，而是在提醒你：現在最需要處理的其實不是結果，而是你一直繞開的那個選擇。
-                </Text>
+                <Text style={styles.analysisTitle}>{synthesisOverview}</Text>
+                <Text style={styles.bodyCopy}>{synthesisNarrative}</Text>
               </View>
             )}
           </View>
@@ -634,9 +692,8 @@ export default function App() {
         {phase === PHASE.FOLLOWUP && (
           <View style={styles.tableSection}>
             <View style={styles.synthesisCard}>
-              <Text style={styles.analysisTitle}>你現在真正怕的是「選錯」，還是「失去」？</Text>
+              <Text style={styles.analysisTitle}>{reflectionQuestion}</Text>
             </View>
-
             {!followupAnswered && (
               <>
                 <View style={styles.choiceList}>
@@ -662,7 +719,6 @@ export default function App() {
                 </View>
               </>
             )}
-
             {followupAnswered && (
               <View style={styles.followupResult}>
                 <Text style={styles.userBubble}>{followupMessage}</Text>
@@ -675,21 +731,12 @@ export default function App() {
         {phase === PHASE.SUPPLEMENT && supplementCard && (
           <View style={styles.tableSection}>
             <View style={styles.supplementWrap}>
-              <RevealCard
-                card={supplementCard}
-                revealed={supplementRevealed}
-                canReveal={false}
-                onPress={() => {}}
-                lockedHint=""
-              />
+              <RevealCard card={supplementCard} revealed={supplementRevealed} canReveal={false} onPress={() => {}} lockedHint="" />
             </View>
-
             {supplementRevealed && (
               <View style={styles.synthesisCard}>
                 <Text style={styles.analysisTitle}>{supplementCard.name} · {supplementCard.reversed ? '逆位' : '正位'}</Text>
-                <Text style={styles.bodyCopy}>
-                  這張沒有推翻前面三張，它只是把焦點縮小：你接下來先處理自己能控制的部分，比一直猜結果更有用。
-                </Text>
+                <Text style={styles.bodyCopy}>這張沒有推翻前面三張，它只是把焦點縮小：你接下來先處理自己能控制的部分，比一直猜結果更有用。</Text>
                 <Pressable style={styles.primaryButton} onPress={resetReading}>
                   <Text style={styles.primaryButtonText}>今天先到這裡</Text>
                 </Pressable>
@@ -704,134 +751,39 @@ export default function App() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
-  screen: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 36,
-    backgroundColor: '#100918',
-  },
-  stage: {
-    minHeight: 330,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: '#3B2550',
-    backgroundColor: '#1A1025',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    padding: 20,
-  },
+  screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36, backgroundColor: '#100918' },
+  stage: { minHeight: 330, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 20 },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
   moon: { position: 'absolute', top: 17, right: 22, color: '#D9B96E', fontSize: 31 },
-  velaPlaceholder: {
-    width: 150,
-    height: 190,
-    borderTopLeftRadius: 74,
-    borderTopRightRadius: 74,
-    borderBottomLeftRadius: 34,
-    borderBottomRightRadius: 34,
-    backgroundColor: '#2B1D36',
-    borderWidth: 1,
-    borderColor: '#594064',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  velaPlaceholder: { width: 150, height: 190, borderTopLeftRadius: 74, borderTopRightRadius: 74, borderBottomLeftRadius: 34, borderBottomRightRadius: 34, backgroundColor: '#2B1D36', borderWidth: 1, borderColor: '#594064', alignItems: 'center', justifyContent: 'center' },
   velaPlaceholderReady: { backgroundColor: '#392046', borderColor: '#9E77B2' },
   velaInitial: { color: '#F5E7FA', fontSize: 68, fontWeight: '300', fontFamily: 'serif' },
   velaState: { marginTop: 12, color: '#A993B5', fontSize: 9, letterSpacing: 1.2 },
-  speechBubble: {
-    marginTop: 22,
-    width: '100%',
-    borderRadius: 18,
-    backgroundColor: '#F0E4F4',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
+  speechBubble: { marginTop: 22, width: '100%', borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingVertical: 14 },
   speech: { color: '#25182C', fontSize: 16, lineHeight: 23, textAlign: 'center', fontWeight: '600' },
-  curtainLayer: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'center',
-    zIndex: 20,
-  },
+  curtainLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
   curtainPanel: { position: 'absolute', top: 0, bottom: 0, width: '52%', backgroundColor: '#4B205E' },
   curtainLeft: { left: 0, borderRightWidth: 1, borderRightColor: '#8C5DA0' },
   curtainRight: { right: 0, borderLeftWidth: 1, borderLeftColor: '#8C5DA0' },
   curtainMoon: { position: 'absolute', top: '35%', color: '#D9B96E', fontSize: 54, zIndex: 25 },
-  curtainCopy: {
-    position: 'absolute',
-    top: '57%',
-    left: 28,
-    right: 28,
-    color: '#F3E8F6',
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: 'center',
-    zIndex: 25,
-  },
+  curtainCopy: { position: 'absolute', top: '57%', left: 28, right: 28, color: '#F3E8F6', fontSize: 15, lineHeight: 22, textAlign: 'center', zIndex: 25 },
   actionArea: { marginTop: 20 },
   bodyCopy: { color: '#B8A8BF', fontSize: 14, lineHeight: 22 },
-  primaryButton: {
-    marginTop: 14,
-    minHeight: 54,
-    borderRadius: 16,
-    backgroundColor: '#7D4A91',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-  },
+  practicalFocus: { marginTop: 12, color: '#D8C2DF', fontSize: 13, lineHeight: 20, fontWeight: '600' },
+  primaryButton: { marginTop: 14, minHeight: 54, borderRadius: 16, backgroundColor: '#7D4A91', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   primaryButtonText: { color: '#FFF8FF', fontSize: 16, fontWeight: '800' },
-  secondaryButton: {
-    marginTop: 10,
-    minHeight: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#70517D',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  secondaryButton: { marginTop: 10, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#70517D', alignItems: 'center', justifyContent: 'center' },
   secondaryButtonText: { color: '#D9C6E0', fontSize: 15, fontWeight: '700' },
   tableSection: { marginTop: 20 },
-  cardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 10,
-  },
-  card: {
-    width: '15.2%',
-    aspectRatio: 0.62,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#6B4B77',
-    backgroundColor: '#24142F',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardSelected: {
-    borderWidth: 2,
-    borderColor: '#E4C6EE',
-    transform: [{ translateY: -5 }],
-    backgroundColor: '#3A2046',
-  },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 },
+  card: { width: '15.2%', aspectRatio: 0.62, borderRadius: 8, borderWidth: 1, borderColor: '#6B4B77', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center' },
+  cardSelected: { borderWidth: 2, borderColor: '#E4C6EE', transform: [{ translateY: -5 }], backgroundColor: '#3A2046' },
   businessCard: { borderStyle: 'dashed', borderColor: '#D6B56D', backgroundColor: '#30233A' },
   cardPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   cardMoon: { color: '#D4B46D', fontSize: 18 },
   cardIndex: { position: 'absolute', bottom: 5, color: '#795E85', fontSize: 8 },
   revealRow: { flexDirection: 'row', gap: 10 },
-  revealCard: {
-    flex: 1,
-    minHeight: 210,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#62456F',
-    backgroundColor: '#24142F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-  },
+  revealCard: { flex: 1, minHeight: 210, borderRadius: 14, borderWidth: 1, borderColor: '#62456F', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
   revealCardOpen: { backgroundColor: '#EBDFF0', borderColor: '#F8ECFB' },
   revealMoon: { color: '#D4B46D', fontSize: 34 },
   tapHint: { marginTop: 12, color: '#9B84A5', fontSize: 11, textAlign: 'center' },
@@ -840,91 +792,25 @@ const styles = StyleSheet.create({
   orientation: { marginTop: 20, color: '#7D4A91', fontSize: 13, fontWeight: '800' },
   thinkingSection: { marginTop: 20, alignItems: 'center' },
   miniCardRow: { width: '100%', flexDirection: 'row', gap: 10 },
-  miniCard: {
-    flex: 1,
-    minHeight: 96,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: '#5E416A',
-    backgroundColor: '#24142F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
+  miniCard: { flex: 1, minHeight: 96, borderRadius: 13, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   miniCardName: { color: '#EBDFF0', fontSize: 14, fontWeight: '800', textAlign: 'center' },
   miniCardOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
   thinkingDots: { marginTop: 22, flexDirection: 'row', gap: 8 },
   thinkingDot: { width: 7, height: 7, borderRadius: 99, backgroundColor: '#B58AC6' },
-  analysisCard: {
-    marginTop: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#3C2A45',
-    backgroundColor: '#18101F',
-    padding: 18,
-  },
-  gateCard: {
-    marginTop: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#6A4C77',
-    backgroundColor: '#201328',
-    padding: 18,
-  },
-  synthesisCard: {
-    marginTop: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#4D3559',
-    backgroundColor: '#18101F',
-    padding: 18,
-  },
-  endEyebrow: { color: '#B58AC6', fontSize: 10, fontWeight: '800', letterSpacing: 1.8 },
+  analysisCard: { marginTop: 14, borderRadius: 20, borderWidth: 1, borderColor: '#3C2A45', backgroundColor: '#18101F', padding: 18 },
+  gateCard: { marginTop: 14, borderRadius: 20, borderWidth: 1, borderColor: '#6A4C77', backgroundColor: '#201328', padding: 18 },
+  synthesisCard: { marginTop: 14, borderRadius: 20, borderWidth: 1, borderColor: '#4D3559', backgroundColor: '#18101F', padding: 18 },
+  endEyebrow: { color: '#B58AC6', fontSize: 10, fontWeight: '800', letterSpacing: 1.4, marginBottom: 6 },
   analysisTitle: { marginBottom: 10, color: '#F3E8F6', fontSize: 18, fontWeight: '800' },
   choiceList: { gap: 10 },
-  choiceButton: {
-    minHeight: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#5F436B',
-    backgroundColor: '#1B1122',
-    justifyContent: 'center',
-    paddingHorizontal: 15,
-  },
+  choiceButton: { minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#5F436B', backgroundColor: '#1B1122', justifyContent: 'center', paddingHorizontal: 15 },
   choiceButtonText: { color: '#E8DCEB', fontSize: 14, lineHeight: 20 },
   inputRow: { marginTop: 14, flexDirection: 'row', gap: 10 },
-  textInput: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#5F436B',
-    backgroundColor: '#18101F',
-    color: '#F2E8F4',
-    paddingHorizontal: 14,
-    fontSize: 14,
-  },
-  sendButton: {
-    minWidth: 70,
-    borderRadius: 14,
-    backgroundColor: '#7D4A91',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
+  textInput: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#5F436B', backgroundColor: '#18101F', color: '#F2E8F4', paddingHorizontal: 14, fontSize: 14 },
+  sendButton: { minWidth: 70, borderRadius: 14, backgroundColor: '#7D4A91', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
   sendButtonText: { color: '#FFF8FF', fontSize: 14, fontWeight: '800' },
   followupResult: { marginTop: 14 },
-  userBubble: {
-    alignSelf: 'flex-end',
-    maxWidth: '86%',
-    borderRadius: 16,
-    backgroundColor: '#6D427D',
-    color: '#FFF8FF',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  userBubble: { alignSelf: 'flex-end', maxWidth: '86%', borderRadius: 16, backgroundColor: '#6D427D', color: '#FFF8FF', paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, lineHeight: 20 },
   velaReply: { marginTop: 14, color: '#D7C6DC', fontSize: 14, lineHeight: 22 },
   supplementWrap: { marginTop: 6, width: '45%', alignSelf: 'center' },
 });
