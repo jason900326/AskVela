@@ -42,6 +42,7 @@ const VELA_ART = {
 
 const PHASE = {
   IDLE: 'idle',
+  GREETING: 'greeting',
   NOTICE: 'notice',
   CURTAIN: 'curtain',
   QUESTION: 'question',
@@ -178,35 +179,39 @@ function VelaStage({ phase, speech, idleScene, pose = 'ready' }) {
     Animated.timing(curtain, { toValue: 1, duration: 620, useNativeDriver: true }).start();
   }, [phase, curtain]);
 
-  const daily = phase === PHASE.IDLE || phase === PHASE.NOTICE || phase === PHASE.CURTAIN;
-  const homeArt = phase === PHASE.IDLE ? HOME_ART.idle : HOME_ART.notice;
+  const daily = [PHASE.IDLE, PHASE.GREETING, PHASE.NOTICE, PHASE.CURTAIN].includes(phase);
+  const homeArt = [PHASE.NOTICE, PHASE.CURTAIN].includes(phase) ? HOME_ART.notice : HOME_ART.idle;
   const art = VELA_ART[pose] || VELA_ART.ready;
   const leftX = curtain.interpolate({ inputRange: [0, 1], outputRange: [-210, 0] });
   const rightX = curtain.interpolate({ inputRange: [0, 1], outputRange: [210, 0] });
 
   return (
     <View style={[styles.stage, !daily && styles.stageTarot]}>
-      {daily ? (
-        <Image
-          source={homeArt}
-          resizeMode="cover"
-          style={styles.stageBackground}
-          accessibilityLabel={`Vela · ${phase === PHASE.IDLE ? idleScene?.label || '待機' : '注意到玩家'}`}
-        />
-      ) : (
-        <>
-          <Image source={TAROT_ROOM} resizeMode="cover" style={styles.stageBackground} />
-          <View pointerEvents="none" style={styles.stageShade} />
-          <View pointerEvents="none" style={styles.velaPortraitWrap}>
-            <Image source={art} resizeMode="contain" style={styles.velaPortrait} accessibilityLabel={`Vela · ${pose}`} />
-          </View>
-        </>
-      )}
-
-      <View style={styles.speechBubble}>
-        <Text style={styles.speakerTag}>VELA</Text>
-        <Text style={styles.speech}>{speech}</Text>
+      <View style={styles.sceneViewport}>
+        {daily ? (
+          <Image
+            source={homeArt}
+            resizeMode="cover"
+            style={styles.sceneImage}
+            accessibilityLabel={`Vela · ${[PHASE.IDLE, PHASE.GREETING].includes(phase) ? idleScene?.label || '待機' : '注意到玩家'}`}
+          />
+        ) : (
+          <>
+            <Image source={TAROT_ROOM} resizeMode="cover" style={styles.sceneImage} />
+            <View pointerEvents="none" style={styles.stageShade} />
+            <View pointerEvents="none" style={styles.velaPortraitWrap}>
+              <Image source={art} resizeMode="cover" style={styles.velaPortrait} accessibilityLabel={`Vela · ${pose}`} />
+            </View>
+          </>
+        )}
       </View>
+
+      {phase !== PHASE.IDLE && (
+        <View style={styles.speechBubble}>
+          <Text style={styles.speakerTag}>VELA</Text>
+          <Text style={styles.speech}>{speech}</Text>
+        </View>
+      )}
 
       {phase === PHASE.CURTAIN && (
         <View pointerEvents="none" style={styles.curtainLayer}>
@@ -408,7 +413,7 @@ export default function App() {
   const [interpretation, setInterpretation] = useState(null);
   const [interpretationLoading, setInterpretationLoading] = useState(false);
   const [businessCardIndex, setBusinessCardIndex] = useState(() => Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
-  const [speech, setSpeech] = useState('……嗯？你來了。');
+  const [speech, setSpeech] = useState('');
   const [revealCount, setRevealCount] = useState(0);
   const [analysisCount, setAnalysisCount] = useState(1);
   const [readingBeat, setReadingBeat] = useState(0);
@@ -532,6 +537,12 @@ export default function App() {
     }
     return undefined;
   }, [phase]);
+
+  function greetVela() {
+    Vibration.vibrate(10);
+    setSpeech('……嗯？你來了。');
+    setPhase(PHASE.GREETING);
+  }
 
   function noticeVela() {
     Vibration.vibrate(10);
@@ -754,7 +765,7 @@ export default function App() {
     setSupplementCard(null);
     setSupplementRevealed(false);
     setBusinessCardIndex(Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
-    setSpeech('……嗯？你來了。');
+    setSpeech('');
     setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 50);
   }
 
@@ -813,8 +824,16 @@ export default function App() {
 
         {phase === PHASE.IDLE && (
           <View style={styles.actionArea}>
+            <Pressable style={styles.primaryButton} onPress={greetVela}>
+              <Text style={styles.primaryButtonText}>嗨 Vela</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {phase === PHASE.GREETING && (
+          <View style={styles.actionArea}>
             <Pressable style={styles.primaryButton} onPress={noticeVela}>
-              <Text style={styles.primaryButtonText}>Vela，我想看塔羅</Text>
+              <Text style={styles.primaryButtonText}>我要看塔羅</Text>
             </Pressable>
           </View>
         )}
@@ -1030,16 +1049,17 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
   screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36, backgroundColor: '#100918' },
-  stage: { minHeight: 458, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 16, paddingBottom: 112 },
+  stage: { minHeight: 430, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 16, paddingBottom: 104 },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
-  stageBackground: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
-  stageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10, 5, 16, 0.22)', zIndex: 0 },
-  velaPortraitWrap: { marginTop: 2, width: '100%', height: 344, alignItems: 'center', justifyContent: 'flex-end', zIndex: 1 },
-  velaPortrait: { width: '100%', height: '100%' },
-  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 16, minHeight: 76, borderRadius: 17, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, zIndex: 5 },
+  sceneViewport: { position: 'absolute', top: 14, left: 14, right: 14, height: 300, borderRadius: 18, overflow: 'hidden', backgroundColor: '#160D20' },
+  sceneImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  stageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10, 5, 16, 0.20)', zIndex: 0 },
+  velaPortraitWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', zIndex: 1, overflow: 'hidden' },
+  velaPortrait: { width: '112%', height: '112%' },
+  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 14, minHeight: 82, borderRadius: 17, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, zIndex: 5 },
   speakerTag: { position: 'absolute', top: -10, left: 14, borderRadius: 8, backgroundColor: '#5C356B', color: '#FFF5FF', paddingHorizontal: 9, paddingVertical: 4, fontSize: 9, fontWeight: '800', letterSpacing: 1.2, overflow: 'hidden' },
   speech: { color: '#25182C', fontSize: 14.5, lineHeight: 21, textAlign: 'left', fontWeight: '600' },
-  curtainLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
+  curtainLayer: { position: 'absolute', top: 14, left: 14, right: 14, height: 300, borderRadius: 18, overflow: 'hidden', flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
   curtainPanel: { position: 'absolute', top: 0, bottom: 0, width: '52%', backgroundColor: '#4B205E' },
   curtainLeft: { left: 0, borderRightWidth: 1, borderRightColor: '#8C5DA0' },
   curtainRight: { right: 0, borderLeftWidth: 1, borderLeftColor: '#8C5DA0' },
