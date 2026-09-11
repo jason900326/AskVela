@@ -21,6 +21,7 @@ jobs:
       - name: Patch mobile prototype
         run: |
           sed -i "s/minHeight: 106/minHeight: 96/" .github/scripts/patch_mobile_game_stage.py
+          sed -i "s/minHeight: 96, borderRadius: 12/minHeight: 96, borderRadius: 13/" .github/scripts/patch_mobile_game_stage.py
           python .github/scripts/patch_mobile_game_stage.py
 
       - name: Verify generated asset registry
