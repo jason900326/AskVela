@@ -343,7 +343,7 @@ export default function App() {
     })();
 
     return () => { cancelled = true; };
-  }, [phase, selectedIndexes, drawLoading, question, requestId]);
+  }, [phase, selectedIndexes, question, requestId]);
 
   useEffect(() => {
     if (phase !== PHASE.REVEAL || drawCards.length !== 3 || revealCount !== drawCards.length) return undefined;
@@ -379,7 +379,7 @@ export default function App() {
     })();
 
     return () => { cancelled = true; };
-  }, [phase, interpretationLoading, interpretation, drawData, drawCards, question, selectedIndexes, requestId]);
+  }, [phase, interpretation, drawData, drawCards, question, selectedIndexes, requestId]);
 
   useEffect(() => {
     if (phase !== PHASE.THINKING) return undefined;
