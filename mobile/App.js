@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
+  Linking,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -14,12 +15,21 @@ import {
 } from 'react-native';
 import {
   LIVE_READING_ENABLED,
+  VELA_API_BASE_URL,
   drawTarotReading,
   followUpTarotReading,
   interpretTarotReading,
   makeRequestId,
   normalizeDrawCards,
 } from './vela-api';
+import { CARD_BACK, TAROT_CARD_IMAGES } from './tarot-assets';
+
+const HOME_ART = {
+  idle: require('./assets/vela/home/idle-home.png'),
+  notice: require('./assets/vela/home/notice.png'),
+};
+
+const TAROT_ROOM = require('./assets/backgrounds/tarot-room.png');
 
 const VELA_ART = {
   ready: require('./assets/vela/ready.png'),
@@ -27,6 +37,7 @@ const VELA_ART = {
   thinking: require('./assets/vela/thinking.png'),
   asking: require('./assets/vela/asking.png'),
   clarifier: require('./assets/vela/clarifier.png'),
+  bye: require('./assets/vela/bye.png'),
 };
 
 const PHASE = {
@@ -43,6 +54,8 @@ const PHASE = {
   SYNTHESIS: 'synthesis',
   FOLLOWUP: 'followup',
   SUPPLEMENT: 'supplement',
+  WRAP_UP: 'wrap-up',
+  GOODBYE: 'goodbye',
 };
 
 const IDLE_SCENES = [
@@ -74,28 +87,28 @@ const QUESTION_PROMPTS = [
 ];
 
 const TAROT_POOL = [
-  ['愚者', 'The Fool'],
-  ['魔術師', 'The Magician'],
-  ['女祭司', 'The High Priestess'],
-  ['皇后', 'The Empress'],
-  ['皇帝', 'The Emperor'],
-  ['教皇', 'The Hierophant'],
-  ['戀人', 'The Lovers'],
-  ['戰車', 'The Chariot'],
-  ['力量', 'Strength'],
-  ['隱者', 'The Hermit'],
-  ['命運之輪', 'Wheel of Fortune'],
-  ['正義', 'Justice'],
-  ['倒吊人', 'The Hanged Man'],
-  ['死神', 'Death'],
-  ['節制', 'Temperance'],
-  ['惡魔', 'The Devil'],
-  ['高塔', 'The Tower'],
-  ['星星', 'The Star'],
-  ['月亮', 'The Moon'],
-  ['太陽', 'The Sun'],
-  ['審判', 'Judgement'],
-  ['世界', 'The World'],
+  ['major-00-fool', '愚者', 'The Fool'],
+  ['major-01-magician', '魔術師', 'The Magician'],
+  ['major-02-high-priestess', '女祭司', 'The High Priestess'],
+  ['major-03-empress', '皇后', 'The Empress'],
+  ['major-04-emperor', '皇帝', 'The Emperor'],
+  ['major-05-hierophant', '教皇', 'The Hierophant'],
+  ['major-06-lovers', '戀人', 'The Lovers'],
+  ['major-07-chariot', '戰車', 'The Chariot'],
+  ['major-08-strength', '力量', 'Strength'],
+  ['major-09-hermit', '隱者', 'The Hermit'],
+  ['major-10-wheel-of-fortune', '命運之輪', 'Wheel of Fortune'],
+  ['major-11-justice', '正義', 'Justice'],
+  ['major-12-hanged-man', '倒吊人', 'The Hanged Man'],
+  ['major-13-death', '死神', 'Death'],
+  ['major-14-temperance', '節制', 'Temperance'],
+  ['major-15-devil', '惡魔', 'The Devil'],
+  ['major-16-tower', '高塔', 'The Tower'],
+  ['major-17-star', '星星', 'The Star'],
+  ['major-18-moon', '月亮', 'The Moon'],
+  ['major-19-sun', '太陽', 'The Sun'],
+  ['major-20-judgement', '審判', 'Judgement'],
+  ['major-21-world', '世界', 'The World'],
 ];
 
 const FOLLOWUP_CHOICES = [
@@ -110,9 +123,9 @@ function pickIdleScene() {
 
 function createMockCards() {
   const shuffled = [...TAROT_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
-  return shuffled.map(([name, english], index) => ({
+  return shuffled.map(([cardId, name, english], index) => ({
     id: `mock-${Date.now()}-${index}`,
-    cardId: `mock-${index}`,
+    cardId,
     name,
     english,
     reversed: Math.random() < 0.5,
@@ -155,17 +168,7 @@ function createMockInterpretation(cards) {
 }
 
 function VelaStage({ phase, speech, idleScene, pose = 'ready' }) {
-  const proximity = useRef(new Animated.Value(0)).current;
   const curtain = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(proximity, {
-      toValue: phase === PHASE.NOTICE ? 1 : 0,
-      friction: 8,
-      tension: 65,
-      useNativeDriver: true,
-    }).start();
-  }, [phase, proximity]);
 
   useEffect(() => {
     if (phase !== PHASE.CURTAIN) {
@@ -175,43 +178,61 @@ function VelaStage({ phase, speech, idleScene, pose = 'ready' }) {
     Animated.timing(curtain, { toValue: 1, duration: 620, useNativeDriver: true }).start();
   }, [phase, curtain]);
 
-  const daily = phase === PHASE.IDLE || phase === PHASE.NOTICE;
-  const closeScale = proximity.interpolate({ inputRange: [0, 1], outputRange: [1, 1.24] });
-  const closeY = proximity.interpolate({ inputRange: [0, 1], outputRange: [0, 22] });
-  const leftX = curtain.interpolate({ inputRange: [0, 1], outputRange: [-190, 0] });
-  const rightX = curtain.interpolate({ inputRange: [0, 1], outputRange: [190, 0] });
+  const daily = phase === PHASE.IDLE || phase === PHASE.NOTICE || phase === PHASE.CURTAIN;
+  const homeArt = phase === PHASE.IDLE ? HOME_ART.idle : HOME_ART.notice;
   const art = VELA_ART[pose] || VELA_ART.ready;
+  const leftX = curtain.interpolate({ inputRange: [0, 1], outputRange: [-210, 0] });
+  const rightX = curtain.interpolate({ inputRange: [0, 1], outputRange: [210, 0] });
 
   return (
     <View style={[styles.stage, !daily && styles.stageTarot]}>
-      <Text style={styles.moon}>☾</Text>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.velaPortraitWrap,
-          { transform: [{ translateY: closeY }, { scale: closeScale }] },
-        ]}
-      >
+      {daily ? (
         <Image
-          source={art}
-          resizeMode="contain"
-          style={styles.velaPortrait}
-          accessibilityLabel={`Vela · ${daily ? idleScene?.label || '待機' : pose}`}
+          source={homeArt}
+          resizeMode="cover"
+          style={styles.stageBackground}
+          accessibilityLabel={`Vela · ${phase === PHASE.IDLE ? idleScene?.label || '待機' : '注意到玩家'}`}
         />
-      </Animated.View>
+      ) : (
+        <>
+          <Image source={TAROT_ROOM} resizeMode="cover" style={styles.stageBackground} />
+          <View pointerEvents="none" style={styles.stageShade} />
+          <View pointerEvents="none" style={styles.velaPortraitWrap}>
+            <Image source={art} resizeMode="contain" style={styles.velaPortrait} accessibilityLabel={`Vela · ${pose}`} />
+          </View>
+        </>
+      )}
+
       <View style={styles.speechBubble}>
         <Text style={styles.speakerTag}>VELA</Text>
         <Text style={styles.speech}>{speech}</Text>
       </View>
+
       {phase === PHASE.CURTAIN && (
         <View pointerEvents="none" style={styles.curtainLayer}>
           <Animated.View style={[styles.curtainPanel, styles.curtainLeft, { transform: [{ translateX: leftX }] }]} />
           <Animated.View style={[styles.curtainPanel, styles.curtainRight, { transform: [{ translateX: rightX }] }]} />
-          <Text style={styles.curtainMoon}>☾</Text>
           <Text style={styles.curtainCopy}>{speech}</Text>
         </View>
       )}
     </View>
+  );
+}
+
+function cardArt(card) {
+  return card?.cardId ? TAROT_CARD_IMAGES[card.cardId] : null;
+}
+
+function CardArt({ card, style, reversed = card?.reversed, resizeMode = 'contain' }) {
+  const source = cardArt(card);
+  if (!source) return null;
+  return (
+    <Image
+      source={source}
+      resizeMode={resizeMode}
+      style={[style, reversed && styles.reversedCardArt]}
+      accessibilityLabel={`${card?.name || '塔羅牌'}・${reversed ? '逆位' : '正位'}`}
+    />
   );
 }
 
@@ -229,13 +250,14 @@ function BackCard({ selected, special, onPress, index, disabled }) {
         pressed && !disabled && styles.cardPressed,
       ]}
     >
-      <Text style={styles.cardMoon}>{special ? '✦' : '☾'}</Text>
-      <Text style={styles.cardIndex}>{index + 1}</Text>
+      <Image source={CARD_BACK} resizeMode="cover" style={styles.cardBackImage} />
+      {special && <View pointerEvents="none" style={styles.businessCardHint} />}
     </Pressable>
   );
 }
 
 function RevealCard({ card, revealed, canReveal, onPress, lockedHint = '先翻前一張' }) {
+  const source = cardArt(card);
   return (
     <Pressable
       onPress={onPress}
@@ -247,14 +269,24 @@ function RevealCard({ card, revealed, canReveal, onPress, lockedHint = '先翻�
       ]}
     >
       {revealed ? (
-        <>
-          <Text style={styles.revealName}>{card.name}</Text>
-          <Text style={styles.revealEnglish}>{card.english}</Text>
-          <Text style={styles.orientation}>{card.reversed ? '逆位' : '正位'}</Text>
-        </>
+        source ? (
+          <>
+            <CardArt card={card} style={styles.revealCardArt} />
+            <View style={styles.revealMeta}>
+              <Text style={styles.revealName}>{card.name}</Text>
+              <Text style={styles.orientation}>{card.reversed ? '逆位' : '正位'}</Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.revealName}>{card.name}</Text>
+            <Text style={styles.revealEnglish}>{card.english}</Text>
+            <Text style={styles.orientation}>{card.reversed ? '逆位' : '正位'}</Text>
+          </>
+        )
       ) : (
         <>
-          <Text style={styles.revealMoon}>☾</Text>
+          <Image source={CARD_BACK} resizeMode="cover" style={styles.revealCardBack} />
           {(canReveal || lockedHint) && <Text style={styles.tapHint}>{canReveal ? '點一下翻牌' : lockedHint}</Text>}
         </>
       )}
@@ -263,9 +295,10 @@ function RevealCard({ card, revealed, canReveal, onPress, lockedHint = '先翻�
 }
 
 function MiniCard({ card }) {
+  const source = cardArt(card);
   return (
     <View style={styles.miniCard}>
-      <Text style={styles.miniCardName}>{card.name}</Text>
+      {source ? <CardArt card={card} style={styles.miniCardArt} /> : <Text style={styles.miniCardName}>{card.name}</Text>}
       <Text style={styles.miniCardOrientation}>{card.reversed ? '逆位' : '正位'}</Text>
     </View>
   );
@@ -274,12 +307,19 @@ function MiniCard({ card }) {
 function ReadingCardStrip({ cards, activeIndex = -1 }) {
   return (
     <View style={styles.readingStrip}>
-      {cards.map((card, index) => (
-        <View key={card.id} style={[styles.readingStripCard, index === activeIndex && styles.readingStripCardActive]}>
-          <Text style={[styles.readingStripName, index === activeIndex && styles.readingStripNameActive]}>{card.name}</Text>
-          <Text style={styles.readingStripOrientation}>{card.reversed ? '逆位' : '正位'}</Text>
-        </View>
-      ))}
+      {cards.map((card, index) => {
+        const source = cardArt(card);
+        const active = index === activeIndex;
+        return (
+          <View key={card.id} style={[styles.readingStripCard, active && styles.readingStripCardActive]}>
+            {source && <CardArt card={card} style={styles.readingStripArt} />}
+            <View style={styles.readingStripMeta}>
+              <Text style={[styles.readingStripName, active && styles.readingStripNameActive]}>{card.name}</Text>
+              <Text style={styles.readingStripOrientation}>{card.reversed ? '逆位' : '正位'}</Text>
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -294,13 +334,31 @@ function getGameReading(resultCard, card, index) {
   };
 }
 
-function buildReadingDialogue(resultCard, card, index) {
+function splitSpeech(text, sentencesPerBeat = 2) {
+  const pieces = String(text || '')
+    .split(/(?<=[。！？])/u)
+    .map((piece) => piece.trim())
+    .filter(Boolean);
+  const beats = [];
+  for (let index = 0; index < pieces.length; index += sentencesPerBeat) {
+    beats.push(pieces.slice(index, index + sentencesPerBeat).join(''));
+  }
+  return beats;
+}
+
+function getReadingSegments(resultCard, card, index) {
   const game = getGameReading(resultCard, card, index);
-  return [
-    game.coreJudgment,
-    game.briefReason && game.briefReason !== game.coreJudgment ? game.briefReason : '',
-    game.practicalFocus ? `你可以先：${game.practicalFocus}` : '',
-  ].filter(Boolean).join('\n');
+  const core = String(game.coreJudgment || '').trim();
+  let reason = String(game.briefReason || '').trim();
+  if (core && reason.startsWith(core)) reason = reason.slice(core.length).trim();
+  const segments = [core, ...splitSpeech(reason, 2)];
+  if (game.practicalFocus) segments.push(`你可以先這樣做：${game.practicalFocus}`);
+  return [...new Set(segments.filter(Boolean))];
+}
+
+function shortSynthesis(overview, narrative) {
+  const beats = [String(overview || '').trim(), ...splitSpeech(narrative, 2)].filter(Boolean);
+  return beats.slice(0, 2).join('\n');
 }
 
 function ActiveReading({ card, index, interpretation }) {
@@ -353,6 +411,7 @@ export default function App() {
   const [speech, setSpeech] = useState('……嗯？你來了。');
   const [revealCount, setRevealCount] = useState(0);
   const [analysisCount, setAnalysisCount] = useState(1);
+  const [readingBeat, setReadingBeat] = useState(0);
   const [followupInput, setFollowupInput] = useState('');
   const [followupMessage, setFollowupMessage] = useState('');
   const [followupAnswered, setFollowupAnswered] = useState(false);
@@ -455,6 +514,7 @@ export default function App() {
     if (!interpretation) return undefined;
     const timer = setTimeout(() => {
       setAnalysisCount(1);
+      setReadingBeat(0);
       setSpeech('好，先看第一張。');
       setPhase(PHASE.FIRST_READING);
     }, 500);
@@ -466,7 +526,7 @@ export default function App() {
 
 
   useEffect(() => {
-    if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.SYNTHESIS, PHASE.FOLLOWUP, PHASE.SUPPLEMENT].includes(phase)) {
+    if ([PHASE.QUESTION, PHASE.REVEAL, PHASE.THINKING, PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.SYNTHESIS, PHASE.FOLLOWUP, PHASE.SUPPLEMENT, PHASE.WRAP_UP, PHASE.GOODBYE].includes(phase)) {
       const timer = setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 80);
       return () => clearTimeout(timer);
     }
@@ -530,25 +590,52 @@ export default function App() {
     else setSpeech('好，我大概知道它們想說什麼了。');
   }
 
+  async function openLogin() {
+    if (!VELA_API_BASE_URL) {
+      setSpeech('登入網址還沒設定好。先用測試按鈕繼續。');
+      return;
+    }
+    try {
+      await Linking.openURL(VELA_API_BASE_URL);
+    } catch {
+      setSpeech('登入頁打不開。先回來用測試按鈕繼續。');
+    }
+  }
+
   function unlockFullReading() {
-    setAnalysisCount(1);
+    setAnalysisCount(2);
+    setReadingBeat(0);
     setSpeech('好。那我繼續講。');
     setPhase(PHASE.FULL_READING);
   }
 
   function continueAfterFirstReading() {
+    const segments = getReadingSegments(interpretation?.cards?.[0], drawCards[0], 0);
+    if (readingBeat < Math.max(0, segments.length - 1)) {
+      setReadingBeat((value) => value + 1);
+      return;
+    }
+    setReadingBeat(0);
     setSpeech('後面兩張才會把這件事講完整。要我繼續嗎？');
     setPhase(PHASE.LOGIN_GATE);
   }
 
   function advanceFullReading() {
+    const cardIndex = Math.max(0, analysisCount - 1);
+    const segments = getReadingSegments(interpretation?.cards?.[cardIndex], drawCards[cardIndex], cardIndex);
+    if (readingBeat < Math.max(0, segments.length - 1)) {
+      setReadingBeat((value) => value + 1);
+      return;
+    }
     if (analysisCount < 3) {
       const next = analysisCount + 1;
       setAnalysisCount(next);
-      setSpeech(next === 2 ? '第二張是卡住你的地方。' : '最後一張，我覺得你要注意這裡。');
+      setReadingBeat(0);
+      setSpeech(next === 3 ? '最後一張，我覺得你要注意這裡。' : '第二張是卡住你的地方。');
       return;
     }
 
+    setReadingBeat(0);
     setSpeech(synthesisOverview);
     setPhase(PHASE.SYNTHESIS);
   }
@@ -560,8 +647,8 @@ export default function App() {
 
   function openSupplement() {
     if (followupLoading || !followupAnswer) return;
-    const [name, english] = TAROT_POOL[Math.floor(Math.random() * TAROT_POOL.length)];
-    setSupplementCard({ id: `supplement-${Date.now()}`, name, english, reversed: Math.random() < 0.5 });
+    const [cardId, name, english] = TAROT_POOL[Math.floor(Math.random() * TAROT_POOL.length)];
+    setSupplementCard({ id: `supplement-${Date.now()}`, cardId, name, english, reversed: Math.random() < 0.5 });
     setSupplementRevealed(false);
     setSpeech('我再補一張。先別急，你自己翻。');
     setPhase(PHASE.SUPPLEMENT);
@@ -571,7 +658,26 @@ export default function App() {
     if (!supplementCard || supplementRevealed) return;
     Vibration.vibrate(28);
     setSupplementRevealed(true);
-    setSpeech('……嗯，果然。');
+    setSpeech('……嗯，果然。這張把焦點縮小了。');
+  }
+
+  function finishSupplement() {
+    setSpeech('大概就是這樣。你還想留一下，還是今天先到這裡？');
+    setPhase(PHASE.WRAP_UP);
+  }
+
+  function stayWithVela() {
+    setFollowupAnswered(false);
+    setFollowupAnswer('');
+    setFollowupMessage('');
+    setFollowupInput('');
+    setSpeech('好，那再聊一下。你還想問什麼？');
+    setPhase(PHASE.FOLLOWUP);
+  }
+
+  function sayGoodbye() {
+    setSpeech('好。那今天先到這裡。下次見。');
+    setPhase(PHASE.GOODBYE);
   }
 
   async function answerFollowup(message) {
@@ -638,6 +744,7 @@ export default function App() {
     setInterpretationLoading(false);
     setRevealCount(0);
     setAnalysisCount(1);
+    setReadingBeat(0);
     setFollowupInput('');
     setFollowupMessage('');
     setFollowupAnswered(false);
@@ -666,21 +773,21 @@ export default function App() {
   const synthesisNarrative = interpretation?.analysisSynthesis?.narrative
     || '第一張描述你現在的位置，第二張指出真正的阻力，第三張則把下一步縮小到一個比較能處理的方向。';
 
-  const readingDialogue = activeReadingIndex === null
-    ? ''
-    : buildReadingDialogue(activeResultCard, activeDrawCard, activeReadingIndex);
+  const readingSegments = activeReadingIndex === null
+    ? []
+    : getReadingSegments(activeResultCard, activeDrawCard, activeReadingIndex);
 
   const stageSpeech = phase === PHASE.CURTAIN
     ? PREPARE_LINES[prepareIndex]
     : phase === PHASE.THINKING
       ? THINKING_LINES[thinkingIndex]
       : phase === PHASE.SYNTHESIS
-        ? [synthesisOverview, synthesisNarrative].filter(Boolean).join('\n')
+        ? shortSynthesis(synthesisOverview, synthesisNarrative)
         : phase === PHASE.FOLLOWUP && followupAnswered
           ? (followupLoading ? '……' : followupAnswer || speech)
           : phase === PHASE.SUPPLEMENT && supplementRevealed
-            ? '這張沒有推翻前面三張。它只是把焦點縮小：先處理你能控制的部分，比一直猜結果更有用。'
-            : readingDialogue || speech;
+            ? '這張沒有推翻前面三張。它只是把焦點縮小：先處理你能控制的部分。'
+            : readingSegments[readingBeat] || speech;
 
   const velaPose = phase === PHASE.THINKING
     ? 'thinking'
@@ -690,9 +797,13 @@ export default function App() {
         ? (followupLoading ? 'thinking' : followupAnswered ? 'reading' : 'asking')
         : phase === PHASE.SUPPLEMENT
           ? (supplementRevealed ? 'clarifier' : 'reading')
-          : [PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.SYNTHESIS].includes(phase)
-            ? 'reading'
-            : 'ready';
+          : phase === PHASE.WRAP_UP
+            ? 'asking'
+            : phase === PHASE.GOODBYE
+              ? 'bye'
+              : [PHASE.FIRST_READING, PHASE.LOGIN_GATE, PHASE.FULL_READING, PHASE.SYNTHESIS].includes(phase)
+                ? 'reading'
+                : 'ready';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -795,7 +906,7 @@ export default function App() {
           <View style={styles.tableSection}>
             <ReadingCardStrip cards={drawCards} activeIndex={0} />
             <Pressable style={styles.primaryButton} onPress={continueAfterFirstReading}>
-              <Text style={styles.primaryButtonText}>繼續聽 Vela 說</Text>
+              <Text style={styles.primaryButtonText}>{readingBeat < Math.max(0, readingSegments.length - 1) ? '繼續' : '聽完第一張'}</Text>
             </Pressable>
           </View>
         )}
@@ -803,8 +914,11 @@ export default function App() {
         {phase === PHASE.LOGIN_GATE && (
           <View style={styles.tableSection}>
             <ReadingCardStrip cards={drawCards} activeIndex={0} />
-            <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
-              <Text style={styles.primaryButtonText}>登入並繼續</Text>
+            <Pressable style={styles.primaryButton} onPress={openLogin}>
+              <Text style={styles.primaryButtonText}>前往登入</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryButton} onPress={unlockFullReading}>
+              <Text style={styles.secondaryButtonText}>我已登入，繼續</Text>
             </Pressable>
           </View>
         )}
@@ -813,7 +927,7 @@ export default function App() {
           <View style={styles.tableSection}>
             <ReadingCardStrip cards={drawCards} activeIndex={analysisCount - 1} />
             <Pressable style={styles.primaryButton} onPress={advanceFullReading}>
-              <Text style={styles.primaryButtonText}>{analysisCount < 3 ? '繼續聽下一張' : '把三張串起來'}</Text>
+              <Text style={styles.primaryButtonText}>{readingBeat < Math.max(0, readingSegments.length - 1) ? '繼續' : analysisCount < 3 ? '聽下一張' : '把三張串起來'}</Text>
             </Pressable>
           </View>
         )}
@@ -883,10 +997,29 @@ export default function App() {
               />
             </View>
             {supplementRevealed && (
-              <Pressable style={styles.primaryButton} onPress={resetReading}>
-                <Text style={styles.primaryButtonText}>今天先到這裡</Text>
+              <Pressable style={styles.primaryButton} onPress={finishSupplement}>
+                <Text style={styles.primaryButtonText}>聽 Vela 說完</Text>
               </Pressable>
             )}
+          </View>
+        )}
+
+        {phase === PHASE.WRAP_UP && (
+          <View style={styles.tableSection}>
+            <Pressable style={styles.primaryButton} onPress={stayWithVela}>
+              <Text style={styles.primaryButtonText}>再聊一下</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryButton} onPress={sayGoodbye}>
+              <Text style={styles.secondaryButtonText}>今天先到這裡</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {phase === PHASE.GOODBYE && (
+          <View style={styles.tableSection}>
+            <Pressable style={styles.primaryButton} onPress={resetReading}>
+              <Text style={styles.primaryButtonText}>回到 Vela 的房間</Text>
+            </Pressable>
           </View>
         )}
       </ScrollView>
@@ -897,19 +1030,19 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
   screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36, backgroundColor: '#100918' },
-  stage: { minHeight: 458, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 16, paddingBottom: 126 },
+  stage: { minHeight: 458, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 16, paddingBottom: 112 },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
-  moon: { position: 'absolute', top: 17, right: 22, color: '#D9B96E', fontSize: 31, zIndex: 3 },
-  velaPortraitWrap: { marginTop: 3, width: '96%', height: 326, alignItems: 'center', justifyContent: 'flex-end', zIndex: 1 },
+  stageBackground: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  stageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10, 5, 16, 0.22)', zIndex: 0 },
+  velaPortraitWrap: { marginTop: 2, width: '100%', height: 344, alignItems: 'center', justifyContent: 'flex-end', zIndex: 1 },
   velaPortrait: { width: '100%', height: '100%' },
-  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 16, minHeight: 92, borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14, zIndex: 5 },
+  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 16, minHeight: 76, borderRadius: 17, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, zIndex: 5 },
   speakerTag: { position: 'absolute', top: -10, left: 14, borderRadius: 8, backgroundColor: '#5C356B', color: '#FFF5FF', paddingHorizontal: 9, paddingVertical: 4, fontSize: 9, fontWeight: '800', letterSpacing: 1.2, overflow: 'hidden' },
-  speech: { color: '#25182C', fontSize: 15, lineHeight: 22, textAlign: 'left', fontWeight: '600' },
+  speech: { color: '#25182C', fontSize: 14.5, lineHeight: 21, textAlign: 'left', fontWeight: '600' },
   curtainLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
   curtainPanel: { position: 'absolute', top: 0, bottom: 0, width: '52%', backgroundColor: '#4B205E' },
   curtainLeft: { left: 0, borderRightWidth: 1, borderRightColor: '#8C5DA0' },
   curtainRight: { right: 0, borderLeftWidth: 1, borderLeftColor: '#8C5DA0' },
-  curtainMoon: { position: 'absolute', top: '35%', color: '#D9B96E', fontSize: 54, zIndex: 25 },
   curtainCopy: { position: 'absolute', top: '57%', left: 28, right: 28, color: '#F3E8F6', fontSize: 15, lineHeight: 22, textAlign: 'center', zIndex: 25 },
   actionArea: { marginTop: 20 },
   bodyCopy: { color: '#B8A8BF', fontSize: 14, lineHeight: 22 },
@@ -919,30 +1052,36 @@ const styles = StyleSheet.create({
   secondaryButton: { marginTop: 10, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: '#70517D', alignItems: 'center', justifyContent: 'center' },
   secondaryButtonText: { color: '#D9C6E0', fontSize: 15, fontWeight: '700' },
   tableSection: { marginTop: 20 },
-  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 },
-  card: { width: '15.2%', aspectRatio: 0.62, borderRadius: 8, borderWidth: 1, borderColor: '#6B4B77', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center' },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', rowGap: 10 },
+  card: { width: '18%', marginRight: '-1.35%', aspectRatio: 0.62, borderRadius: 8, borderWidth: 1, borderColor: '#6B4B77', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   cardSelected: { borderWidth: 2, borderColor: '#E4C6EE', transform: [{ translateY: -5 }], backgroundColor: '#3A2046' },
-  businessCard: { borderStyle: 'dashed', borderColor: '#D6B56D', backgroundColor: '#30233A' },
+  businessCard: { borderColor: '#D6B56D' },
+  businessCardHint: { ...StyleSheet.absoluteFillObject, borderWidth: 1, borderColor: 'rgba(217,185,110,0.6)', backgroundColor: 'rgba(217,185,110,0.06)' },
+  cardBackImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   cardPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
-  cardMoon: { color: '#D4B46D', fontSize: 18 },
-  cardIndex: { position: 'absolute', bottom: 5, color: '#795E85', fontSize: 8 },
   revealRow: { flexDirection: 'row', gap: 10 },
-  revealCard: { flex: 1, minHeight: 210, borderRadius: 14, borderWidth: 1, borderColor: '#62456F', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
-  revealCardOpen: { backgroundColor: '#EBDFF0', borderColor: '#F8ECFB' },
-  revealMoon: { color: '#D4B46D', fontSize: 34 },
+  revealCard: { flex: 1, aspectRatio: 0.62, borderRadius: 14, borderWidth: 1, borderColor: '#62456F', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  revealCardOpen: { backgroundColor: '#17101F', borderColor: '#F8ECFB' },
+  revealCardArt: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  revealCardBack: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  revealMeta: { position: 'absolute', left: 5, right: 5, bottom: 5, borderRadius: 8, paddingVertical: 5, paddingHorizontal: 4, backgroundColor: 'rgba(16,9,24,0.82)', alignItems: 'center' },
+  reversedCardArt: { transform: [{ rotate: '180deg' }] },
   tapHint: { marginTop: 12, color: '#9B84A5', fontSize: 11, textAlign: 'center' },
   revealName: { color: '#291C30', fontSize: 19, fontWeight: '800', textAlign: 'center' },
   revealEnglish: { marginTop: 8, color: '#6D5A74', fontSize: 11, textAlign: 'center' },
   orientation: { marginTop: 20, color: '#7D4A91', fontSize: 13, fontWeight: '800' },
   readingStrip: { width: '100%', flexDirection: 'row', gap: 10 },
-  readingStripCard: { flex: 1, minHeight: 132, borderRadius: 14, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  readingStripCardActive: { borderWidth: 2, borderColor: '#C99BDB', backgroundColor: '#35203F', transform: [{ translateY: -4 }] },
+  readingStripCard: { flex: 1, minHeight: 164, borderRadius: 14, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  readingStripCardActive: { borderWidth: 2, borderColor: '#E1BF68', backgroundColor: '#35203F', transform: [{ translateY: -4 }], shadowColor: '#E1BF68', shadowOpacity: 0.9, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
+  readingStripArt: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  readingStripMeta: { width: '100%', paddingVertical: 7, paddingHorizontal: 4, backgroundColor: 'rgba(16,9,24,0.84)', alignItems: 'center' },
   readingStripName: { color: '#BBA9C1', fontSize: 14, fontWeight: '800', textAlign: 'center' },
   readingStripNameActive: { color: '#FFF5FF' },
   readingStripOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
   thinkingSection: { marginTop: 20, alignItems: 'center' },
   miniCardRow: { width: '100%', flexDirection: 'row', gap: 10 },
-  miniCard: { flex: 1, minHeight: 96, borderRadius: 13, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  miniCard: { flex: 1, minHeight: 126, borderRadius: 12, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  miniCardArt: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   miniCardName: { color: '#EBDFF0', fontSize: 14, fontWeight: '800', textAlign: 'center' },
   miniCardOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
   thinkingDots: { marginTop: 22, flexDirection: 'row', gap: 8 },
