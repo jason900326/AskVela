@@ -1,0 +1,48 @@
+name: Hotfix mobile loading state
+
+on:
+  push:
+    branches:
+      - app-prototype-vertical-slice
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: app-prototype-vertical-slice
+          fetch-depth: 0
+      - name: Patch self-cancelling effects
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('mobile/App.js')
+          text = path.read_text()
+          text = text.replace(
+              "  }, [phase, selectedIndexes, drawLoading, question, requestId]);",
+              "  }, [phase, selectedIndexes, question, requestId]);",
+          )
+          text = text.replace(
+              "  }, [phase, interpretationLoading, interpretation, drawData, drawCards, question, selectedIndexes, requestId]);",
+              "  }, [phase, interpretation, drawData, drawCards, question, selectedIndexes, requestId]);",
+          )
+          path.write_text(text)
+          PY
+      - name: Commit hotfix
+        shell: bash
+        run: |
+          if git diff --quiet -- mobile/App.js; then
+            echo "No patch needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/App.js
+          git commit -m "Fix mobile async flow cancellation"
+          git push origin HEAD:app-prototype-vertical-slice
