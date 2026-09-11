@@ -7,6 +7,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   Vibration,
   View,
 } from 'react-native';
@@ -17,7 +18,11 @@ const PHASE = {
   DRAW: 'draw',
   REVEAL: 'reveal',
   THINKING: 'thinking',
-  ANALYSIS: 'analysis',
+  FIRST_READING: 'first-reading',
+  LOGIN_GATE: 'login-gate',
+  FULL_READING: 'full-reading',
+  FOLLOWUP: 'followup',
+  SUPPLEMENT: 'supplement',
 };
 
 const PREPARE_LINES = [
@@ -59,6 +64,12 @@ const TAROT_POOL = [
   ['世界', 'The World'],
 ];
 
+const FOLLOWUP_CHOICES = [
+  '對，我其實一直在猶豫。',
+  '我比較怕事情最後不是我想的那樣。',
+  '那我現在最應該做什麼？',
+];
+
 function shuffle(input) {
   const array = [...input];
   for (let i = array.length - 1; i > 0; i -= 1) {
@@ -77,6 +88,16 @@ function createReading() {
       english,
       reversed: Math.random() < 0.5,
     }));
+}
+
+function cardReading(card, index) {
+  const orientation = card?.reversed ? '逆位' : '正位';
+  const lines = [
+    `${card?.name}出現在第一個位置，比較像是在說：你現在已經感覺到事情哪裡不對，只是還沒有完全承認。${orientation}讓這個訊號更明顯。`,
+    `第二張${card?.name}比較像中間的卡點。它不是單獨在講好或壞，而是在提醒你：現在的反應很可能被前一張牌推著走。`,
+    `最後的${card?.name}比較接近你接下來可以採取的方向。這張牌不是命令，比較像是提醒你哪一種選擇會讓事情變得比較清楚。`,
+  ];
+  return lines[index] ?? `${card?.name}在這組牌裡有自己的位置。`;
 }
 
 function VelaStage({ phase, speech }) {
@@ -148,7 +169,9 @@ function RevealCard({ card, revealed, canReveal, onPress }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={revealed ? `${card.name}${card.reversed ? '逆位' : '正位'}` : '未翻開的塔羅牌'}
+      accessibilityLabel={
+        revealed ? `${card.name}${card.reversed ? '逆位' : '正位'}` : '未翻開的塔羅牌'
+      }
       onPress={onPress}
       disabled={!canReveal || revealed}
       style={({ pressed }) => [
@@ -182,6 +205,19 @@ function MiniCard({ card }) {
   );
 }
 
+function ReadingBlock({ card, index }) {
+  if (!card) return null;
+  return (
+    <View style={styles.analysisCard}>
+      <Text style={styles.endEyebrow}>CARD {index + 1}</Text>
+      <Text style={styles.analysisTitle}>
+        {card.name} · {card.reversed ? '逆位' : '正位'}
+      </Text>
+      <Text style={styles.bodyCopy}>{cardReading(card, index)}</Text>
+    </View>
+  );
+}
+
 export default function App() {
   const scrollRef = useRef(null);
   const [phase, setPhase] = useState(PHASE.IDLE);
@@ -194,6 +230,12 @@ export default function App() {
   );
   const [speech, setSpeech] = useState('你今天是來找我聊天，還是真的想看牌？');
   const [revealCount, setRevealCount] = useState(0);
+  const [analysisCount, setAnalysisCount] = useState(1);
+  const [followupInput, setFollowupInput] = useState('');
+  const [followupMessage, setFollowupMessage] = useState('');
+  const [followupAnswered, setFollowupAnswered] = useState(false);
+  const [supplementCard, setSupplementCard] = useState(null);
+  const [supplementRevealed, setSupplementRevealed] = useState(false);
 
   const selectedCards = useMemo(
     () => selectedIds.map((id) => cards.find((card) => card.id === id)).filter(Boolean),
@@ -251,8 +293,9 @@ export default function App() {
       if (thinkingIndex < THINKING_LINES.length - 1) {
         setThinkingIndex((value) => value + 1);
       } else {
+        setAnalysisCount(1);
         setSpeech('好，先從第一張開始。');
-        setPhase(PHASE.ANALYSIS);
+        setPhase(PHASE.FIRST_READING);
       }
     }, 1050);
 
@@ -260,7 +303,49 @@ export default function App() {
   }, [phase, thinkingIndex]);
 
   useEffect(() => {
-    if ([PHASE.REVEAL, PHASE.THINKING, PHASE.ANALYSIS].includes(phase)) {
+    if (phase !== PHASE.FIRST_READING) return undefined;
+    const timer = setTimeout(() => {
+      setSpeech('後面兩張才會把這件事講完整。要我繼續嗎？');
+      setPhase(PHASE.LOGIN_GATE);
+    }, 2300);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== PHASE.FULL_READING) return undefined;
+
+    if (analysisCount < 3) {
+      const timer = setTimeout(() => {
+        const next = analysisCount + 1;
+        setAnalysisCount(next);
+        if (next === 2) {
+          setSpeech('第二張就是卡住你的地方。');
+        } else {
+          setSpeech('最後一張，我覺得你要注意這裡。');
+        }
+      }, 1650);
+      return () => clearTimeout(timer);
+    }
+
+    const timer = setTimeout(() => {
+      setSpeech('三張放在一起，我反而想先問你一件事。');
+      setPhase(PHASE.FOLLOWUP);
+    }, 1900);
+    return () => clearTimeout(timer);
+  }, [phase, analysisCount]);
+
+  useEffect(() => {
+    if (
+      [
+        PHASE.REVEAL,
+        PHASE.THINKING,
+        PHASE.FIRST_READING,
+        PHASE.LOGIN_GATE,
+        PHASE.FULL_READING,
+        PHASE.FOLLOWUP,
+        PHASE.SUPPLEMENT,
+      ].includes(phase)
+    ) {
       const timer = setTimeout(() => {
         scrollRef.current?.scrollTo({ y: 0, animated: true });
       }, 80);
@@ -319,12 +404,49 @@ export default function App() {
     }
   }
 
+  function unlockFullReading() {
+    setAnalysisCount(1);
+    setSpeech('好。那我繼續講，你先別急著下結論。');
+    setPhase(PHASE.FULL_READING);
+  }
+
+  function answerFollowup(message) {
+    const clean = message.trim();
+    if (!clean) return;
+    setFollowupMessage(clean);
+    setFollowupInput('');
+    setFollowupAnswered(true);
+    setSpeech('嗯，那我懂你卡住的點了。這裡補一張會比較有用。');
+  }
+
+  function beginSupplement() {
+    const remaining = cards.filter((card) => !selectedIds.includes(card.id));
+    const nextCard = remaining[Math.floor(Math.random() * remaining.length)] ?? createReading()[0];
+    setSupplementCard({ ...nextCard, id: `supplement-${Date.now()}` });
+    setSupplementRevealed(false);
+    setSpeech('這次只補一張。你自己翻。');
+    setPhase(PHASE.SUPPLEMENT);
+  }
+
+  function revealSupplement() {
+    if (supplementRevealed) return;
+    Vibration.vibrate(28);
+    setSupplementRevealed(true);
+    setSpeech('嗯，就是這張。它其實是在回答你剛剛那句話。');
+  }
+
   function resetReading() {
     setCards(createReading());
     setSelectedIds([]);
     setRevealCount(0);
     setPrepareIndex(0);
     setThinkingIndex(0);
+    setAnalysisCount(1);
+    setFollowupInput('');
+    setFollowupMessage('');
+    setFollowupAnswered(false);
+    setSupplementCard(null);
+    setSupplementRevealed(false);
     setBusinessCardIndex(Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
     setPhase(PHASE.IDLE);
     setSpeech('你今天是來找我聊天，還是真的想看牌？');
@@ -341,7 +463,11 @@ export default function App() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.screen}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.screen}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.brand}>ASK VELA</Text>
         <Text style={styles.prototypeLabel}>INTERACTIVE TAROT · VERTICAL SLICE</Text>
 
@@ -350,7 +476,7 @@ export default function App() {
         {phase === PHASE.IDLE && (
           <View style={styles.actionArea}>
             <Text style={styles.bodyCopy}>
-              第一版先不接 AI。這裡只驗證「Vela 像不像一個真的在你面前準備占卜的人」。
+              第一版先不接 AI。這裡先把一整輪角色互動與塔羅流程跑完。
             </Text>
             <Pressable style={styles.primaryButton} onPress={beginReading}>
               <Text style={styles.primaryButtonText}>幫我看塔羅</Text>
@@ -435,23 +561,138 @@ export default function App() {
           </View>
         )}
 
-        {phase === PHASE.ANALYSIS && (
+        {phase === PHASE.FIRST_READING && (
           <View style={styles.tableSection}>
             <Text style={styles.sectionTitle}>Vela 開始解牌</Text>
+            <ReadingBlock card={selectedCards[0]} index={0} />
+          </View>
+        )}
 
-            <View style={styles.analysisCard}>
-              <Text style={styles.endEyebrow}>FIRST CARD</Text>
-              <Text style={styles.analysisTitle}>
-                {selectedCards[0]?.name} · {selectedCards[0]?.reversed ? '逆位' : '正位'}
-              </Text>
+        {phase === PHASE.LOGIN_GATE && (
+          <View style={styles.tableSection}>
+            <Text style={styles.sectionTitle}>Vela 開始解牌</Text>
+            <ReadingBlock card={selectedCards[0]} index={0} />
+
+            <View style={styles.gateCard}>
+              <Text style={styles.endEyebrow}>FREE READING</Text>
+              <Text style={styles.analysisTitle}>後面兩張會把關係串起來。</Text>
               <Text style={styles.bodyCopy}>
-                這裡下一步會直接接回現有的塔羅分析 API。這版先確認「翻完第三張 → Vela 思考 → 自動開始說」的節奏，不再插入任何下一步按鈕。
+                正式版這裡會要求登入，並提供一次完整免費體驗。Prototype 先直接模擬已登入。
+              </Text>
+              <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
+                <Text style={styles.primaryButtonText}>Prototype：登入並繼續</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {phase === PHASE.FULL_READING && (
+          <View style={styles.tableSection}>
+            <Text style={styles.sectionTitle}>Vela 的解讀</Text>
+            {selectedCards.slice(0, analysisCount).map((card, index) => (
+              <ReadingBlock key={card.id} card={card} index={index} />
+            ))}
+
+            {analysisCount === 3 && (
+              <View style={styles.synthesisCard}>
+                <Text style={styles.endEyebrow}>TOGETHER</Text>
+                <Text style={styles.analysisTitle}>三張牌放在一起</Text>
+                <Text style={styles.bodyCopy}>
+                  第一張像你現在的感受，第二張把真正的阻力指出來，第三張才是下一步。它們不是在替你決定，而是在提醒你：現在最需要處理的其實不是結果，而是你一直繞開的那個選擇。
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {phase === PHASE.FOLLOWUP && (
+          <View style={styles.tableSection}>
+            <Text style={styles.sectionTitle}>先別急著走</Text>
+            <View style={styles.synthesisCard}>
+              <Text style={styles.endEyebrow}>VELA WANTS TO ASK</Text>
+              <Text style={styles.analysisTitle}>你現在真正怕的是「選錯」，還是「失去」？</Text>
+              <Text style={styles.bodyCopy}>
+                正式版這裡會把你剛剛的牌、原始問題與解讀一起留在對話裡。
               </Text>
             </View>
 
-            <Pressable style={styles.secondaryButton} onPress={resetReading}>
-              <Text style={styles.secondaryButtonText}>再玩一次</Text>
-            </Pressable>
+            {!followupAnswered && (
+              <>
+                <View style={styles.choiceList}>
+                  {FOLLOWUP_CHOICES.map((choice) => (
+                    <Pressable
+                      key={choice}
+                      style={styles.choiceButton}
+                      onPress={() => answerFollowup(choice)}
+                    >
+                      <Text style={styles.choiceButtonText}>{choice}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                <View style={styles.inputRow}>
+                  <TextInput
+                    value={followupInput}
+                    onChangeText={setFollowupInput}
+                    placeholder="或自己問 Vela……"
+                    placeholderTextColor="#725E7B"
+                    style={styles.textInput}
+                    returnKeyType="send"
+                    onSubmitEditing={() => answerFollowup(followupInput)}
+                  />
+                  <Pressable style={styles.sendButton} onPress={() => answerFollowup(followupInput)}>
+                    <Text style={styles.sendButtonText}>送出</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
+
+            {followupAnswered && (
+              <View style={styles.followupResult}>
+                <Text style={styles.userBubble}>{followupMessage}</Text>
+                <Text style={styles.velaReply}>
+                  那這就不是單純問「結果會怎樣」了。你其實是在確認自己有沒有承受那個選擇的空間。我會建議補一張，只問「現在最值得注意的是什麼」。
+                </Text>
+                <Pressable style={styles.primaryButton} onPress={beginSupplement}>
+                  <Text style={styles.primaryButtonText}>好，補一張</Text>
+                </Pressable>
+                <Pressable style={styles.secondaryButton} onPress={resetReading}>
+                  <Text style={styles.secondaryButtonText}>今天先到這裡</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
+
+        {phase === PHASE.SUPPLEMENT && supplementCard && (
+          <View style={styles.tableSection}>
+            <Text style={styles.sectionTitle}>補一張</Text>
+            <Text style={styles.sectionHint}>這張只回答你剛剛的追問。</Text>
+
+            <View style={styles.supplementWrap}>
+              <RevealCard
+                card={supplementCard}
+                revealed={supplementRevealed}
+                canReveal={!supplementRevealed}
+                onPress={revealSupplement}
+              />
+            </View>
+
+            {supplementRevealed && (
+              <View style={styles.synthesisCard}>
+                <Text style={styles.endEyebrow}>CLARIFIER</Text>
+                <Text style={styles.analysisTitle}>
+                  {supplementCard.name} · {supplementCard.reversed ? '逆位' : '正位'}
+                </Text>
+                <Text style={styles.bodyCopy}>
+                  這張補牌不是推翻前面三張，而是把焦點縮小：你接下來先處理自己能控制的部分，比一直猜結果更有用。正式版會由同一份 reading context 產生真正的補牌解讀。
+                </Text>
+                <Text style={styles.velaReply}>Vela：好，這次我真的講完了。</Text>
+                <Pressable style={styles.primaryButton} onPress={resetReading}>
+                  <Text style={styles.primaryButtonText}>再看一次</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -760,6 +1001,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#18101F',
     padding: 18,
   },
+  gateCard: {
+    marginTop: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#6A4C77',
+    backgroundColor: '#201328',
+    padding: 18,
+  },
+  synthesisCard: {
+    marginTop: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#4D3559',
+    backgroundColor: '#18101F',
+    padding: 18,
+  },
   endEyebrow: {
     color: '#B58AC6',
     fontSize: 10,
@@ -773,8 +1030,80 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
   },
-  secondaryButton: {
+  choiceList: {
     marginTop: 18,
+    gap: 10,
+  },
+  choiceButton: {
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#5F436B',
+    backgroundColor: '#1B1122',
+    justifyContent: 'center',
+    paddingHorizontal: 15,
+  },
+  choiceButtonText: {
+    color: '#E8DCEB',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  inputRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#5F436B',
+    backgroundColor: '#18101F',
+    color: '#F2E8F4',
+    paddingHorizontal: 14,
+    fontSize: 14,
+  },
+  sendButton: {
+    minWidth: 70,
+    borderRadius: 14,
+    backgroundColor: '#7D4A91',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  sendButtonText: {
+    color: '#FFF8FF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  followupResult: {
+    marginTop: 18,
+  },
+  userBubble: {
+    alignSelf: 'flex-end',
+    maxWidth: '86%',
+    borderRadius: 16,
+    backgroundColor: '#6D427D',
+    color: '#FFF8FF',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  velaReply: {
+    marginTop: 14,
+    color: '#D7C6DC',
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  supplementWrap: {
+    marginTop: 18,
+    width: '45%',
+    alignSelf: 'center',
+  },
+  secondaryButton: {
+    marginTop: 12,
     minHeight: 48,
     borderRadius: 14,
     borderWidth: 1,
