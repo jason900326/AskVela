@@ -3,7 +3,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 
 export default defineConfig([
   ...nextVitals,
-  globalIgnores([".next/**", "node_modules/**", "data/processed/**"]),
+  globalIgnores([".next/**", "node_modules/**", "data/processed/**", "mobile/**"]),
   {
     // These interaction components intentionally hydrate/reset local UI state from
     // browser-only session/auth state. Keep the exception narrow instead of
