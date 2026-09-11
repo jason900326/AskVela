@@ -16,6 +16,8 @@ const PHASE = {
   PREPARING: 'preparing',
   DRAW: 'draw',
   REVEAL: 'reveal',
+  THINKING: 'thinking',
+  ANALYSIS: 'analysis',
 };
 
 const PREPARE_LINES = [
@@ -23,6 +25,13 @@ const PREPARE_LINES = [
   '把桌上的垃圾藏到你看不到的地方……',
   '正在喬一個位子給你坐……',
   '擺上我很珍貴的牌……',
+];
+
+const THINKING_LINES = [
+  '思考你剛剛問我的問題……',
+  '這三張牌的關聯是什麼？',
+  '晚餐要吃什麼……',
+  '好像有一張牌可以把狀況說清楚。',
 ];
 
 const TAROT_POOL = [
@@ -139,6 +148,7 @@ function RevealCard({ card, revealed, canReveal, onPress }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={revealed ? `${card.name}${card.reversed ? '逆位' : '正位'}` : '未翻開的塔羅牌'}
       onPress={onPress}
       disabled={!canReveal || revealed}
       style={({ pressed }) => [
@@ -163,9 +173,20 @@ function RevealCard({ card, revealed, canReveal, onPress }) {
   );
 }
 
+function MiniCard({ card }) {
+  return (
+    <View style={styles.miniCard}>
+      <Text style={styles.miniCardName}>{card.name}</Text>
+      <Text style={styles.miniCardOrientation}>{card.reversed ? '逆位' : '正位'}</Text>
+    </View>
+  );
+}
+
 export default function App() {
+  const scrollRef = useRef(null);
   const [phase, setPhase] = useState(PHASE.IDLE);
   const [prepareIndex, setPrepareIndex] = useState(0);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
   const [cards, setCards] = useState(() => createReading());
   const [selectedIds, setSelectedIds] = useState([]);
   const [businessCardIndex, setBusinessCardIndex] = useState(() =>
@@ -173,6 +194,11 @@ export default function App() {
   );
   const [speech, setSpeech] = useState('你今天是來找我聊天，還是真的想看牌？');
   const [revealCount, setRevealCount] = useState(0);
+
+  const selectedCards = useMemo(
+    () => selectedIds.map((id) => cards.find((card) => card.id === id)).filter(Boolean),
+    [cards, selectedIds],
+  );
 
   useEffect(() => {
     if (phase !== PHASE.PREPARING) return undefined;
@@ -182,20 +208,70 @@ export default function App() {
         setPrepareIndex((value) => value + 1);
       } else {
         setPhase(PHASE.DRAW);
-        setSpeech('好了。坐吧，挑三張。');
+        setSpeech('好了。坐吧，憑感覺挑三張。');
       }
     }, 1150);
 
     return () => clearTimeout(timer);
   }, [phase, prepareIndex]);
 
-  const selectedCards = useMemo(
-    () => selectedIds.map((id) => cards.find((card) => card.id === id)).filter(Boolean),
-    [cards, selectedIds],
-  );
+  useEffect(() => {
+    if (phase !== PHASE.DRAW || selectedIds.length !== 3) return undefined;
+
+    const timer = setTimeout(() => {
+      setRevealCount(0);
+      setSpeech('好，就這三張。其他的我收走。');
+      setPhase(PHASE.REVEAL);
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [phase, selectedIds]);
+
+  useEffect(() => {
+    if (
+      phase !== PHASE.REVEAL ||
+      selectedCards.length !== 3 ||
+      revealCount !== selectedCards.length
+    ) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      setThinkingIndex(0);
+      setPhase(PHASE.THINKING);
+    }, 850);
+
+    return () => clearTimeout(timer);
+  }, [phase, revealCount, selectedCards.length]);
+
+  useEffect(() => {
+    if (phase !== PHASE.THINKING) return undefined;
+
+    const timer = setTimeout(() => {
+      if (thinkingIndex < THINKING_LINES.length - 1) {
+        setThinkingIndex((value) => value + 1);
+      } else {
+        setSpeech('好，先從第一張開始。');
+        setPhase(PHASE.ANALYSIS);
+      }
+    }, 1050);
+
+    return () => clearTimeout(timer);
+  }, [phase, thinkingIndex]);
+
+  useEffect(() => {
+    if ([PHASE.REVEAL, PHASE.THINKING, PHASE.ANALYSIS].includes(phase)) {
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [phase]);
 
   function beginReading() {
     setPrepareIndex(0);
+    setThinkingIndex(0);
     setPhase(PHASE.PREPARING);
     setSpeech('……現在？好啦，等我一下。');
   }
@@ -214,23 +290,17 @@ export default function App() {
         return current.filter((id) => id !== card.id);
       }
 
-      if (current.length >= 3) {
-        setSpeech('三張就夠了，不要貪心。');
-        return current;
-      }
+      if (current.length >= 3) return current;
 
       const next = [...current, card.id];
       Vibration.vibrate(12);
-      setSpeech(next.length === 3 ? '好，就這三張。' : `還差 ${3 - next.length} 張。`);
+      setSpeech(
+        next.length === 3
+          ? '好，就這三張。其他的我收走。'
+          : `還差 ${3 - next.length} 張。`,
+      );
       return next;
     });
-  }
-
-  function lockSelection() {
-    if (selectedIds.length !== 3) return;
-    setRevealCount(0);
-    setPhase(PHASE.REVEAL);
-    setSpeech('一張一張來。別急。');
   }
 
   function revealCard(index) {
@@ -254,22 +324,28 @@ export default function App() {
     setSelectedIds([]);
     setRevealCount(0);
     setPrepareIndex(0);
+    setThinkingIndex(0);
     setBusinessCardIndex(Math.random() < 0.05 ? Math.floor(Math.random() * 12) : null);
     setPhase(PHASE.IDLE);
     setSpeech('你今天是來找我聊天，還是真的想看牌？');
+    setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 50);
   }
+
+  const stageSpeech =
+    phase === PHASE.PREPARING
+      ? PREPARE_LINES[prepareIndex]
+      : phase === PHASE.THINKING
+        ? THINKING_LINES[thinkingIndex]
+        : speech;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <ScrollView contentContainerStyle={styles.screen}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.screen}>
         <Text style={styles.brand}>ASK VELA</Text>
         <Text style={styles.prototypeLabel}>INTERACTIVE TAROT · VERTICAL SLICE</Text>
 
-        <VelaStage
-          phase={phase}
-          speech={phase === PHASE.PREPARING ? PREPARE_LINES[prepareIndex] : speech}
-        />
+        <VelaStage phase={phase} speech={stageSpeech} />
 
         {phase === PHASE.IDLE && (
           <View style={styles.actionArea}>
@@ -299,7 +375,10 @@ export default function App() {
         {phase === PHASE.DRAW && (
           <View style={styles.tableSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>挑 3 張</Text>
+              <View>
+                <Text style={styles.sectionTitle}>挑 3 張</Text>
+                <Text style={styles.sectionHint}>選滿後 Vela 會直接把其他牌收走。</Text>
+              </View>
               <Text style={styles.selectionCount}>{selectedIds.length}/3</Text>
             </View>
 
@@ -315,22 +394,16 @@ export default function App() {
               ))}
             </View>
 
-            <Pressable
-              disabled={selectedIds.length !== 3}
-              onPress={lockSelection}
-              style={[
-                styles.primaryButton,
-                selectedIds.length !== 3 && styles.primaryButtonDisabled,
-              ]}
-            >
-              <Text style={styles.primaryButtonText}>把這三張留下</Text>
-            </Pressable>
+            {selectedIds.length === 3 && (
+              <Text style={styles.autoAdvanceCopy}>Vela 正在把其他牌收起來……</Text>
+            )}
           </View>
         )}
 
         {phase === PHASE.REVEAL && (
           <View style={styles.tableSection}>
-            <Text style={styles.sectionTitle}>翻開你剛剛選的牌</Text>
+            <Text style={styles.sectionTitle}>一張一張翻開</Text>
+            <Text style={styles.sectionHint}>第三張翻開後，Vela 會直接開始想。</Text>
 
             <View style={styles.revealRow}>
               {selectedCards.map((card, index) => (
@@ -343,19 +416,42 @@ export default function App() {
                 />
               ))}
             </View>
+          </View>
+        )}
 
-            {revealCount === selectedCards.length && (
-              <View style={styles.prototypeEnd}>
-                <Text style={styles.endEyebrow}>PROTOTYPE END</Text>
-                <Text style={styles.endTitle}>下一步才接真正的 Vela 解讀。</Text>
-                <Text style={styles.bodyCopy}>
-                  目前這一刀只驗證角色、節奏、抽牌、低機率彩蛋與翻牌反應。
-                </Text>
-                <Pressable style={styles.secondaryButton} onPress={resetReading}>
-                  <Text style={styles.secondaryButtonText}>再玩一次</Text>
-                </Pressable>
-              </View>
-            )}
+        {phase === PHASE.THINKING && (
+          <View style={styles.thinkingSection}>
+            <View style={styles.miniCardRow}>
+              {selectedCards.map((card) => (
+                <MiniCard key={card.id} card={card} />
+              ))}
+            </View>
+            <View style={styles.thinkingDots}>
+              <View style={styles.thinkingDot} />
+              <View style={styles.thinkingDot} />
+              <View style={styles.thinkingDot} />
+            </View>
+            <Text style={styles.smallCopy}>不用按任何東西，讓她想一下。</Text>
+          </View>
+        )}
+
+        {phase === PHASE.ANALYSIS && (
+          <View style={styles.tableSection}>
+            <Text style={styles.sectionTitle}>Vela 開始解牌</Text>
+
+            <View style={styles.analysisCard}>
+              <Text style={styles.endEyebrow}>FIRST CARD</Text>
+              <Text style={styles.analysisTitle}>
+                {selectedCards[0]?.name} · {selectedCards[0]?.reversed ? '逆位' : '正位'}
+              </Text>
+              <Text style={styles.bodyCopy}>
+                這裡下一步會直接接回現有的塔羅分析 API。這版先確認「翻完第三張 → Vela 思考 → 自動開始說」的節奏，不再插入任何下一步按鈕。
+              </Text>
+            </View>
+
+            <Pressable style={styles.secondaryButton} onPress={resetReading}>
+              <Text style={styles.secondaryButtonText}>再玩一次</Text>
+            </Pressable>
           </View>
         )}
       </ScrollView>
@@ -467,9 +563,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 18,
   },
-  primaryButtonDisabled: {
-    opacity: 0.35,
-  },
   primaryButtonText: {
     color: '#FFF8FF',
     fontSize: 16,
@@ -501,12 +594,19 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 14,
   },
   sectionTitle: {
     color: '#F2E8F4',
     fontSize: 19,
     fontWeight: '800',
+  },
+  sectionHint: {
+    marginTop: 5,
+    color: '#806E89',
+    fontSize: 12,
+    lineHeight: 18,
   },
   selectionCount: {
     color: '#C7A6D4',
@@ -554,6 +654,13 @@ const styles = StyleSheet.create({
     bottom: 7,
     color: '#795E85',
     fontSize: 9,
+  },
+  autoAdvanceCopy: {
+    marginTop: 16,
+    color: '#B58AC6',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '700',
   },
   revealRow: {
     marginTop: 18,
@@ -603,8 +710,50 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  prototypeEnd: {
+  thinkingSection: {
+    marginTop: 26,
+    alignItems: 'center',
+  },
+  miniCardRow: {
+    width: '100%',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  miniCard: {
+    flex: 1,
+    minHeight: 96,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: '#5E416A',
+    backgroundColor: '#24142F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  miniCardName: {
+    color: '#EBDFF0',
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  miniCardOrientation: {
+    marginTop: 7,
+    color: '#AE8CBA',
+    fontSize: 11,
+  },
+  thinkingDots: {
     marginTop: 24,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  thinkingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 99,
+    backgroundColor: '#B58AC6',
+  },
+  analysisCard: {
+    marginTop: 18,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#3C2A45',
@@ -617,7 +766,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.8,
   },
-  endTitle: {
+  analysisTitle: {
     marginTop: 7,
     marginBottom: 10,
     color: '#F3E8F6',
