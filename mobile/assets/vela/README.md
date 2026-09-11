@@ -6,3 +6,5 @@ State mapping:
 - thinking: connecting the spread
 - asking: asking the player a question
 - clarifier: supplemental-card reaction
+
+The stage swaps these static portraits by interaction state; character motion is intentionally limited to scene transitions / camera emphasis rather than idle bobbing.
