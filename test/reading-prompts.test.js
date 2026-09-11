@@ -32,12 +32,18 @@ test("all interpretation layers prohibit converting difficult source themes into
   assert.match(buildLayerCInstructions(safety), /declare another person bad/u);
 });
 
-test("Vela synthesis is grounded, concise, conclusion-first, and avoids repeating the card walkthrough", () => {
+test("Vela card results are game-paced, direct, grounded, and synthesis stays concise", () => {
   const safety = { isHighStakes: false, categories: [] };
   const layerB = buildLayerBInstructions(safety);
   const layerC = buildLayerCInstructions(safety);
 
-  assert.match(layerB, /2-3 substantive sentences/u);
+  assert.match(layerB, /interactive character scene, not a report/u);
+  assert.match(layerB, /coreJudgment/u);
+  assert.match(layerB, /briefReason/u);
+  assert.match(layerB, /recap/u);
+  assert.match(layerB, /1-2 substantive sentences/u);
+  assert.match(layerB, /actual concern/u);
+  assert.match(layerB, /Avoid generic tarot exposition/u);
   assert.match(layerB, /Do not add fillers, fake hesitation/u);
   assert.match(layerB, /Do not make every card paragraph end with a polished conclusion/u);
   assert.match(layerC, /voice users experience as Vela/u);
