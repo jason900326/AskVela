@@ -200,7 +200,7 @@ function VelaStage({ phase, speech, idleScene, pose = 'ready' }) {
             <Image source={TAROT_ROOM} resizeMode="cover" style={styles.sceneImage} />
             <View pointerEvents="none" style={styles.stageShade} />
             <View pointerEvents="none" style={styles.velaPortraitWrap}>
-              <Image source={art} resizeMode="cover" style={styles.velaPortrait} accessibilityLabel={`Vela · ${pose}`} />
+              <Image source={art} resizeMode="contain" style={styles.velaPortrait} accessibilityLabel={`Vela · ${pose}`} />
             </View>
           </>
         )}
@@ -356,7 +356,7 @@ function getReadingSegments(resultCard, card, index) {
   const core = String(game.coreJudgment || '').trim();
   let reason = String(game.briefReason || '').trim();
   if (core && reason.startsWith(core)) reason = reason.slice(core.length).trim();
-  const segments = [core, ...splitSpeech(reason, 2)];
+  const segments = [core, ...splitSpeech(reason, 1)];
   if (game.practicalFocus) segments.push(`你可以先這樣做：${game.practicalFocus}`);
   return [...new Set(segments.filter(Boolean))];
 }
@@ -1049,17 +1049,17 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
   screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36, backgroundColor: '#100918' },
-  stage: { minHeight: 430, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 16, paddingBottom: 104 },
+  stage: { height: 418, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden' },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
-  sceneViewport: { position: 'absolute', top: 14, left: 14, right: 14, height: 300, borderRadius: 18, overflow: 'hidden', backgroundColor: '#160D20' },
+  sceneViewport: { position: 'absolute', top: 14, left: 14, right: 14, height: 286, borderRadius: 18, overflow: 'hidden', backgroundColor: '#160D20' },
   sceneImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
-  stageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10, 5, 16, 0.20)', zIndex: 0 },
-  velaPortraitWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', zIndex: 1, overflow: 'hidden' },
-  velaPortrait: { width: '112%', height: '112%' },
-  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 14, minHeight: 82, borderRadius: 17, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, zIndex: 5 },
+  stageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10, 5, 16, 0.14)', zIndex: 0 },
+  velaPortraitWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'flex-end', zIndex: 2, overflow: 'hidden' },
+  velaPortrait: { width: '94%', height: '105%', transform: [{ translateY: 10 }, { scale: 1.06 }] },
+  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 14, minHeight: 88, maxHeight: 104, borderRadius: 17, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, zIndex: 5 },
   speakerTag: { position: 'absolute', top: -10, left: 14, borderRadius: 8, backgroundColor: '#5C356B', color: '#FFF5FF', paddingHorizontal: 9, paddingVertical: 4, fontSize: 9, fontWeight: '800', letterSpacing: 1.2, overflow: 'hidden' },
   speech: { color: '#25182C', fontSize: 14.5, lineHeight: 21, textAlign: 'left', fontWeight: '600' },
-  curtainLayer: { position: 'absolute', top: 14, left: 14, right: 14, height: 300, borderRadius: 18, overflow: 'hidden', flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
+  curtainLayer: { position: 'absolute', top: 14, left: 14, right: 14, height: 286, borderRadius: 18, overflow: 'hidden', flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
   curtainPanel: { position: 'absolute', top: 0, bottom: 0, width: '52%', backgroundColor: '#4B205E' },
   curtainLeft: { left: 0, borderRightWidth: 1, borderRightColor: '#8C5DA0' },
   curtainRight: { right: 0, borderLeftWidth: 1, borderLeftColor: '#8C5DA0' },
@@ -1090,8 +1090,8 @@ const styles = StyleSheet.create({
   revealName: { color: '#291C30', fontSize: 19, fontWeight: '800', textAlign: 'center' },
   revealEnglish: { marginTop: 8, color: '#6D5A74', fontSize: 11, textAlign: 'center' },
   orientation: { marginTop: 20, color: '#7D4A91', fontSize: 13, fontWeight: '800' },
-  readingStrip: { width: '100%', flexDirection: 'row', gap: 10 },
-  readingStripCard: { flex: 1, minHeight: 164, borderRadius: 14, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  readingStrip: { width: '100%', height: 184, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  readingStripCard: { width: '31.5%', height: 184, borderRadius: 14, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   readingStripCardActive: { borderWidth: 2, borderColor: '#E1BF68', backgroundColor: '#35203F', transform: [{ translateY: -4 }], shadowColor: '#E1BF68', shadowOpacity: 0.9, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
   readingStripArt: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   readingStripMeta: { width: '100%', paddingVertical: 7, paddingHorizontal: 4, backgroundColor: 'rgba(16,9,24,0.84)', alignItems: 'center' },
@@ -1099,8 +1099,8 @@ const styles = StyleSheet.create({
   readingStripNameActive: { color: '#FFF5FF' },
   readingStripOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
   thinkingSection: { marginTop: 20, alignItems: 'center' },
-  miniCardRow: { width: '100%', flexDirection: 'row', gap: 10 },
-  miniCard: { flex: 1, minHeight: 126, borderRadius: 12, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  miniCardRow: { width: '100%', height: 154, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  miniCard: { width: '31.5%', height: 154, borderRadius: 12, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   miniCardArt: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   miniCardName: { color: '#EBDFF0', fontSize: 14, fontWeight: '800', textAlign: 'center' },
   miniCardOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
