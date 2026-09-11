@@ -1,0 +1,1 @@
+Vela small character assets will be committed directly through Git blobs; this marker can be removed after verification.
