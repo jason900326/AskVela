@@ -198,6 +198,7 @@ function VelaStage({ phase, speech, idleScene }) {
         <Text style={styles.velaState}>{daily ? idleScene.label : 'TAROT VELA'}</Text>
       </Animated.View>
       <View style={styles.speechBubble}>
+        <Text style={styles.speakerTag}>VELA</Text>
         <Text style={styles.speech}>{speech}</Text>
       </View>
       {phase === PHASE.CURTAIN && (
@@ -268,6 +269,19 @@ function MiniCard({ card }) {
   );
 }
 
+function ReadingCardStrip({ cards, activeIndex = -1 }) {
+  return (
+    <View style={styles.readingStrip}>
+      {cards.map((card, index) => (
+        <View key={card.id} style={[styles.readingStripCard, index === activeIndex && styles.readingStripCardActive]}>
+          <Text style={[styles.readingStripName, index === activeIndex && styles.readingStripNameActive]}>{card.name}</Text>
+          <Text style={styles.readingStripOrientation}>{card.reversed ? '逆位' : '正位'}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function getGameReading(resultCard, card, index) {
   const fallback = mockCardReading(card, index);
   return {
@@ -276,6 +290,15 @@ function getGameReading(resultCard, card, index) {
     recap: resultCard?.recap || resultCard?.coreJudgment || `${card?.name}：${fallback}`,
     practicalFocus: resultCard?.practicalFocus || '',
   };
+}
+
+function buildReadingDialogue(resultCard, card, index) {
+  const game = getGameReading(resultCard, card, index);
+  return [
+    game.coreJudgment,
+    game.briefReason && game.briefReason !== game.coreJudgment ? game.briefReason : '',
+    game.practicalFocus ? `你可以先：${game.practicalFocus}` : '',
+  ].filter(Boolean).join('\n');
 }
 
 function ActiveReading({ card, index, interpretation }) {
@@ -637,15 +660,25 @@ export default function App() {
     ? null
     : getGameReading(activeResultCard, activeDrawCard, activeReadingIndex);
 
+  const synthesisOverview = interpretation?.analysisSynthesis?.overview || '三張牌放在一起';
+  const synthesisNarrative = interpretation?.analysisSynthesis?.narrative
+    || '第一張描述你現在的位置，第二張指出真正的阻力，第三張則把下一步縮小到一個比較能處理的方向。';
+
+  const readingDialogue = activeReadingIndex === null
+    ? ''
+    : buildReadingDialogue(activeResultCard, activeDrawCard, activeReadingIndex);
+
   const stageSpeech = phase === PHASE.CURTAIN
     ? PREPARE_LINES[prepareIndex]
     : phase === PHASE.THINKING
       ? THINKING_LINES[thinkingIndex]
-      : activeGameReading?.coreJudgment || speech;
-
-  const synthesisOverview = interpretation?.analysisSynthesis?.overview || '三張牌放在一起';
-  const synthesisNarrative = interpretation?.analysisSynthesis?.narrative
-    || '第一張描述你現在的位置，第二張指出真正的阻力，第三張則把下一步縮小到一個比較能處理的方向。';
+      : phase === PHASE.SYNTHESIS
+        ? [synthesisOverview, synthesisNarrative].filter(Boolean).join('\n')
+        : phase === PHASE.FOLLOWUP && followupAnswered
+          ? (followupLoading ? '……' : followupAnswer || speech)
+          : phase === PHASE.SUPPLEMENT && supplementRevealed
+            ? '這張沒有推翻前面三張。它只是把焦點縮小：先處理你能控制的部分，比一直猜結果更有用。'
+            : readingDialogue || speech;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -746,55 +779,36 @@ export default function App() {
 
         {phase === PHASE.FIRST_READING && (
           <View style={styles.tableSection}>
-            <ActiveReading card={drawCards[0]} index={0} interpretation={interpretation} />
+            <ReadingCardStrip cards={drawCards} activeIndex={0} />
             <Pressable style={styles.primaryButton} onPress={continueAfterFirstReading}>
-              <Text style={styles.primaryButtonText}>我懂了，繼續</Text>
+              <Text style={styles.primaryButtonText}>繼續聽 Vela 說</Text>
             </Pressable>
           </View>
         )}
 
         {phase === PHASE.LOGIN_GATE && (
           <View style={styles.tableSection}>
-            <ReadingRecap card={drawCards[0]} index={0} interpretation={interpretation} />
-            <View style={styles.gateCard}>
-              <Text style={styles.bodyCopy}>後面兩張會把這件事講完整。</Text>
-              <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
-                <Text style={styles.primaryButtonText}>登入並繼續</Text>
-              </Pressable>
-            </View>
+            <ReadingCardStrip cards={drawCards} activeIndex={0} />
+            <Pressable style={styles.primaryButton} onPress={unlockFullReading}>
+              <Text style={styles.primaryButtonText}>登入並繼續</Text>
+            </Pressable>
           </View>
         )}
 
         {phase === PHASE.FULL_READING && (
           <View style={styles.tableSection}>
-            {drawCards.slice(0, Math.max(0, analysisCount - 1)).map((card, index) => (
-              <ReadingRecap key={card.id} card={card} index={index} interpretation={interpretation} />
-            ))}
-            <ActiveReading card={drawCards[analysisCount - 1]} index={analysisCount - 1} interpretation={interpretation} />
+            <ReadingCardStrip cards={drawCards} activeIndex={analysisCount - 1} />
             <Pressable style={styles.primaryButton} onPress={advanceFullReading}>
-              <Text style={styles.primaryButtonText}>{analysisCount < 3 ? '看下一張' : '三張一起看'}</Text>
+              <Text style={styles.primaryButtonText}>{analysisCount < 3 ? '繼續聽下一張' : '把三張串起來'}</Text>
             </Pressable>
           </View>
         )}
 
         {phase === PHASE.SYNTHESIS && (
           <View style={styles.tableSection}>
-            <View style={styles.recapStack}>
-              {drawCards.map((card, index) => (
-                <ReadingRecap key={card.id} card={card} index={index} interpretation={interpretation} />
-              ))}
-            </View>
-            <View style={styles.synthesisScene}>
-              <Text style={styles.synthesisNarrative}>{synthesisNarrative}</Text>
-              {(interpretation?.analysisSynthesis?.practicalGuidance || interpretation?.synthesis?.practicalGuidance || []).slice(0, 2).map((item) => (
-                <View key={item} style={styles.synthesisStep}>
-                  <Text style={styles.synthesisStepDot}>•</Text>
-                  <Text style={styles.synthesisStepText}>{item}</Text>
-                </View>
-              ))}
-            </View>
+            <ReadingCardStrip cards={drawCards} activeIndex={-1} />
             <Pressable style={styles.primaryButton} onPress={continueToFollowup}>
-              <Text style={styles.primaryButtonText}>我看完了</Text>
+              <Text style={styles.primaryButtonText}>繼續</Text>
             </Pressable>
           </View>
         )}
@@ -828,11 +842,6 @@ export default function App() {
             )}
             {followupAnswered && (
               <View style={styles.followupResult}>
-                <Text style={styles.userBubble}>{followupMessage}</Text>
-                <Text style={styles.velaReply}>{followupLoading ? '……' : followupAnswer}</Text>
-                {!followupLoading && !!followupPracticalFocus && (
-                  <Text style={styles.practicalFocus}>{followupPracticalFocus}</Text>
-                )}
                 {!followupLoading && !!followupAnswer && (
                   <>
                     <Pressable style={styles.primaryButton} onPress={openSupplement}>
@@ -850,9 +859,6 @@ export default function App() {
 
         {phase === PHASE.SUPPLEMENT && supplementCard && (
           <View style={styles.tableSection}>
-            {!!followupAnswer && (
-              <Text style={styles.velaReply}>{followupAnswer}</Text>
-            )}
             <View style={styles.supplementWrap}>
               <RevealCard
                 card={supplementCard}
@@ -863,13 +869,9 @@ export default function App() {
               />
             </View>
             {supplementRevealed && (
-              <View style={styles.synthesisCard}>
-                <Text style={styles.analysisTitle}>{supplementCard.name} · {supplementCard.reversed ? '逆位' : '正位'}</Text>
-                <Text style={styles.bodyCopy}>這張沒有推翻前面三張，它只是把焦點縮小：你接下來先處理自己能控制的部分，比一直猜結果更有用。</Text>
-                <Pressable style={styles.primaryButton} onPress={resetReading}>
-                  <Text style={styles.primaryButtonText}>今天先到這裡</Text>
-                </Pressable>
-              </View>
+              <Pressable style={styles.primaryButton} onPress={resetReading}>
+                <Text style={styles.primaryButtonText}>今天先到這裡</Text>
+              </Pressable>
             )}
           </View>
         )}
@@ -881,15 +883,16 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#100918' },
   screen: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36, backgroundColor: '#100918' },
-  stage: { minHeight: 330, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 20 },
+  stage: { minHeight: 420, borderRadius: 28, borderWidth: 1, borderColor: '#3B2550', backgroundColor: '#1A1025', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', padding: 20, paddingBottom: 128 },
   stageTarot: { backgroundColor: '#160D20', borderColor: '#5B386D' },
   moon: { position: 'absolute', top: 17, right: 22, color: '#D9B96E', fontSize: 31 },
-  velaPlaceholder: { width: 150, height: 190, borderTopLeftRadius: 74, borderTopRightRadius: 74, borderBottomLeftRadius: 34, borderBottomRightRadius: 34, backgroundColor: '#2B1D36', borderWidth: 1, borderColor: '#594064', alignItems: 'center', justifyContent: 'center' },
+  velaPlaceholder: { marginTop: 26, width: 200, height: 235, borderTopLeftRadius: 96, borderTopRightRadius: 96, borderBottomLeftRadius: 38, borderBottomRightRadius: 38, backgroundColor: '#2B1D36', borderWidth: 1, borderColor: '#594064', alignItems: 'center', justifyContent: 'center' },
   velaPlaceholderReady: { backgroundColor: '#392046', borderColor: '#9E77B2' },
   velaInitial: { color: '#F5E7FA', fontSize: 68, fontWeight: '300', fontFamily: 'serif' },
   velaState: { marginTop: 12, color: '#A993B5', fontSize: 9, letterSpacing: 1.2 },
-  speechBubble: { marginTop: 22, width: '100%', borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingVertical: 14 },
-  speech: { color: '#25182C', fontSize: 16, lineHeight: 23, textAlign: 'center', fontWeight: '600' },
+  speechBubble: { position: 'absolute', left: 16, right: 16, bottom: 16, minHeight: 92, borderRadius: 18, backgroundColor: '#F0E4F4', paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14 },
+  speakerTag: { position: 'absolute', top: -10, left: 14, borderRadius: 8, backgroundColor: '#5C356B', color: '#FFF5FF', paddingHorizontal: 9, paddingVertical: 4, fontSize: 9, fontWeight: '800', letterSpacing: 1.2, overflow: 'hidden' },
+  speech: { color: '#25182C', fontSize: 15, lineHeight: 22, textAlign: 'left', fontWeight: '600' },
   curtainLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', zIndex: 20 },
   curtainPanel: { position: 'absolute', top: 0, bottom: 0, width: '52%', backgroundColor: '#4B205E' },
   curtainLeft: { left: 0, borderRightWidth: 1, borderRightColor: '#8C5DA0' },
@@ -919,6 +922,12 @@ const styles = StyleSheet.create({
   revealName: { color: '#291C30', fontSize: 19, fontWeight: '800', textAlign: 'center' },
   revealEnglish: { marginTop: 8, color: '#6D5A74', fontSize: 11, textAlign: 'center' },
   orientation: { marginTop: 20, color: '#7D4A91', fontSize: 13, fontWeight: '800' },
+  readingStrip: { width: '100%', flexDirection: 'row', gap: 10 },
+  readingStripCard: { flex: 1, minHeight: 132, borderRadius: 14, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  readingStripCardActive: { borderWidth: 2, borderColor: '#C99BDB', backgroundColor: '#35203F', transform: [{ translateY: -4 }] },
+  readingStripName: { color: '#BBA9C1', fontSize: 14, fontWeight: '800', textAlign: 'center' },
+  readingStripNameActive: { color: '#FFF5FF' },
+  readingStripOrientation: { marginTop: 7, color: '#AE8CBA', fontSize: 11 },
   thinkingSection: { marginTop: 20, alignItems: 'center' },
   miniCardRow: { width: '100%', flexDirection: 'row', gap: 10 },
   miniCard: { flex: 1, minHeight: 96, borderRadius: 13, borderWidth: 1, borderColor: '#5E416A', backgroundColor: '#24142F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
