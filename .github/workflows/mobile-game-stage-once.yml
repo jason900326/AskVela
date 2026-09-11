@@ -1,0 +1,42 @@
+name: Mobile game stage one-shot
+
+on:
+  push:
+    branches:
+      - app-prototype-vertical-slice
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: app-prototype-vertical-slice
+          fetch-depth: 0
+
+      - name: Patch mobile prototype
+        run: python .github/scripts/patch_mobile_game_stage.py
+
+      - name: Verify generated asset registry
+        run: |
+          test -f mobile/tarot-assets.js
+          grep -q "major-04-emperor" mobile/tarot-assets.js
+          grep -q "CARD_BACK" mobile/tarot-assets.js
+          grep -q "idle-home.png" mobile/App.js
+          grep -q "tarot-room.png" mobile/App.js
+
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/App.js mobile/vela-api.js mobile/tarot-assets.js
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Wire uploaded art into mobile game flow"
+          git push origin HEAD:app-prototype-vertical-slice
